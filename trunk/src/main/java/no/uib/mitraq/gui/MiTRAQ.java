@@ -149,7 +149,8 @@ public class MiTRAQ extends javax.swing.JFrame {
     private void setUpResultsTable() {
 
         // cell renderers
-        resultsJTable.getColumn("FC").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, -1.0, 1.0, groupBColor, groupAColor));
+        resultsJTable.getColumn("FC").setCellRenderer(new JSparklinesBarChartTableCellRenderer(
+                PlotOrientation.HORIZONTAL, -1.0, 1.0, groupBColor, groupAColor, Color.GRAY, new Double(foldChangeLevelJSpinner.getValue().toString())));
         resultsJTable.getColumn("Peptides").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, tableCellBarChartColor));
         resultsJTable.getColumn("Coverage").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 100.0, tableCellBarChartColor));
         resultsJTable.getColumn("Exp. Count").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, tableCellBarChartColor));
@@ -276,8 +277,8 @@ public class MiTRAQ extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel3 = new javax.swing.JPanel();
-        jScrollPane3 = new javax.swing.JScrollPane();
+        resultsJPanel = new javax.swing.JPanel();
+        resultsTableJScrollPane = new javax.swing.JScrollPane();
         resultsJTable = new JTable() {
             protected JTableHeader createDefaultTableHeader() {
                 return new JTableHeader(columnModel) {
@@ -295,11 +296,13 @@ public class MiTRAQ extends javax.swing.JFrame {
         chartJPanel = new javax.swing.JPanel();
         filterResultsJButton = new javax.swing.JButton();
         proteinCountJLabel = new javax.swing.JLabel();
-        jScrollPane2 = new javax.swing.JScrollPane();
+        accessiobNumbersJScrollPane = new javax.swing.JScrollPane();
         accessionNumbersJEditorPane = new javax.swing.JEditorPane();
-        jLabel1 = new javax.swing.JLabel();
+        significanceLevelJLabel = new javax.swing.JLabel();
         significanceLevelJSpinner = new javax.swing.JSpinner();
         exportJButton = new javax.swing.JButton();
+        foldChangeJLabel = new javax.swing.JLabel();
+        foldChangeLevelJSpinner = new javax.swing.JSpinner();
         menuBar = new javax.swing.JMenuBar();
         fileJMenu = new javax.swing.JMenu();
         openJMenuItem = new javax.swing.JMenuItem();
@@ -315,7 +318,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("MiTRAQ - Multiple iTRAQ Data Analysis");
 
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Results"));
+        resultsJPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Results"));
 
         resultsJTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -350,7 +353,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                 resultsJTableKeyReleased(evt);
             }
         });
-        jScrollPane3.setViewportView(resultsJTable);
+        resultsTableJScrollPane.setViewportView(resultsJTable);
 
         chartJPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         chartJPanel.setLayout(new javax.swing.BoxLayout(chartJPanel, javax.swing.BoxLayout.LINE_AXIS));
@@ -373,10 +376,11 @@ public class MiTRAQ extends javax.swing.JFrame {
                 accessionNumbersJEditorPaneHyperlinkUpdate(evt);
             }
         });
-        jScrollPane2.setViewportView(accessionNumbersJEditorPane);
+        accessiobNumbersJScrollPane.setViewportView(accessionNumbersJEditorPane);
 
-        jLabel1.setFont(jLabel1.getFont().deriveFont((jLabel1.getFont().getStyle() | java.awt.Font.ITALIC)));
-        jLabel1.setText("Significance Level:");
+        significanceLevelJLabel.setFont(significanceLevelJLabel.getFont().deriveFont((significanceLevelJLabel.getFont().getStyle() | java.awt.Font.ITALIC)));
+        significanceLevelJLabel.setText("Significance Level:");
+        significanceLevelJLabel.setToolTipText("Significance Level Used for the t-test");
 
         significanceLevelJSpinner.setModel(new javax.swing.SpinnerNumberModel(0.05d, 0.0d, 1.0d, 0.01d));
         significanceLevelJSpinner.setToolTipText("Significance Level Used for the t-test");
@@ -394,46 +398,64 @@ public class MiTRAQ extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
+        foldChangeJLabel.setFont(foldChangeJLabel.getFont().deriveFont((foldChangeJLabel.getFont().getStyle() | java.awt.Font.ITALIC)));
+        foldChangeJLabel.setText("Fold Change:");
+        foldChangeJLabel.setToolTipText("Minimum fold change to consider");
+
+        foldChangeLevelJSpinner.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(1.5d), Double.valueOf(0.0d), null, Double.valueOf(0.1d)));
+        foldChangeLevelJSpinner.setToolTipText("Minimum fold change to consider");
+        foldChangeLevelJSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                foldChangeLevelJSpinnerStateChanged(evt);
+            }
+        });
+
+        javax.swing.GroupLayout resultsJPanelLayout = new javax.swing.GroupLayout(resultsJPanel);
+        resultsJPanel.setLayout(resultsJPanelLayout);
+        resultsJPanelLayout.setHorizontalGroup(
+            resultsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(resultsJPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE)
+                .addGroup(resultsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(resultsTableJScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE)
                     .addComponent(chartJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                    .addComponent(accessiobNumbersJScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, resultsJPanelLayout.createSequentialGroup()
                         .addComponent(proteinCountJLabel)
                         .addGap(41, 41, 41)
-                        .addComponent(jLabel1)
+                        .addComponent(significanceLevelJLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(significanceLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 725, Short.MAX_VALUE)
+                        .addGap(45, 45, 45)
+                        .addComponent(foldChangeJLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(foldChangeLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 550, Short.MAX_VALUE)
                         .addComponent(filterResultsJButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(exportJButton)))
                 .addContainerGap())
         );
 
-        jPanel3Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {exportJButton, filterResultsJButton});
+        resultsJPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {exportJButton, filterResultsJButton});
 
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 265, Short.MAX_VALUE)
+        resultsJPanelLayout.setVerticalGroup(
+            resultsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(resultsJPanelLayout.createSequentialGroup()
+                .addComponent(resultsTableJScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 265, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(resultsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(proteinCountJLabel)
                     .addComponent(significanceLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1)
+                    .addComponent(significanceLevelJLabel)
                     .addComponent(exportJButton)
-                    .addComponent(filterResultsJButton))
+                    .addComponent(filterResultsJButton)
+                    .addComponent(foldChangeJLabel)
+                    .addComponent(foldChangeLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chartJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 349, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(accessiobNumbersJScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
@@ -521,14 +543,14 @@ public class MiTRAQ extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(resultsJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(resultsJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -598,32 +620,117 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         accessionNumbersJEditorPane.setText(accessionNumberLinks + "</html>");
 
+        double averageARatio = 0;
+        int counterA = 0;
+
+        // add bars for the data values in group A
         for (int i = 0; i < currentProtein.getRatiosGroupA().size(); i++) {
             if (currentProtein.getRatiosGroupA().get(i) != null) {
                 dataset.addValue(currentProtein.getRatiosGroupA().get(i), "1", groupALabel + (i + 1));
+                averageARatio += currentProtein.getRatiosGroupA().get(i);
+                counterA++;
             } else {
                 dataset.addValue(0, "1", groupALabel + (i + 1));
             }
         }
 
+        // add a bar for the average value in group A
+        dataset.addValue(averageARatio / counterA, "1", groupALabel + " Avg");
+
+        double averageBRatio = 0;
+        int counterB = 0;
+
+        // add bars for the data values in group B
         for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
             if (currentProtein.getRatiosGroupB().get(i) != null) {
                 dataset.addValue(currentProtein.getRatiosGroupB().get(i), "1", groupBLabel + (i + 1));
-
+                averageBRatio += currentProtein.getRatiosGroupB().get(i);
+                counterB++;
             } else {
                 dataset.addValue(0, "1", groupBLabel + (i + 1));
             }
         }
 
+        // add a bar for the average value in group B
+        dataset.addValue(averageBRatio / counterB, "1", groupBLabel + " Avg");
+
+
+        // set up the bar colors
         ArrayList<Color> barColors = new ArrayList<Color>();
 
+        // set the colors for the group A bars
         for (int i = 0; i < currentProtein.getRatiosGroupA().size(); i++) {
             barColors.add(groupAColor);
         }
 
+        // set the color for the average group A bar
+        int red = groupAColor.getRed();
+        int green = groupAColor.getGreen();
+        int blue = groupAColor.getBlue();
+
+        if (red + 150 < 255) {
+            red += 150;
+        } else {
+            red = 255;
+        }
+
+        if (green + 150 < 255) {
+            green += 150;
+        } else {
+            green = 255;
+        }
+
+        if (blue + 150 < 255) {
+            blue += 150;
+        } else {
+            blue = 255;
+        }
+
+        // make sure that the bar is not white
+        if (red == 255 && blue == 255 && green == 255) {
+            red = 225;
+            blue = 225;
+            green = 225;
+        }
+
+        barColors.add(new Color(red, green, blue));
+
+        // set the colors for the group B bars
         for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
             barColors.add(groupBColor);
         }
+
+        // set the color for the average group B bar
+        red = groupBColor.getRed();
+        green = groupBColor.getGreen();
+        blue = groupBColor.getBlue();
+
+        if (green + 150 < 255) {
+            green += 150;
+        } else {
+            green = 255;
+        }
+
+        if (red + 150 < 255) {
+            red += 150;
+        } else {
+            red = 255;
+        }
+
+        if (blue + 150 < 255) {
+            blue += 150;
+        } else {
+            blue = 255;
+        }
+
+        // make sure that the bar is not white
+        if (red == 255 && blue == 255 && green == 255) {
+            red = 225;
+            blue = 225;
+            green = 225;
+        }
+
+        barColors.add(new Color(red, green, blue));
 
         String title = currentProtein.getProteinName() + " (" + currentProtein.getAccessionNumber() + ")";
 
@@ -866,6 +973,21 @@ public class MiTRAQ extends javax.swing.JFrame {
     }//GEN-LAST:event_cellBarChartColorMenuItemActionPerformed
 
     /**
+     * Update the fold change colors if the fold change level value is changed.
+     *
+     * @param evt
+     */
+    private void foldChangeLevelJSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_foldChangeLevelJSpinnerStateChanged
+
+        double significantFoldChangeLevel = new Double(foldChangeLevelJSpinner.getValue().toString());
+
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).setSignificanceLevel(significantFoldChangeLevel);
+
+        resultsJTable.revalidate();
+        resultsJTable.repaint();
+    }//GEN-LAST:event_foldChangeLevelJSpinnerStateChanged
+
+    /**
      * Returns the results table.
      *
      * @return the results table
@@ -947,6 +1069,7 @@ public class MiTRAQ extends javax.swing.JFrame {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem aboutMenuItem;
+    private javax.swing.JScrollPane accessiobNumbersJScrollPane;
     private javax.swing.JEditorPane accessionNumbersJEditorPane;
     private javax.swing.JMenuItem cellBarChartColorMenuItem;
     private javax.swing.JPanel chartJPanel;
@@ -955,16 +1078,17 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JButton exportJButton;
     private javax.swing.JMenu fileJMenu;
     private javax.swing.JButton filterResultsJButton;
+    private javax.swing.JLabel foldChangeJLabel;
+    private javax.swing.JSpinner foldChangeLevelJSpinner;
     private javax.swing.JMenu helpJMenu;
     private javax.swing.JMenuItem helpJMenuItem;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JMenuItem openJMenuItem;
     private javax.swing.JLabel proteinCountJLabel;
+    private javax.swing.JPanel resultsJPanel;
     private javax.swing.JTable resultsJTable;
+    private javax.swing.JScrollPane resultsTableJScrollPane;
+    private javax.swing.JLabel significanceLevelJLabel;
     private javax.swing.JSpinner significanceLevelJSpinner;
     private javax.swing.JMenu viewJMenu;
     private javax.swing.JCheckBoxMenuItem viewNumbersJCheckBoxMenuItem;

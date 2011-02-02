@@ -502,6 +502,11 @@ public class ExperimentalDesign extends javax.swing.JDialog {
      */
     private void loadJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadJButtonActionPerformed
         this.setVisible(false);
+
+        // store the group colors
+        mitraq.setGroupAColor(groupAColorJPanel.getBackground());
+        mitraq.setGroupBColor(groupBColorJPanel.getBackground());
+
         mitraq.loadItraqData(groupOneLabelJTextField.getText(), groupTwoLabelJTextField.getText(),
                 iTraqTypeJComboBox.getSelectedItem().toString(), iTraqReferenceJComboBox.getSelectedItem().toString(),
                 new Integer(numberOfExperimentsJSpinner.getValue().toString()), experimentalDesignJTable, ratioFileJTextField.getText());
