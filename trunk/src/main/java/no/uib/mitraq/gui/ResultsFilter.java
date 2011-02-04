@@ -357,6 +357,7 @@ public class ResultsFilter extends javax.swing.JDialog {
         });
 
         jLabel1.setText("(contains, RegExp)");
+        jLabel1.setToolTipText("<html>\nFind all proteins containing a given string.<br>\nRegular expressions are supported.\n</html>");
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
