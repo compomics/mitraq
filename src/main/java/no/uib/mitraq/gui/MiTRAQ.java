@@ -6,6 +6,7 @@ import no.uib.mitraq.util.TsvFileFilter;
 import com.jgoodies.looks.plastic.PlasticLookAndFeel;
 import com.jgoodies.looks.plastic.PlasticXPLookAndFeel;
 import com.jgoodies.looks.plastic.theme.SkyKrupp;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
@@ -24,7 +25,6 @@ import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.Vector;
 import javax.swing.ImageIcon;
-import javax.swing.JColorChooser;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -34,11 +34,13 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
-import no.uib.jsparklines.renderers.util.BarChartColorRenderer;
 import no.uib.jsparklines.renderers.JSparklinesBarChartTableCellRenderer;
 import no.uib.jsparklines.extra.TrueFalseIconRenderer;
+import no.uib.jsparklines.renderers.util.BarChartColorRenderer;
+import no.uib.jsparklines.renderers.util.StatisticalBarChartColorRenderer;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.stat.StatUtils;
+import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import org.apache.commons.math.stat.inference.TestUtils;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -47,11 +49,15 @@ import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.labels.ItemLabelAnchor;
 import org.jfree.chart.labels.ItemLabelPosition;
 import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
+import org.jfree.chart.plot.CategoryMarker;
 import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.DatasetRenderingOrder;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.category.CategoryItemRenderer;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.statistics.DefaultStatisticalCategoryDataset;
+import org.jfree.ui.Layer;
 import org.jfree.ui.TextAnchor;
 
 /**
@@ -95,9 +101,15 @@ public class MiTRAQ extends javax.swing.JFrame {
      */
     private Color groupBColor = Color.BLUE;
     /**
-     * The color to use for bar charts shown inside a table cell.
+     * The color to use for bar charts shown inside a table cell when a big
+     * value is "good".
      */
-    private Color tableCellBarChartColor = new Color(110, 196, 97);
+    private Color tableCellBarChartColorBig = new Color(110, 196, 97);
+    /**
+     * The color to use for bar charts shown inside a table cell when a small
+     * value is "good".
+     */
+    private Color tableCellBarChartColorSmall = new Color(247, 247, 23);
     /**
      * The current file the ratios are extracted from.
      */
@@ -118,7 +130,19 @@ public class MiTRAQ extends javax.swing.JFrame {
      * If true the cells in the results table are shown as numbers, false
      * displays bar charts.
      */
-    private boolean showResultsAsNumbers = false;
+    private boolean showSparklines = false;
+    /**
+     * If true error bars are shown for the average value bar in the plot.
+     */
+    private boolean showErrorBars = true;
+    /**
+     * If true background hightlighting is added to the average value bars.
+     */
+    private boolean highlightAverageBars = false;
+    /**
+     * If true each bar in the bar chart will be labelled with its value.
+     */
+    private boolean showBarChartLabels = true;
     /**
      * If set to true all messages will be sent to a log file.
      */
@@ -148,25 +172,33 @@ public class MiTRAQ extends javax.swing.JFrame {
      */
     private void setUpResultsTable() {
 
-        // cell renderers
+        // sparklines cell renderers
         resultsJTable.getColumn("FC").setCellRenderer(new JSparklinesBarChartTableCellRenderer(
                 PlotOrientation.HORIZONTAL, -1.0, 1.0, groupBColor, groupAColor, Color.GRAY, new Double(foldChangeLevelJSpinner.getValue().toString())));
-        resultsJTable.getColumn("Peptides").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, tableCellBarChartColor));
-        resultsJTable.getColumn("Coverage").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 100.0, tableCellBarChartColor));
-        resultsJTable.getColumn("Exp. Count").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, tableCellBarChartColor));
-        resultsJTable.getColumn("P-value").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, tableCellBarChartColor));
-        resultsJTable.getColumn("Q-value").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, tableCellBarChartColor));
+        resultsJTable.getColumn("Peptides").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, tableCellBarChartColorBig));
+        resultsJTable.getColumn("Coverage").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 100.0, tableCellBarChartColorBig));
+        resultsJTable.getColumn("Exp. Count").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, tableCellBarChartColorBig));
+        resultsJTable.getColumn("P-value").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, tableCellBarChartColorSmall));
+        resultsJTable.getColumn("Q-value").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, tableCellBarChartColorSmall));
 
+        // set the minimum value to display in the p- and q-value plots
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("P-value").getCellRenderer()).setMinimumChartValue(0.05);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Q-value").getCellRenderer()).setMinimumChartValue(0.05);
+
+        // add the true/false cell renderer
         resultsJTable.getColumn("Significant").setCellRenderer(new TrueFalseIconRenderer(
                 new ImageIcon(this.getClass().getResource("/icons/accept.png")), new ImageIcon(this.getClass().getResource("/icons/Error_3.png"))));
         resultsJTable.getColumn("Bonferroni").setCellRenderer(new TrueFalseIconRenderer(
                 new ImageIcon(this.getClass().getResource("/icons/accept.png")), new ImageIcon(this.getClass().getResource("/icons/Error_3.png"))));
 
+        // turn off column reordering
         resultsJTable.getTableHeader().setReorderingAllowed(false);
 
+        // enable sorting by clicking on the column headers
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(resultsJTable.getModel());
         resultsJTable.setRowSorter(sorter);
 
+        // set the widths of the columns
         resultsJTable.getColumn(" ").setMaxWidth(40);
         resultsJTable.getColumn("FC").setMaxWidth(70);
         resultsJTable.getColumn("P-value").setMaxWidth(70);
@@ -187,6 +219,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         resultsJTable.getColumn("Significant").setMinWidth(80);
         resultsJTable.getColumn("Bonferroni").setMinWidth(80);
 
+        // set the column header tooltips
         columnHeaderToolTips = new Vector();
         columnHeaderToolTips.add(null);
         columnHeaderToolTips.add("Protein Description");
@@ -278,6 +311,10 @@ public class MiTRAQ extends javax.swing.JFrame {
     private void initComponents() {
 
         resultsJPanel = new javax.swing.JPanel();
+        accessiobNumbersJScrollPane = new javax.swing.JScrollPane();
+        accessionNumbersJEditorPane = new javax.swing.JEditorPane();
+        resultsJSplitPane = new javax.swing.JSplitPane();
+        resultsTableJPanel = new javax.swing.JPanel();
         resultsTableJScrollPane = new javax.swing.JScrollPane();
         resultsJTable = new JTable() {
             protected JTableHeader createDefaultTableHeader() {
@@ -293,32 +330,47 @@ public class MiTRAQ extends javax.swing.JFrame {
                 };
             }
         };
-        chartJPanel = new javax.swing.JPanel();
-        filterResultsJButton = new javax.swing.JButton();
         proteinCountJLabel = new javax.swing.JLabel();
-        accessiobNumbersJScrollPane = new javax.swing.JScrollPane();
-        accessionNumbersJEditorPane = new javax.swing.JEditorPane();
         significanceLevelJLabel = new javax.swing.JLabel();
         significanceLevelJSpinner = new javax.swing.JSpinner();
-        exportJButton = new javax.swing.JButton();
         foldChangeJLabel = new javax.swing.JLabel();
         foldChangeLevelJSpinner = new javax.swing.JSpinner();
+        filterResultsJButton = new javax.swing.JButton();
+        exportJButton = new javax.swing.JButton();
+        chartJPanel = new javax.swing.JPanel();
         menuBar = new javax.swing.JMenuBar();
         fileJMenu = new javax.swing.JMenu();
         openJMenuItem = new javax.swing.JMenuItem();
         exitJMenuItem = new javax.swing.JMenuItem();
-        editJMenu = new javax.swing.JMenu();
-        cellBarChartColorMenuItem = new javax.swing.JMenuItem();
         viewJMenu = new javax.swing.JMenu();
-        viewNumbersJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
+        viewSparklinesJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
+        errorBarsJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
+        highlightAveragesJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
+        barChartLabelsJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
         helpJMenu = new javax.swing.JMenu();
         helpJMenuItem = new javax.swing.JMenuItem();
         aboutMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("MiTRAQ - Multiple iTRAQ Data Analysis");
+        setMinimumSize(new java.awt.Dimension(800, 700));
 
         resultsJPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Results"));
+
+        accessionNumbersJEditorPane.setContentType("text/html");
+        accessionNumbersJEditorPane.setEditable(false);
+        accessionNumbersJEditorPane.addHyperlinkListener(new javax.swing.event.HyperlinkListener() {
+            public void hyperlinkUpdate(javax.swing.event.HyperlinkEvent evt) {
+                accessionNumbersJEditorPaneHyperlinkUpdate(evt);
+            }
+        });
+        accessiobNumbersJScrollPane.setViewportView(accessionNumbersJEditorPane);
+
+        resultsJSplitPane.setBorder(null);
+        resultsJSplitPane.setDividerLocation(350);
+        resultsJSplitPane.setDividerSize(0);
+        resultsJSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        resultsJSplitPane.setResizeWeight(1.0);
 
         resultsJTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -355,28 +407,8 @@ public class MiTRAQ extends javax.swing.JFrame {
         });
         resultsTableJScrollPane.setViewportView(resultsJTable);
 
-        chartJPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-        chartJPanel.setLayout(new javax.swing.BoxLayout(chartJPanel, javax.swing.BoxLayout.LINE_AXIS));
-
-        filterResultsJButton.setText("Filter");
-        filterResultsJButton.setToolTipText("Filter the Protein Results");
-        filterResultsJButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                filterResultsJButtonActionPerformed(evt);
-            }
-        });
-
         proteinCountJLabel.setFont(proteinCountJLabel.getFont().deriveFont((proteinCountJLabel.getFont().getStyle() | java.awt.Font.ITALIC)));
         proteinCountJLabel.setText("Protein Count: -");
-
-        accessionNumbersJEditorPane.setContentType("text/html");
-        accessionNumbersJEditorPane.setEditable(false);
-        accessionNumbersJEditorPane.addHyperlinkListener(new javax.swing.event.HyperlinkListener() {
-            public void hyperlinkUpdate(javax.swing.event.HyperlinkEvent evt) {
-                accessionNumbersJEditorPaneHyperlinkUpdate(evt);
-            }
-        });
-        accessiobNumbersJScrollPane.setViewportView(accessionNumbersJEditorPane);
 
         significanceLevelJLabel.setFont(significanceLevelJLabel.getFont().deriveFont((significanceLevelJLabel.getFont().getStyle() | java.awt.Font.ITALIC)));
         significanceLevelJLabel.setText("Significance Level:");
@@ -387,14 +419,6 @@ public class MiTRAQ extends javax.swing.JFrame {
         significanceLevelJSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 significanceLevelJSpinnerStateChanged(evt);
-            }
-        });
-
-        exportJButton.setText("Export");
-        exportJButton.setToolTipText("Export Results to CSV File");
-        exportJButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                exportJButtonActionPerformed(evt);
             }
         });
 
@@ -410,6 +434,68 @@ public class MiTRAQ extends javax.swing.JFrame {
             }
         });
 
+        filterResultsJButton.setText("Filter");
+        filterResultsJButton.setToolTipText("Filter the Protein Results");
+        filterResultsJButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                filterResultsJButtonActionPerformed(evt);
+            }
+        });
+
+        exportJButton.setText("Export");
+        exportJButton.setToolTipText("Export Results to CSV File");
+        exportJButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exportJButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout resultsTableJPanelLayout = new javax.swing.GroupLayout(resultsTableJPanel);
+        resultsTableJPanel.setLayout(resultsTableJPanelLayout);
+        resultsTableJPanelLayout.setHorizontalGroup(
+            resultsTableJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, resultsTableJPanelLayout.createSequentialGroup()
+                .addComponent(proteinCountJLabel)
+                .addGap(41, 41, 41)
+                .addComponent(significanceLevelJLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(significanceLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(45, 45, 45)
+                .addComponent(foldChangeJLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(foldChangeLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 550, Short.MAX_VALUE)
+                .addComponent(filterResultsJButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(exportJButton))
+            .addComponent(resultsTableJScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE)
+        );
+
+        resultsTableJPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {exportJButton, filterResultsJButton});
+
+        resultsTableJPanelLayout.setVerticalGroup(
+            resultsTableJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, resultsTableJPanelLayout.createSequentialGroup()
+                .addComponent(resultsTableJScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 310, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(resultsTableJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(exportJButton)
+                    .addComponent(filterResultsJButton)
+                    .addComponent(proteinCountJLabel)
+                    .addComponent(significanceLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(significanceLevelJLabel)
+                    .addComponent(foldChangeJLabel)
+                    .addComponent(foldChangeLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
+        resultsJSplitPane.setTopComponent(resultsTableJPanel);
+
+        chartJPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        chartJPanel.setMaximumSize(new java.awt.Dimension(4, 200));
+        chartJPanel.setLayout(new javax.swing.BoxLayout(chartJPanel, javax.swing.BoxLayout.LINE_AXIS));
+        resultsJSplitPane.setRightComponent(chartJPanel);
+
         javax.swing.GroupLayout resultsJPanelLayout = new javax.swing.GroupLayout(resultsJPanel);
         resultsJPanel.setLayout(resultsJPanelLayout);
         resultsJPanelLayout.setHorizontalGroup(
@@ -417,43 +503,15 @@ public class MiTRAQ extends javax.swing.JFrame {
             .addGroup(resultsJPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(resultsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(resultsTableJScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE)
-                    .addComponent(chartJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE)
-                    .addComponent(accessiobNumbersJScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, resultsJPanelLayout.createSequentialGroup()
-                        .addComponent(proteinCountJLabel)
-                        .addGap(41, 41, 41)
-                        .addComponent(significanceLevelJLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(significanceLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(45, 45, 45)
-                        .addComponent(foldChangeJLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(foldChangeLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 550, Short.MAX_VALUE)
-                        .addComponent(filterResultsJButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(exportJButton)))
+                    .addComponent(resultsJSplitPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE)
+                    .addComponent(accessiobNumbersJScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE))
                 .addContainerGap())
         );
-
-        resultsJPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {exportJButton, filterResultsJButton});
-
         resultsJPanelLayout.setVerticalGroup(
             resultsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(resultsJPanelLayout.createSequentialGroup()
-                .addComponent(resultsTableJScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 265, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(resultsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(proteinCountJLabel)
-                    .addComponent(significanceLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(significanceLevelJLabel)
-                    .addComponent(exportJButton)
-                    .addComponent(filterResultsJButton)
-                    .addComponent(foldChangeJLabel)
-                    .addComponent(foldChangeLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(chartJPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 349, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, resultsJPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(resultsJSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 638, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(accessiobNumbersJScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -462,6 +520,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         fileJMenu.setMnemonic('F');
         fileJMenu.setText("File");
 
+        openJMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
         openJMenuItem.setMnemonic('O');
         openJMenuItem.setText("Open");
         openJMenuItem.addActionListener(new java.awt.event.ActionListener() {
@@ -481,33 +540,55 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         menuBar.add(fileJMenu);
 
-        editJMenu.setMnemonic('E');
-        editJMenu.setText("Edit");
-
-        cellBarChartColorMenuItem.setMnemonic('P');
-        cellBarChartColorMenuItem.setText("Table Cell Plot Color");
-        cellBarChartColorMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cellBarChartColorMenuItemActionPerformed(evt);
-            }
-        });
-        editJMenu.add(cellBarChartColorMenuItem);
-
-        menuBar.add(editJMenu);
-
         viewJMenu.setMnemonic('V');
         viewJMenu.setText("View");
 
-        viewNumbersJCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
-        viewNumbersJCheckBoxMenuItem.setMnemonic('N');
-        viewNumbersJCheckBoxMenuItem.setText("Numbers");
-        viewNumbersJCheckBoxMenuItem.setToolTipText("View the results as numbers");
-        viewNumbersJCheckBoxMenuItem.addActionListener(new java.awt.event.ActionListener() {
+        viewSparklinesJCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_L, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        viewSparklinesJCheckBoxMenuItem.setMnemonic('L');
+        viewSparklinesJCheckBoxMenuItem.setSelected(true);
+        viewSparklinesJCheckBoxMenuItem.setText("JSparklines");
+        viewSparklinesJCheckBoxMenuItem.setToolTipText("View the results as sparklines or numbers");
+        viewSparklinesJCheckBoxMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                viewNumbersJCheckBoxMenuItemActionPerformed(evt);
+                viewSparklinesJCheckBoxMenuItemActionPerformed(evt);
             }
         });
-        viewJMenu.add(viewNumbersJCheckBoxMenuItem);
+        viewJMenu.add(viewSparklinesJCheckBoxMenuItem);
+
+        errorBarsJCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_E, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        errorBarsJCheckBoxMenuItem.setMnemonic('E');
+        errorBarsJCheckBoxMenuItem.setSelected(true);
+        errorBarsJCheckBoxMenuItem.setText("Error Bars");
+        errorBarsJCheckBoxMenuItem.setToolTipText("Show the error bars for the average value");
+        errorBarsJCheckBoxMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                errorBarsJCheckBoxMenuItemActionPerformed(evt);
+            }
+        });
+        viewJMenu.add(errorBarsJCheckBoxMenuItem);
+
+        highlightAveragesJCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_H, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        highlightAveragesJCheckBoxMenuItem.setMnemonic('H');
+        highlightAveragesJCheckBoxMenuItem.setText("Highlight Averages");
+        highlightAveragesJCheckBoxMenuItem.setToolTipText("Adds background hightlighting for the average value bars");
+        highlightAveragesJCheckBoxMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                highlightAveragesJCheckBoxMenuItemActionPerformed(evt);
+            }
+        });
+        viewJMenu.add(highlightAveragesJCheckBoxMenuItem);
+
+        barChartLabelsJCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_B, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        barChartLabelsJCheckBoxMenuItem.setMnemonic('B');
+        barChartLabelsJCheckBoxMenuItem.setSelected(true);
+        barChartLabelsJCheckBoxMenuItem.setText("Bar Chart Labels");
+        barChartLabelsJCheckBoxMenuItem.setToolTipText("Show the labels for the bar charts");
+        barChartLabelsJCheckBoxMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                barChartLabelsJCheckBoxMenuItemActionPerformed(evt);
+            }
+        });
+        viewJMenu.add(barChartLabelsJCheckBoxMenuItem);
 
         menuBar.add(viewJMenu);
 
@@ -585,160 +666,118 @@ public class MiTRAQ extends javax.swing.JFrame {
      */
     private void resultsJTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_resultsJTableMouseClicked
 
-        int index = new Integer("" + resultsJTable.getValueAt(resultsJTable.getSelectedRow(), 0)) - 1;
-        Protein currentProtein = allValidProteins.get(index);
-        StringTokenizer tok = new StringTokenizer(currentProtein.getAccessionNumbersAll(), "|");
+        if (resultsJTable.getSelectedRow() != -1) {
 
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+            int index = new Integer("" + resultsJTable.getValueAt(resultsJTable.getSelectedRow(), 0)) - 1;
+            Protein currentProtein = allValidProteins.get(index);
+            StringTokenizer tok = new StringTokenizer(currentProtein.getAccessionNumbersAll(), "|");
 
-        String accessionNumberLinks = "<html>Accession Numbers: ";
+            DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+            DefaultStatisticalCategoryDataset datasetErrors = new DefaultStatisticalCategoryDataset();
 
-        while (tok.hasMoreTokens()) {
+            String accessionNumberLinks = "<html>Accession Numbers: ";
 
-            String currentAccessionNumber = tok.nextToken();
-            String database = null;
+            while (tok.hasMoreTokens()) {
 
-            if (currentAccessionNumber.toUpperCase().startsWith("IPI")) {
-                database = "IPI";
-            } else if (currentAccessionNumber.toUpperCase().startsWith("SWISS-PROT")
-                    || currentAccessionNumber.startsWith("UNI-PROT")) {  // @TODO: untested!!
-                database = "UNI-PROT";
+                String currentAccessionNumber = tok.nextToken();
+                String database = null;
+
+                if (currentAccessionNumber.toUpperCase().startsWith("IPI")) {
+                    database = "IPI";
+                } else if (currentAccessionNumber.toUpperCase().startsWith("SWISS-PROT")
+                        || currentAccessionNumber.startsWith("UNI-PROT")) {  // @TODO: untested!!
+                    database = "UNI-PROT";
+                }
+
+                // @TODO: add more databases
+
+                if (database != null) {
+                    accessionNumberLinks += "<a href=\"http://srs.ebi.ac.uk/srsbin/cgi-bin/wgetz?-e+%5b"
+                            + database + "-AccNumber:" + currentAccessionNumber
+                            + "%5d\">" + currentAccessionNumber + "</a>, ";
+                } else {
+                    accessionNumberLinks += currentAccessionNumber + ", ";
+                }
             }
 
-            // @TODO: add more databases
+            accessionNumberLinks = accessionNumberLinks.substring(0, accessionNumberLinks.length() - 2);
+            accessionNumbersJEditorPane.setText(accessionNumberLinks + "</html>");
 
-            if (database != null) {
-                accessionNumberLinks += "<a href=\"http://srs.ebi.ac.uk/srsbin/cgi-bin/wgetz?-e+%5b"
-                        + database + "-AccNumber:" + currentAccessionNumber
-                        + "%5d\">" + currentAccessionNumber + "</a>, ";
-            } else {
-                accessionNumberLinks += currentAccessionNumber + ", ";
+            SummaryStatistics stats = new SummaryStatistics();
+
+            // add bars for the data values in group A
+            for (int i = 0; i < currentProtein.getRatiosGroupA().size(); i++) {
+                if (currentProtein.getRatiosGroupA().get(i) != null) {
+                    dataset.addValue(currentProtein.getRatiosGroupA().get(i), "1", groupALabel + (i + 1));
+                    datasetErrors.add(null, null, "1", groupALabel + (i + 1));
+                    stats.addValue(currentProtein.getRatiosGroupA().get(i));
+                } else {
+                    dataset.addValue(0, "1", groupALabel + (i + 1));
+                    datasetErrors.add(null, null, "1", groupALabel + (i + 1));
+                }
             }
-        }
 
-        accessionNumberLinks = accessionNumberLinks.substring(0, accessionNumberLinks.length() - 2);
+            // add a bar for the average value in group A
+            dataset.addValue(stats.getMean(), "1", groupALabel + " Avg");
+            datasetErrors.add(stats.getMean(), stats.getStandardDeviation(), "1", groupALabel + " Avg");
 
-        accessionNumbersJEditorPane.setText(accessionNumberLinks + "</html>");
+            stats = new SummaryStatistics();
 
-        double averageARatio = 0;
-        int counterA = 0;
-
-        // add bars for the data values in group A
-        for (int i = 0; i < currentProtein.getRatiosGroupA().size(); i++) {
-            if (currentProtein.getRatiosGroupA().get(i) != null) {
-                dataset.addValue(currentProtein.getRatiosGroupA().get(i), "1", groupALabel + (i + 1));
-                averageARatio += currentProtein.getRatiosGroupA().get(i);
-                counterA++;
-            } else {
-                dataset.addValue(0, "1", groupALabel + (i + 1));
+            // add a bar for the average value in group B
+            for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
+                if (currentProtein.getRatiosGroupB().get(i) != null) {
+                    stats.addValue(currentProtein.getRatiosGroupB().get(i));
+                }
             }
-        }
 
-        // add a bar for the average value in group A
-        dataset.addValue(averageARatio / counterA, "1", groupALabel + " Avg");
+            dataset.addValue(stats.getMean(), "1", groupBLabel + " Avg");
+            datasetErrors.add(stats.getMean(), stats.getStandardDeviation(), "1", groupBLabel + " Avg");
 
-        double averageBRatio = 0;
-        int counterB = 0;
-
-        // add bars for the data values in group B
-        for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
-            if (currentProtein.getRatiosGroupB().get(i) != null) {
-                dataset.addValue(currentProtein.getRatiosGroupB().get(i), "1", groupBLabel + (i + 1));
-                averageBRatio += currentProtein.getRatiosGroupB().get(i);
-                counterB++;
-            } else {
-                dataset.addValue(0, "1", groupBLabel + (i + 1));
+            // add bars for the data values in group B
+            for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
+                if (currentProtein.getRatiosGroupB().get(i) != null) {
+                    dataset.addValue(currentProtein.getRatiosGroupB().get(i), "1", groupBLabel + (i + 1));
+                    datasetErrors.add(null, null, "1", groupBLabel + (i + 1));
+                } else {
+                    dataset.addValue(0, "1", groupBLabel + (i + 1));
+                    datasetErrors.add(null, null, "1", groupBLabel + (i + 1));
+                }
             }
+
+            // set up the bar colors
+            ArrayList<Color> barColors = new ArrayList<Color>();
+
+            // set the colors for the group A bars
+            for (int i = 0; i < currentProtein.getRatiosGroupA().size(); i++) {
+                barColors.add(groupAColor);
+            }
+
+            // set the color for the average group A bar
+            barColors.add(getAverageValueColor(groupAColor));
+
+            // set the color for the average group B bar
+            barColors.add(getAverageValueColor(groupBColor));
+
+            // set the colors for the group B bars
+            for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
+                barColors.add(groupBColor);
+            }
+
+            String title = currentProtein.getProteinName() + " (" + currentProtein.getAccessionNumber() + ")";
+
+            JFreeChart chart = createRatioChart(dataset, datasetErrors, title, barColors);
+
+            if (highlightAverageBars) {
+                CategoryPlot plot = (CategoryPlot) chart.getPlot();
+                plot.addDomainMarker(new CategoryMarker(groupALabel + " Avg", Color.LIGHT_GRAY, new BasicStroke(1.0f), Color.LIGHT_GRAY, new BasicStroke(1.0f), 0.2f), Layer.BACKGROUND);
+                plot.addDomainMarker(new CategoryMarker(groupBLabel + " Avg", Color.LIGHT_GRAY, new BasicStroke(1.0f), Color.LIGHT_GRAY, new BasicStroke(1.0f), 0.2f), Layer.BACKGROUND);
+            }
+
+            ChartPanel chartPanel = new ChartPanel(chart);
+            chartJPanel.removeAll();
+            chartJPanel.add(chartPanel);
+            chartJPanel.validate();
         }
-
-        // add a bar for the average value in group B
-        dataset.addValue(averageBRatio / counterB, "1", groupBLabel + " Avg");
-
-
-        // set up the bar colors
-        ArrayList<Color> barColors = new ArrayList<Color>();
-
-        // set the colors for the group A bars
-        for (int i = 0; i < currentProtein.getRatiosGroupA().size(); i++) {
-            barColors.add(groupAColor);
-        }
-
-        // set the color for the average group A bar
-        int red = groupAColor.getRed();
-        int green = groupAColor.getGreen();
-        int blue = groupAColor.getBlue();
-
-        if (red + 150 < 255) {
-            red += 150;
-        } else {
-            red = 255;
-        }
-
-        if (green + 150 < 255) {
-            green += 150;
-        } else {
-            green = 255;
-        }
-
-        if (blue + 150 < 255) {
-            blue += 150;
-        } else {
-            blue = 255;
-        }
-
-        // make sure that the bar is not white
-        if (red == 255 && blue == 255 && green == 255) {
-            red = 225;
-            blue = 225;
-            green = 225;
-        }
-
-        barColors.add(new Color(red, green, blue));
-
-        // set the colors for the group B bars
-        for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
-            barColors.add(groupBColor);
-        }
-
-        // set the color for the average group B bar
-        red = groupBColor.getRed();
-        green = groupBColor.getGreen();
-        blue = groupBColor.getBlue();
-
-        if (green + 150 < 255) {
-            green += 150;
-        } else {
-            green = 255;
-        }
-
-        if (red + 150 < 255) {
-            red += 150;
-        } else {
-            red = 255;
-        }
-
-        if (blue + 150 < 255) {
-            blue += 150;
-        } else {
-            blue = 255;
-        }
-
-        // make sure that the bar is not white
-        if (red == 255 && blue == 255 && green == 255) {
-            red = 225;
-            blue = 225;
-            green = 225;
-        }
-
-        barColors.add(new Color(red, green, blue));
-
-        String title = currentProtein.getProteinName() + " (" + currentProtein.getAccessionNumber() + ")";
-
-        JFreeChart chart = createRatioChart(dataset, title, barColors);
-        ChartPanel chartPanel = new ChartPanel(chart);
-        chartJPanel.removeAll();
-        chartJPanel.add(chartPanel);
-        chartJPanel.validate();
     }//GEN-LAST:event_resultsJTableMouseClicked
 
     /**
@@ -935,42 +974,19 @@ public class MiTRAQ extends javax.swing.JFrame {
      *
      * @param evt
      */
-    private void viewNumbersJCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewNumbersJCheckBoxMenuItemActionPerformed
-        showResultsAsNumbers = viewNumbersJCheckBoxMenuItem.isSelected();
+    private void viewSparklinesJCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewSparklinesJCheckBoxMenuItemActionPerformed
+        showSparklines = viewSparklinesJCheckBoxMenuItem.isSelected();
 
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).showNumbers(showResultsAsNumbers);
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Peptides").getCellRenderer()).showNumbers(showResultsAsNumbers);
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Exp. Count").getCellRenderer()).showNumbers(showResultsAsNumbers);
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Coverage").getCellRenderer()).showNumbers(showResultsAsNumbers);
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("P-value").getCellRenderer()).showNumbers(showResultsAsNumbers);
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Q-value").getCellRenderer()).showNumbers(showResultsAsNumbers);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).showNumbers(!showSparklines);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Peptides").getCellRenderer()).showNumbers(!showSparklines);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Exp. Count").getCellRenderer()).showNumbers(!showSparklines);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Coverage").getCellRenderer()).showNumbers(!showSparklines);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("P-value").getCellRenderer()).showNumbers(!showSparklines);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Q-value").getCellRenderer()).showNumbers(!showSparklines);
 
         resultsJTable.revalidate();
         resultsJTable.repaint();
-    }//GEN-LAST:event_viewNumbersJCheckBoxMenuItemActionPerformed
-
-    /**
-     * Opens a color chooser where the color to use for the bar charts in the
-     * result cells can be selected.
-     *
-     * @param evt
-     */
-    private void cellBarChartColorMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cellBarChartColorMenuItemActionPerformed
-        Color color = JColorChooser.showDialog(this, "Choose a Color", tableCellBarChartColor);
-
-        if (color != null) {
-            tableCellBarChartColor = color;
-
-            ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Peptides").getCellRenderer()).setPositiveValuesColor(tableCellBarChartColor);
-            ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Exp. Count").getCellRenderer()).setPositiveValuesColor(tableCellBarChartColor);
-            ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Coverage").getCellRenderer()).setPositiveValuesColor(tableCellBarChartColor);
-            ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("P-value").getCellRenderer()).setPositiveValuesColor(tableCellBarChartColor);
-            ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Q-value").getCellRenderer()).setPositiveValuesColor(tableCellBarChartColor);
-
-            resultsJTable.revalidate();
-            resultsJTable.repaint();
-        }
-    }//GEN-LAST:event_cellBarChartColorMenuItemActionPerformed
+    }//GEN-LAST:event_viewSparklinesJCheckBoxMenuItemActionPerformed
 
     /**
      * Update the fold change colors if the fold change level value is changed.
@@ -980,12 +996,41 @@ public class MiTRAQ extends javax.swing.JFrame {
     private void foldChangeLevelJSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_foldChangeLevelJSpinnerStateChanged
 
         double significantFoldChangeLevel = new Double(foldChangeLevelJSpinner.getValue().toString());
-
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).setSignificanceLevel(significantFoldChangeLevel);
 
         resultsJTable.revalidate();
         resultsJTable.repaint();
     }//GEN-LAST:event_foldChangeLevelJSpinnerStateChanged
+
+    /**
+     * Turns the display of the error bars on or off.
+     *
+     * @param evt
+     */
+    private void errorBarsJCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_errorBarsJCheckBoxMenuItemActionPerformed
+        showErrorBars = errorBarsJCheckBoxMenuItem.isSelected();
+        resultsJTableMouseClicked(null);
+    }//GEN-LAST:event_errorBarsJCheckBoxMenuItemActionPerformed
+
+    /**
+     * Turns the display of the highlighting of the average value bars on or off.
+     * 
+     * @param evt
+     */
+    private void highlightAveragesJCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_highlightAveragesJCheckBoxMenuItemActionPerformed
+        highlightAverageBars = highlightAveragesJCheckBoxMenuItem.isSelected();
+        resultsJTableMouseClicked(null);
+    }//GEN-LAST:event_highlightAveragesJCheckBoxMenuItemActionPerformed
+
+    /**
+     * Turns the display of the labels in the bar charts on or off.
+     * 
+     * @param evt
+     */
+    private void barChartLabelsJCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_barChartLabelsJCheckBoxMenuItemActionPerformed
+        showBarChartLabels = barChartLabelsJCheckBoxMenuItem.isSelected();
+        resultsJTableMouseClicked(null);
+    }//GEN-LAST:event_barChartLabelsJCheckBoxMenuItemActionPerformed
 
     /**
      * Returns the results table.
@@ -1004,8 +1049,9 @@ public class MiTRAQ extends javax.swing.JFrame {
      * @param barColors the colors to use for the bars
      * @return the chart
      */
-    private JFreeChart createRatioChart(final CategoryDataset dataset, String title, ArrayList<Color> barColors) {
+    private JFreeChart createRatioChart(CategoryDataset dataset, DefaultStatisticalCategoryDataset datasetErrors, String title, ArrayList<Color> barColors) {
 
+        // create the bar chart
         final JFreeChart chart = ChartFactory.createBarChart(
                 title, // chart title
                 null, // domain axis label
@@ -1016,21 +1062,59 @@ public class MiTRAQ extends javax.swing.JFrame {
                 true, // tooltips
                 false); // urls
 
+        // set the background and gridline colors
         CategoryPlot plot = chart.getCategoryPlot();
         plot.setBackgroundPaint(Color.WHITE);
         plot.setRangeGridlinePaint(Color.BLACK);
 
+        // set the bar chart renderer
         CategoryItemRenderer renderer = new BarChartColorRenderer(barColors);
         renderer.setBaseItemLabelsVisible(true);
-        renderer.setBaseItemLabelGenerator(new StandardCategoryItemLabelGenerator());
-        renderer.setBaseNegativeItemLabelPosition(new ItemLabelPosition(ItemLabelAnchor.OUTSIDE12, TextAnchor.BOTTOM_CENTER));
-        renderer.setBasePositiveItemLabelPosition(new ItemLabelPosition(ItemLabelAnchor.OUTSIDE12, TextAnchor.BOTTOM_CENTER));
+
+        // add bar chart labels if selected
+        if (showBarChartLabels) {
+            renderer.setBaseItemLabelGenerator(new StandardCategoryItemLabelGenerator());
+            renderer.setBaseNegativeItemLabelPosition(new ItemLabelPosition(ItemLabelAnchor.OUTSIDE12, TextAnchor.BOTTOM_CENTER));
+            renderer.setBasePositiveItemLabelPosition(new ItemLabelPosition(ItemLabelAnchor.OUTSIDE12, TextAnchor.BOTTOM_CENTER));
+        }
+
         plot.setRenderer(renderer);
 
-        // change the margin at the top of the range axis...
+        // change the margin at the top and bottom of the range axis
         final ValueAxis rangeAxis = plot.getRangeAxis();
         rangeAxis.setLowerMargin(0.15);
         rangeAxis.setUpperMargin(0.15);
+
+        // add a second axis on the right, identical to the left one
+        ValueAxis rangeAxis2 = chart.getCategoryPlot().getRangeAxis();
+        plot.setRangeAxis(1, rangeAxis2);
+
+        // add error bars to the bar chart if selected
+        if (showErrorBars) {
+            plot.setDataset(1, datasetErrors);
+            plot.mapDatasetToRangeAxis(1, 0);
+
+            ArrayList<Color> barColorsErrors = new ArrayList<Color>();
+
+            // add "colors" for the first dataset, need to get the correct
+            // indices for the average bar colors
+            for (int i = 0; i < (dataset.getColumnCount() - 2) / 2; i++) {
+                barColorsErrors.add(null);
+            }
+
+            // set the color for the average group A bar
+            barColorsErrors.add(getAverageValueColor(groupAColor));
+
+            // set the color for the average group B bar
+            barColorsErrors.add(getAverageValueColor(groupBColor));
+
+            // set the renderer for the error bar plot
+            StatisticalBarChartColorRenderer rendererErrors = new StatisticalBarChartColorRenderer(barColorsErrors);
+            plot.setRenderer(1, rendererErrors);
+
+            // make sure that the error bars are drawn last
+            plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
+        }
 
         return chart;
     }
@@ -1071,9 +1155,9 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JMenuItem aboutMenuItem;
     private javax.swing.JScrollPane accessiobNumbersJScrollPane;
     private javax.swing.JEditorPane accessionNumbersJEditorPane;
-    private javax.swing.JMenuItem cellBarChartColorMenuItem;
+    private javax.swing.JCheckBoxMenuItem barChartLabelsJCheckBoxMenuItem;
     private javax.swing.JPanel chartJPanel;
-    private javax.swing.JMenu editJMenu;
+    private javax.swing.JCheckBoxMenuItem errorBarsJCheckBoxMenuItem;
     private javax.swing.JMenuItem exitJMenuItem;
     private javax.swing.JButton exportJButton;
     private javax.swing.JMenu fileJMenu;
@@ -1082,16 +1166,19 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JSpinner foldChangeLevelJSpinner;
     private javax.swing.JMenu helpJMenu;
     private javax.swing.JMenuItem helpJMenuItem;
+    private javax.swing.JCheckBoxMenuItem highlightAveragesJCheckBoxMenuItem;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JMenuItem openJMenuItem;
     private javax.swing.JLabel proteinCountJLabel;
     private javax.swing.JPanel resultsJPanel;
+    private javax.swing.JSplitPane resultsJSplitPane;
     private javax.swing.JTable resultsJTable;
+    private javax.swing.JPanel resultsTableJPanel;
     private javax.swing.JScrollPane resultsTableJScrollPane;
     private javax.swing.JLabel significanceLevelJLabel;
     private javax.swing.JSpinner significanceLevelJSpinner;
     private javax.swing.JMenu viewJMenu;
-    private javax.swing.JCheckBoxMenuItem viewNumbersJCheckBoxMenuItem;
+    private javax.swing.JCheckBoxMenuItem viewSparklinesJCheckBoxMenuItem;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -1785,6 +1872,8 @@ public class MiTRAQ extends javax.swing.JFrame {
     }
 
     /**
+     * Returns the color for group A.
+     *
      * @return the groupAColor
      */
     public Color getGroupAColor() {
@@ -1792,6 +1881,8 @@ public class MiTRAQ extends javax.swing.JFrame {
     }
 
     /**
+     * Set the color for groups A.
+     *
      * @param groupAColor the groupAColor to set
      */
     public void setGroupAColor(Color groupAColor) {
@@ -1800,6 +1891,8 @@ public class MiTRAQ extends javax.swing.JFrame {
     }
 
     /**
+     * Returns the color for group B.
+     *
      * @return the groupBColor
      */
     public Color getGroupBColor() {
@@ -1807,10 +1900,53 @@ public class MiTRAQ extends javax.swing.JFrame {
     }
 
     /**
+     * Set the color for group B.
+     *
      * @param groupBColor the groupBColor to set
      */
     public void setGroupBColor(Color groupBColor) {
         this.groupBColor = groupBColor;
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).setNegativeValuesColor(groupBColor);
+    }
+
+    /**
+     * Returns the color to use for the average value bar for the given 
+     * group color.
+     * 
+     * @param groupColor the original color for the group
+     * @return the color to use for the average bar
+     */
+    private Color getAverageValueColor(Color groupColor) {
+
+        int red = groupColor.getRed();
+        int green = groupColor.getGreen();
+        int blue = groupColor.getBlue();
+
+        if (green + 150 < 255) {
+            green += 150;
+        } else {
+            green = 255;
+        }
+
+        if (red + 150 < 255) {
+            red += 150;
+        } else {
+            red = 255;
+        }
+
+        if (blue + 150 < 255) {
+            blue += 150;
+        } else {
+            blue = 255;
+        }
+
+        // make sure that the bar is not white
+        if (red == 255 && blue == 255 && green == 255) {
+            red = 225;
+            blue = 225;
+            green = 225;
+        }
+
+        return new Color(red, green, blue);
     }
 }

@@ -515,6 +515,7 @@
         <Component class="javax.swing.JLabel" name="jLabel1">
           <Properties>
             <Property name="text" type="java.lang.String" value="(contains, RegExp)"/>
+            <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;&#xa;Find all proteins containing a given string.&lt;br&gt;&#xa;Regular expressions are supported.&#xa;&lt;/html&gt;"/>
           </Properties>
         </Component>
       </SubComponents>
