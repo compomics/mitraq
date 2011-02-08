@@ -187,7 +187,11 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="resultsJSplitPane" alignment="1" pref="1133" max="32767" attributes="0"/>
-                      <Component id="accessiobNumbersJScrollPane" alignment="1" pref="1133" max="32767" attributes="0"/>
+                      <Group type="102" alignment="1" attributes="0">
+                          <Component id="accessiobNumbersJScrollPane" pref="1062" max="32767" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="exportPlotJButton" min="-2" max="-2" attributes="0"/>
+                      </Group>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -199,8 +203,11 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="resultsJSplitPane" pref="638" max="32767" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="accessiobNumbersJScrollPane" min="-2" pref="47" max="-2" attributes="0"/>
-                  <EmptySpace min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="1" attributes="0">
+                      <Component id="accessiobNumbersJScrollPane" linkSize="2" min="-2" pref="47" max="-2" attributes="1"/>
+                      <Component id="exportPlotJButton" linkSize="2" pref="47" max="32767" attributes="1"/>
+                  </Group>
+                  <EmptySpace max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -260,7 +267,7 @@
                           <EmptySpace pref="550" max="32767" attributes="0"/>
                           <Component id="filterResultsJButton" linkSize="1" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="exportJButton" linkSize="1" min="-2" max="-2" attributes="0"/>
+                          <Component id="exportProteinListJButton" linkSize="1" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <Component id="resultsTableJScrollPane" alignment="0" pref="1133" max="32767" attributes="0"/>
                   </Group>
@@ -271,7 +278,7 @@
                           <Component id="resultsTableJScrollPane" pref="310" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="exportJButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="exportProteinListJButton" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="filterResultsJButton" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="proteinCountJLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="significanceLevelJSpinner" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -382,13 +389,13 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="filterResultsJButtonActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JButton" name="exportJButton">
+                <Component class="javax.swing.JButton" name="exportProteinListJButton">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Export"/>
-                    <Property name="toolTipText" type="java.lang.String" value="Export Results to CSV File"/>
+                    <Property name="toolTipText" type="java.lang.String" value="Export Protein Results to CSV File"/>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exportJButtonActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exportProteinListJButtonActionPerformed"/>
                   </Events>
                 </Component>
               </SubComponents>
@@ -414,6 +421,16 @@
             </Container>
           </SubComponents>
         </Container>
+        <Component class="javax.swing.JButton" name="exportPlotJButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="&lt;html&gt;&#xa;&lt;p align=center&gt;&#xa;Export&lt;br&gt;Plot&#xa;&lt;/p&gt;&#xa;&lt;/html&gt;"/>
+            <Property name="toolTipText" type="java.lang.String" value="Export the plot to file"/>
+            <Property name="enabled" type="boolean" value="false"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exportPlotJButtonActionPerformed"/>
+          </Events>
+        </Component>
       </SubComponents>
     </Container>
   </SubComponents>
