@@ -529,13 +529,13 @@ public class ResultsFilter extends javax.swing.JDialog {
      * @param evt
      */
     private void clearJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearJButtonActionPerformed
-        proteinJTextField.setText(null);
-        peptidesJTextField.setText(null);
-        coverageJTextField.setText(null);
-        expCountJTextField.setText(null);
-        foldChangeJTextField.setText(null);
-        pValueJTextField.setText(null);
-        qValueJTextField.setText(null);
+        proteinJTextField.setText("");
+        peptidesJTextField.setText("");
+        coverageJTextField.setText("");
+        expCountJTextField.setText("");
+        foldChangeJTextField.setText("");
+        pValueJTextField.setText("");
+        qValueJTextField.setText("");
         filter();
     }//GEN-LAST:event_clearJButtonActionPerformed
 
