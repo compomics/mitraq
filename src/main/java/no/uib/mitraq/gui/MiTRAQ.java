@@ -117,7 +117,7 @@ public class MiTRAQ extends javax.swing.JFrame {
     /**
      * The current text filter values.
      */
-    private String[] currentFilterValues = {null, null, null, null, null, null, null};
+    private String[] currentFilterValues = {"", "", "", "", "", "", ""};
     /**
      * The current settings for the radio buttons for the filters.
      */
@@ -921,7 +921,10 @@ public class MiTRAQ extends javax.swing.JFrame {
                     FileWriter f = new FileWriter(path);
                     BufferedWriter w = new BufferedWriter(f);
 
-                    w.write("Index\tProtein Description\tAccession Number\tAccession Numbers\tUnique Peptides\t"
+                    // add the current filter settings at the top of the file
+                    addFilterSettings(w);
+
+                    w.write("\nIndex\tProtein Description\tAccession Number\tAccession Numbers\tUnique Peptides\t"
                             + "Coverage\tExperiment Counter\tFold Change\tP-value\tQ-value\tSignificant\tBonferroni\t");
 
                     if (resultsJTable.getRowCount() > 0) {
@@ -1211,6 +1214,96 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JMenu viewJMenu;
     private javax.swing.JCheckBoxMenuItem viewSparklinesJCheckBoxMenuItem;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * Add the current filter settings at the top of export file.
+     * 
+     * @param w the buffered writer
+     * @throws IOException
+     */
+    private void addFilterSettings(BufferedWriter w) throws IOException {
+
+        w.write("Filter Settings:\n");
+        w.write("Protein Name or Accession Contains: " + currentFilterValues[0] + "\n");
+        w.write("#Peptides: ");
+
+        if (currrentFilterRadioButtonSelections[0] == 0) {
+            w.write("> ");
+        } else if (currrentFilterRadioButtonSelections[0] == 1) {
+            w.write("= ");
+        } else {
+            w.write("< ");
+        }
+
+        w.write(currentFilterValues[1] + "\n");
+
+        
+        w.write("Protein Coverage: ");
+
+        if (currrentFilterRadioButtonSelections[1] == 0) {
+            w.write("> ");
+        } else if (currrentFilterRadioButtonSelections[1] == 1) {
+            w.write("= ");
+        } else {
+            w.write("< ");
+        }
+
+        w.write(currentFilterValues[2] + "\n");
+
+
+        w.write("Experiment Count: ");
+
+        if (currrentFilterRadioButtonSelections[2] == 0) {
+            w.write("> ");
+        } else if (currrentFilterRadioButtonSelections[2] == 1) {
+            w.write("= ");
+        } else {
+            w.write("< ");
+        }
+
+        w.write(currentFilterValues[3] + "\n");
+
+
+        w.write("Fold Change: ");
+
+        if (currrentFilterRadioButtonSelections[3] == 0) {
+            w.write("> ");
+        } else if (currrentFilterRadioButtonSelections[3] == 1) {
+            w.write("= ");
+        } else {
+            w.write("< ");
+        }
+
+        w.write(currentFilterValues[4] + "\n");
+
+
+        w.write("P-value: ");
+
+        if (currrentFilterRadioButtonSelections[4] == 0) {
+            w.write("> ");
+        } else if (currrentFilterRadioButtonSelections[4] == 1) {
+            w.write("= ");
+        } else {
+            w.write("< ");
+        }
+
+        w.write(currentFilterValues[5] + "\n");
+
+
+        w.write("Q-value: ");
+
+        if (currrentFilterRadioButtonSelections[5] == 0) {
+            w.write("> ");
+        } else if (currrentFilterRadioButtonSelections[5] == 1) {
+            w.write("= ");
+        } else {
+            w.write("< ");
+        }
+
+        w.write(currentFilterValues[6] + "\n");
+
+        w.write("Significance Level: " + significanceLevelJSpinner.getValue() + "\n");
+    }
 
     /**
      * Loads the iTRAQ data from the ssv input file.
