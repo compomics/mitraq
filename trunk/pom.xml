@@ -191,6 +191,24 @@
             <artifactId>swing-layout</artifactId>
             <version>1.0.3</version>
         </dependency>
+
+        <!-- Used for exporting to svg, png, pdf etc.-->
+        <dependency>
+            <groupId>batik</groupId>
+            <artifactId>batik-all</artifactId>
+            <version>1.6</version>
+        </dependency>
+        <dependency>
+            <groupId>batik</groupId>
+            <artifactId>pdf-transcoder</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>xerces</groupId>
+            <artifactId>xercesImpl</artifactId>
+            <version>2.9.1</version>
+        </dependency>
+
     </dependencies>
 
 </project>

@@ -144,6 +144,10 @@ public class MiTRAQ extends javax.swing.JFrame {
      */
     private boolean showBarChartLabels = true;
     /**
+     * The current chart panel.
+     */
+    private ChartPanel chartPanel = null;
+    /**
      * If set to true all messages will be sent to a log file.
      */
     private static boolean useLogFile = true;
@@ -336,8 +340,9 @@ public class MiTRAQ extends javax.swing.JFrame {
         foldChangeJLabel = new javax.swing.JLabel();
         foldChangeLevelJSpinner = new javax.swing.JSpinner();
         filterResultsJButton = new javax.swing.JButton();
-        exportJButton = new javax.swing.JButton();
+        exportProteinListJButton = new javax.swing.JButton();
         chartJPanel = new javax.swing.JPanel();
+        exportPlotJButton = new javax.swing.JButton();
         menuBar = new javax.swing.JMenuBar();
         fileJMenu = new javax.swing.JMenu();
         openJMenuItem = new javax.swing.JMenuItem();
@@ -442,11 +447,11 @@ public class MiTRAQ extends javax.swing.JFrame {
             }
         });
 
-        exportJButton.setText("Export");
-        exportJButton.setToolTipText("Export Results to CSV File");
-        exportJButton.addActionListener(new java.awt.event.ActionListener() {
+        exportProteinListJButton.setText("Export");
+        exportProteinListJButton.setToolTipText("Export Protein Results to CSV File");
+        exportProteinListJButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                exportJButtonActionPerformed(evt);
+                exportProteinListJButtonActionPerformed(evt);
             }
         });
 
@@ -467,11 +472,11 @@ public class MiTRAQ extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 550, Short.MAX_VALUE)
                 .addComponent(filterResultsJButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(exportJButton))
+                .addComponent(exportProteinListJButton))
             .addComponent(resultsTableJScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE)
         );
 
-        resultsTableJPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {exportJButton, filterResultsJButton});
+        resultsTableJPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {exportProteinListJButton, filterResultsJButton});
 
         resultsTableJPanelLayout.setVerticalGroup(
             resultsTableJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -479,7 +484,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                 .addComponent(resultsTableJScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 310, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(resultsTableJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(exportJButton)
+                    .addComponent(exportProteinListJButton)
                     .addComponent(filterResultsJButton)
                     .addComponent(proteinCountJLabel)
                     .addComponent(significanceLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -496,6 +501,15 @@ public class MiTRAQ extends javax.swing.JFrame {
         chartJPanel.setLayout(new javax.swing.BoxLayout(chartJPanel, javax.swing.BoxLayout.LINE_AXIS));
         resultsJSplitPane.setRightComponent(chartJPanel);
 
+        exportPlotJButton.setText("<html>\n<p align=center>\nExport<br>Plot\n</p>\n</html>");
+        exportPlotJButton.setToolTipText("Export the plot to file");
+        exportPlotJButton.setEnabled(false);
+        exportPlotJButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exportPlotJButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout resultsJPanelLayout = new javax.swing.GroupLayout(resultsJPanel);
         resultsJPanel.setLayout(resultsJPanelLayout);
         resultsJPanelLayout.setHorizontalGroup(
@@ -504,7 +518,10 @@ public class MiTRAQ extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(resultsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(resultsJSplitPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE)
-                    .addComponent(accessiobNumbersJScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, resultsJPanelLayout.createSequentialGroup()
+                        .addComponent(accessiobNumbersJScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1062, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(exportPlotJButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         resultsJPanelLayout.setVerticalGroup(
@@ -513,9 +530,13 @@ public class MiTRAQ extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(resultsJSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 638, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(accessiobNumbersJScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(resultsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(accessiobNumbersJScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(exportPlotJButton, javax.swing.GroupLayout.DEFAULT_SIZE, 47, Short.MAX_VALUE))
                 .addContainerGap())
         );
+
+        resultsJPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {accessiobNumbersJScrollPane, exportPlotJButton});
 
         fileJMenu.setMnemonic('F');
         fileJMenu.setText("File");
@@ -773,7 +794,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                 plot.addDomainMarker(new CategoryMarker(groupBLabel + " Avg", Color.LIGHT_GRAY, new BasicStroke(1.0f), Color.LIGHT_GRAY, new BasicStroke(1.0f), 0.2f), Layer.BACKGROUND);
             }
 
-            ChartPanel chartPanel = new ChartPanel(chart);
+            chartPanel = new ChartPanel(chart);
             chartJPanel.removeAll();
             chartJPanel.add(chartPanel);
             chartJPanel.validate();
@@ -871,7 +892,7 @@ public class MiTRAQ extends javax.swing.JFrame {
      *
      * @param evt
      */
-    private void exportJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportJButtonActionPerformed
+    private void exportProteinListJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportProteinListJButtonActionPerformed
 
         JFileChooser chooser = new JFileChooser(currentRatioFile);
         chooser.setDialogTitle("Select the Export File");
@@ -966,7 +987,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                 this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
             }
         }
-    }//GEN-LAST:event_exportJButtonActionPerformed
+    }//GEN-LAST:event_exportProteinListJButtonActionPerformed
 
     /**
      * Turns the display of the underlying numbers in the cells in the results
@@ -1031,6 +1052,15 @@ public class MiTRAQ extends javax.swing.JFrame {
         showBarChartLabels = barChartLabelsJCheckBoxMenuItem.isSelected();
         resultsJTableMouseClicked(null);
     }//GEN-LAST:event_barChartLabelsJCheckBoxMenuItemActionPerformed
+
+    /**
+     * 
+     * 
+     * @param evt
+     */
+    private void exportPlotJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportPlotJButtonActionPerformed
+        new ExportPlot(this, true, chartPanel);
+    }//GEN-LAST:event_exportPlotJButtonActionPerformed
 
     /**
      * Returns the results table.
@@ -1159,7 +1189,8 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JPanel chartJPanel;
     private javax.swing.JCheckBoxMenuItem errorBarsJCheckBoxMenuItem;
     private javax.swing.JMenuItem exitJMenuItem;
-    private javax.swing.JButton exportJButton;
+    private javax.swing.JButton exportPlotJButton;
+    private javax.swing.JButton exportProteinListJButton;
     private javax.swing.JMenu fileJMenu;
     private javax.swing.JButton filterResultsJButton;
     private javax.swing.JLabel foldChangeJLabel;
@@ -1806,6 +1837,7 @@ public class MiTRAQ extends javax.swing.JFrame {
             resultsJTableMouseClicked(null);
         }
 
+        exportPlotJButton.setEnabled(true);
         this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
     }
 
