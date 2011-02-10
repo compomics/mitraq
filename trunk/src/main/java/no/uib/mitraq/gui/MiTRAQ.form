@@ -260,11 +260,7 @@
                           <Component id="significanceLevelJLabel" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="significanceLevelJSpinner" min="-2" pref="62" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="45" max="-2" attributes="0"/>
-                          <Component id="foldChangeJLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="foldChangeLevelJSpinner" min="-2" pref="62" max="-2" attributes="0"/>
-                          <EmptySpace pref="550" max="32767" attributes="0"/>
+                          <EmptySpace pref="725" max="32767" attributes="0"/>
                           <Component id="filterResultsJButton" linkSize="1" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="exportProteinListJButton" linkSize="1" min="-2" max="-2" attributes="0"/>
@@ -283,8 +279,6 @@
                               <Component id="proteinCountJLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="significanceLevelJSpinner" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="significanceLevelJLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="foldChangeJLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="foldChangeLevelJSpinner" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -301,19 +295,8 @@
                   <SubComponents>
                     <Component class="javax.swing.JTable" name="resultsJTable">
                       <Properties>
-                        <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
-                          <Table columnCount="10" rowCount="0">
-                            <Column editable="false" title=" " type="java.lang.Integer"/>
-                            <Column editable="false" title="Protein" type="java.lang.String"/>
-                            <Column editable="false" title="FC" type="java.lang.Double"/>
-                            <Column editable="false" title="Peptides" type="java.lang.Integer"/>
-                            <Column editable="false" title="Coverage" type="java.lang.Integer"/>
-                            <Column editable="false" title="Exp. Count" type="java.lang.Integer"/>
-                            <Column editable="false" title="P-value" type="java.lang.Double"/>
-                            <Column editable="false" title="Q-value" type="java.lang.Double"/>
-                            <Column editable="false" title="Significant" type="java.lang.Boolean"/>
-                            <Column editable="false" title="Bonferroni" type="java.lang.Boolean"/>
-                          </Table>
+                        <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                          <Connection code="new javax.swing.table.DefaultTableModel(&#xa;            new Object [][] {&#xa;&#xa;            },&#xa;            new String [] {&#xa;                &quot; &quot;, &quot;Protein&quot;, &quot;FC&quot;, &quot;Peptides&quot;, &quot;Coverage&quot;, &quot;Exp. Count&quot;, &quot;P-value&quot;, &quot;Q-value&quot;, &quot;Significant&quot;, &quot;Bonferroni&quot;&#xa;            }&#xa;        ) {&#xa;            Class[] types = new Class [] {&#xa;                java.lang.Integer.class, java.lang.String.class, XYDataPoint.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.Double.class, java.lang.Double.class, java.lang.Boolean.class, java.lang.Boolean.class&#xa;            };&#xa;            boolean[] canEdit = new boolean [] {&#xa;                false, false, false, false, false, false, false, false, false, false&#xa;            };&#xa;&#xa;            public Class getColumnClass(int columnIndex) {&#xa;                return types [columnIndex];&#xa;            }&#xa;&#xa;            public boolean isCellEditable(int rowIndex, int columnIndex) {&#xa;                return canEdit [columnIndex];&#xa;            }&#xa;        }" type="code"/>
                         </Property>
                       </Properties>
                       <Events>
@@ -356,28 +339,6 @@
                   </Properties>
                   <Events>
                     <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="significanceLevelJSpinnerStateChanged"/>
-                  </Events>
-                </Component>
-                <Component class="javax.swing.JLabel" name="foldChangeJLabel">
-                  <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font component="foldChangeJLabel" italic="true" property="font" relativeSize="true" size="0"/>
-                      </FontInfo>
-                    </Property>
-                    <Property name="text" type="java.lang.String" value="Fold Change:"/>
-                    <Property name="toolTipText" type="java.lang.String" value="Minimum fold change to consider"/>
-                  </Properties>
-                </Component>
-                <Component class="javax.swing.JSpinner" name="foldChangeLevelJSpinner">
-                  <Properties>
-                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                      <SpinnerModel initial="1.5" minimum="0.0" numberType="java.lang.Double" stepSize="0.1" type="number"/>
-                    </Property>
-                    <Property name="toolTipText" type="java.lang.String" value="Minimum fold change to consider"/>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="foldChangeLevelJSpinnerStateChanged"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JButton" name="filterResultsJButton">

@@ -34,6 +34,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import no.uib.jsparklines.data.XYDataPoint;
 import no.uib.jsparklines.renderers.JSparklinesBarChartTableCellRenderer;
 import no.uib.jsparklines.extra.TrueFalseIconRenderer;
 import no.uib.jsparklines.renderers.util.BarChartColorRenderer;
@@ -100,16 +101,6 @@ public class MiTRAQ extends javax.swing.JFrame {
      * The color to use for group A.
      */
     private Color groupBColor = Color.BLUE;
-    /**
-     * The color to use for bar charts shown inside a table cell when a big
-     * value is "good".
-     */
-    private Color tableCellBarChartColorBig = new Color(110, 196, 97);
-    /**
-     * The color to use for bar charts shown inside a table cell when a small
-     * value is "good".
-     */
-    private Color tableCellBarChartColorSmall = new Color(247, 247, 23);
     /**
      * The current file the ratios are extracted from.
      */
@@ -178,16 +169,12 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         // sparklines cell renderers
         resultsJTable.getColumn("FC").setCellRenderer(new JSparklinesBarChartTableCellRenderer(
-                PlotOrientation.HORIZONTAL, -1.0, 1.0, groupBColor, groupAColor, Color.GRAY, new Double(foldChangeLevelJSpinner.getValue().toString())));
-        resultsJTable.getColumn("Peptides").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, tableCellBarChartColorBig));
-        resultsJTable.getColumn("Coverage").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 100.0, tableCellBarChartColorBig));
-        resultsJTable.getColumn("Exp. Count").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, tableCellBarChartColorBig));
-        resultsJTable.getColumn("P-value").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, tableCellBarChartColorSmall));
-        resultsJTable.getColumn("Q-value").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, tableCellBarChartColorSmall));
-
-        // set the minimum value to display in the p- and q-value plots
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("P-value").getCellRenderer()).setMinimumChartValue(0.05);
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Q-value").getCellRenderer()).setMinimumChartValue(0.05);
+                PlotOrientation.HORIZONTAL, -1.0, 1.0, groupBColor, groupAColor, Color.GRAY, new Double(significanceLevelJSpinner.getValue().toString())));
+        resultsJTable.getColumn("Peptides").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, true));
+        resultsJTable.getColumn("Coverage").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 100.0, true));
+        resultsJTable.getColumn("Exp. Count").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, true));
+        resultsJTable.getColumn("P-value").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, false));
+        resultsJTable.getColumn("Q-value").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, false));
 
         // add the true/false cell renderer
         resultsJTable.getColumn("Significant").setCellRenderer(new TrueFalseIconRenderer(
@@ -337,8 +324,6 @@ public class MiTRAQ extends javax.swing.JFrame {
         proteinCountJLabel = new javax.swing.JLabel();
         significanceLevelJLabel = new javax.swing.JLabel();
         significanceLevelJSpinner = new javax.swing.JSpinner();
-        foldChangeJLabel = new javax.swing.JLabel();
-        foldChangeLevelJSpinner = new javax.swing.JSpinner();
         filterResultsJButton = new javax.swing.JButton();
         exportProteinListJButton = new javax.swing.JButton();
         chartJPanel = new javax.swing.JPanel();
@@ -386,7 +371,7 @@ public class MiTRAQ extends javax.swing.JFrame {
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Integer.class, java.lang.String.class, java.lang.Double.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.Double.class, java.lang.Double.class, java.lang.Boolean.class, java.lang.Boolean.class
+                java.lang.Integer.class, java.lang.String.class, XYDataPoint.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.Double.class, java.lang.Double.class, java.lang.Boolean.class, java.lang.Boolean.class
             };
             boolean[] canEdit = new boolean [] {
                 false, false, false, false, false, false, false, false, false, false
@@ -427,18 +412,6 @@ public class MiTRAQ extends javax.swing.JFrame {
             }
         });
 
-        foldChangeJLabel.setFont(foldChangeJLabel.getFont().deriveFont((foldChangeJLabel.getFont().getStyle() | java.awt.Font.ITALIC)));
-        foldChangeJLabel.setText("Fold Change:");
-        foldChangeJLabel.setToolTipText("Minimum fold change to consider");
-
-        foldChangeLevelJSpinner.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(1.5d), Double.valueOf(0.0d), null, Double.valueOf(0.1d)));
-        foldChangeLevelJSpinner.setToolTipText("Minimum fold change to consider");
-        foldChangeLevelJSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                foldChangeLevelJSpinnerStateChanged(evt);
-            }
-        });
-
         filterResultsJButton.setText("Filter");
         filterResultsJButton.setToolTipText("Filter the Protein Results");
         filterResultsJButton.addActionListener(new java.awt.event.ActionListener() {
@@ -465,11 +438,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                 .addComponent(significanceLevelJLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(significanceLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(45, 45, 45)
-                .addComponent(foldChangeJLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(foldChangeLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 550, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 725, Short.MAX_VALUE)
                 .addComponent(filterResultsJButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(exportProteinListJButton))
@@ -488,9 +457,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                     .addComponent(filterResultsJButton)
                     .addComponent(proteinCountJLabel)
                     .addComponent(significanceLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(significanceLevelJLabel)
-                    .addComponent(foldChangeJLabel)
-                    .addComponent(foldChangeLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(significanceLevelJLabel))
                 .addContainerGap())
         );
 
@@ -871,7 +838,8 @@ public class MiTRAQ extends javax.swing.JFrame {
 
     /**
      * Updated the significance tests in the results table according to the
-     * currently selected significance level.
+     * currently selected significance level. And update the color coding
+     * in the fold change plot.
      *
      * @param evt
      */
@@ -884,6 +852,11 @@ public class MiTRAQ extends javax.swing.JFrame {
             ((DefaultTableModel) resultsJTable.getModel()).setValueAt(pValue < equallyExpressedSignificanceLevel, i, resultsJTable.getColumn("Significant").getModelIndex());
             ((DefaultTableModel) resultsJTable.getModel()).setValueAt(pValue < equallyExpressedSignificanceLevel / allValidProteins.size(), i, resultsJTable.getColumn("Bonferroni").getModelIndex());
         }
+
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).setSignificanceLevel(differentiallyExpressedSignificanceLevel);
+
+        resultsJTable.revalidate();
+        resultsJTable.repaint();
     }//GEN-LAST:event_significanceLevelJSpinnerStateChanged
 
     /**
@@ -1011,20 +984,6 @@ public class MiTRAQ extends javax.swing.JFrame {
         resultsJTable.revalidate();
         resultsJTable.repaint();
     }//GEN-LAST:event_viewSparklinesJCheckBoxMenuItemActionPerformed
-
-    /**
-     * Update the fold change colors if the fold change level value is changed.
-     *
-     * @param evt
-     */
-    private void foldChangeLevelJSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_foldChangeLevelJSpinnerStateChanged
-
-        double significantFoldChangeLevel = new Double(foldChangeLevelJSpinner.getValue().toString());
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).setSignificanceLevel(significantFoldChangeLevel);
-
-        resultsJTable.revalidate();
-        resultsJTable.repaint();
-    }//GEN-LAST:event_foldChangeLevelJSpinnerStateChanged
 
     /**
      * Turns the display of the error bars on or off.
@@ -1196,8 +1155,6 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JButton exportProteinListJButton;
     private javax.swing.JMenu fileJMenu;
     private javax.swing.JButton filterResultsJButton;
-    private javax.swing.JLabel foldChangeJLabel;
-    private javax.swing.JSpinner foldChangeLevelJSpinner;
     private javax.swing.JMenu helpJMenu;
     private javax.swing.JMenuItem helpJMenuItem;
     private javax.swing.JCheckBoxMenuItem highlightAveragesJCheckBoxMenuItem;
@@ -1898,7 +1855,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                     new Object[]{
                         new Integer(i + 1),
                         currentProtein.getProteinName() + " (" + currentProtein.getAccessionNumber() + ")",
-                        currentProtein.getFoldChange(),
+                        new XYDataPoint(currentProtein.getFoldChange(), currentProtein.getPValue()),
                         currentProtein.getNumberUniquePeptides(),
                         currentProtein.getPercentCoverage(),
                         currentProtein.getNumExperimentsTwoUniquePeptides(),
