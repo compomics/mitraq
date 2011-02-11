@@ -123,6 +123,11 @@ public class MiTRAQ extends javax.swing.JFrame {
      */
     private boolean showSparklines = false;
     /**
+     * If true the values and the bar charts are shown in the cells, false
+     * displays the bar charts only.
+     */
+    private boolean showValuesAndCharts = false;
+    /**
      * If true error bars are shown for the average value bar in the plot.
      */
     private boolean showErrorBars = true;
@@ -191,24 +196,8 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         // set the widths of the columns
         resultsJTable.getColumn(" ").setMaxWidth(40);
-        resultsJTable.getColumn("FC").setMaxWidth(70);
-        resultsJTable.getColumn("P-value").setMaxWidth(70);
-        resultsJTable.getColumn("Q-value").setMaxWidth(70);
-        resultsJTable.getColumn("Peptides").setMaxWidth(80);
-        resultsJTable.getColumn("Coverage").setMaxWidth(80);
-        resultsJTable.getColumn("Exp. Count").setMaxWidth(80);
-        resultsJTable.getColumn("Significant").setMaxWidth(80);
-        resultsJTable.getColumn("Bonferroni").setMaxWidth(80);
-
         resultsJTable.getColumn(" ").setMinWidth(40);
-        resultsJTable.getColumn("FC").setMinWidth(70);
-        resultsJTable.getColumn("P-value").setMinWidth(70);
-        resultsJTable.getColumn("Q-value").setMinWidth(70);
-        resultsJTable.getColumn("Peptides").setMinWidth(80);
-        resultsJTable.getColumn("Coverage").setMinWidth(80);
-        resultsJTable.getColumn("Exp. Count").setMinWidth(80);
-        resultsJTable.getColumn("Significant").setMinWidth(80);
-        resultsJTable.getColumn("Bonferroni").setMinWidth(80);
+        resultsJTable.getColumn("Protein").setMinWidth(400);
 
         // set the column header tooltips
         columnHeaderToolTips = new Vector();
@@ -334,6 +323,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         exitJMenuItem = new javax.swing.JMenuItem();
         viewJMenu = new javax.swing.JMenu();
         viewSparklinesJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
+        valuesAndChartJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
         errorBarsJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
         highlightAveragesJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
         barChartLabelsJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
@@ -542,6 +532,17 @@ public class MiTRAQ extends javax.swing.JFrame {
             }
         });
         viewJMenu.add(viewSparklinesJCheckBoxMenuItem);
+
+        valuesAndChartJCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_V, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        valuesAndChartJCheckBoxMenuItem.setMnemonic('B');
+        valuesAndChartJCheckBoxMenuItem.setText("Values and JSparklines");
+        valuesAndChartJCheckBoxMenuItem.setToolTipText("Show the values and the bar charts");
+        valuesAndChartJCheckBoxMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                valuesAndChartJCheckBoxMenuItemActionPerformed(evt);
+            }
+        });
+        viewJMenu.add(valuesAndChartJCheckBoxMenuItem);
 
         errorBarsJCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_E, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
         errorBarsJCheckBoxMenuItem.setMnemonic('E');
@@ -974,6 +975,8 @@ public class MiTRAQ extends javax.swing.JFrame {
     private void viewSparklinesJCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewSparklinesJCheckBoxMenuItemActionPerformed
         showSparklines = viewSparklinesJCheckBoxMenuItem.isSelected();
 
+        valuesAndChartJCheckBoxMenuItem.setEnabled(showSparklines);
+
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).showNumbers(!showSparklines);
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Peptides").getCellRenderer()).showNumbers(!showSparklines);
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Exp. Count").getCellRenderer()).showNumbers(!showSparklines);
@@ -1016,13 +1019,33 @@ public class MiTRAQ extends javax.swing.JFrame {
     }//GEN-LAST:event_barChartLabelsJCheckBoxMenuItemActionPerformed
 
     /**
-     * 
+     * Opens a dialog where the user can select the format to export to plot to.
      * 
      * @param evt
      */
     private void exportPlotJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportPlotJButtonActionPerformed
         new ExportPlot(this, true, chartPanel);
     }//GEN-LAST:event_exportPlotJButtonActionPerformed
+
+    /**
+     * Turns the display of the values together with the charts in the cells in
+     * the results table on or off. When turned off the bar charts are shown.
+     *
+     * @param evt
+     */
+    private void valuesAndChartJCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_valuesAndChartJCheckBoxMenuItemActionPerformed
+        showValuesAndCharts = valuesAndChartJCheckBoxMenuItem.isSelected();
+
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Peptides").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Exp. Count").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Coverage").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("P-value").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Q-value").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
+
+        resultsJTable.revalidate();
+        resultsJTable.repaint();
+    }//GEN-LAST:event_valuesAndChartJCheckBoxMenuItemActionPerformed
 
     /**
      * Returns the results table.
@@ -1168,6 +1191,7 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JScrollPane resultsTableJScrollPane;
     private javax.swing.JLabel significanceLevelJLabel;
     private javax.swing.JSpinner significanceLevelJSpinner;
+    private javax.swing.JCheckBoxMenuItem valuesAndChartJCheckBoxMenuItem;
     private javax.swing.JMenu viewJMenu;
     private javax.swing.JCheckBoxMenuItem viewSparklinesJCheckBoxMenuItem;
     // End of variables declaration//GEN-END:variables
