@@ -52,6 +52,19 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="viewSparklinesJCheckBoxMenuItemActionPerformed"/>
               </Events>
             </MenuItem>
+            <MenuItem class="javax.swing.JCheckBoxMenuItem" name="valuesAndChartJCheckBoxMenuItem">
+              <Properties>
+                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
+                  <KeyStroke key="Shift+Ctrl+V"/>
+                </Property>
+                <Property name="mnemonic" type="int" value="66"/>
+                <Property name="text" type="java.lang.String" value="Values and JSparklines"/>
+                <Property name="toolTipText" type="java.lang.String" value="Show the values and the bar charts"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="valuesAndChartJCheckBoxMenuItemActionPerformed"/>
+              </Events>
+            </MenuItem>
             <MenuItem class="javax.swing.JCheckBoxMenuItem" name="errorBarsJCheckBoxMenuItem">
               <Properties>
                 <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
