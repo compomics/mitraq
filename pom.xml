@@ -8,7 +8,7 @@
     <version>${version.number}</version> <!-- version number is set below -->
     <name>MiTRAQ</name>
     <description></description>
-    <url></url>
+    <url>http://mitraq.googlecode.com</url>
 
 
     <!-- Set the version number for the whole project -->
