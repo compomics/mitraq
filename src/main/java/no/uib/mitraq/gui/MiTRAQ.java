@@ -1100,6 +1100,16 @@ public class MiTRAQ extends javax.swing.JFrame {
         rangeAxis.setLowerMargin(0.15);
         rangeAxis.setUpperMargin(0.15);
 
+        double lowerBound = rangeAxis.getLowerBound();
+        double upperBound = rangeAxis.getUpperBound();
+
+        // make sure that the iTRAQ ratio bar chart as a symmetrical y-axis
+        if (Math.abs(lowerBound) > Math.abs(upperBound)) {
+            rangeAxis.setUpperBound(Math.abs(lowerBound));
+        } else {
+            rangeAxis.setLowerBound(-Math.abs(upperBound));
+        }
+        
         // add a second axis on the right, identical to the left one
         ValueAxis rangeAxis2 = chart.getCategoryPlot().getRangeAxis();
         plot.setRangeAxis(1, rangeAxis2);
@@ -1905,7 +1915,6 @@ public class MiTRAQ extends javax.swing.JFrame {
             ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).setMinValue(-Math.ceil(maxAbsoluteValueFoldChange));
             ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Peptides").getCellRenderer()).setMaxValue(maxPeptideCount);
             ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Exp. Count").getCellRenderer()).setMaxValue(numberOfExperiments);
-
 
             resultsJTable.setRowSelectionInterval(0, 0);
             resultsJTableMouseClicked(null);
