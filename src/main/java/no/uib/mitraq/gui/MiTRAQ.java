@@ -1525,13 +1525,13 @@ public class MiTRAQ extends javax.swing.JFrame {
 
 
                             // take log 2 of the ratio, NB: not needed for the old data format...
-                            if (!oldDataFormat) {
+                            if (!oldDataFormat && ratio != 0) {
                                 ratio = Math.log(ratio) / Math.log(2);
                             }
 
                             if (experimentLabels[i][j] != null) {
 
-                                if (numUniquePeptides > 1) {
+                                if (numUniquePeptides > 1 && ratio != 0) {
                                     allRatios.get(i + "_" + j).add(ratio);
                                 }
 
@@ -1589,6 +1589,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                     }
 
                     medianRatios.put(i + "_" + j, StatUtils.percentile(tempValues, 50));
+                    //System.out.println(medianRatios.get(i + "_" + j));
                 }
             }
         }
