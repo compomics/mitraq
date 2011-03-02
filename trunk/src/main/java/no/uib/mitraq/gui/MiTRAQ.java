@@ -1312,6 +1312,9 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         currentRatioFile = ratioFile;
 
+        // add the title of the project to the dialog header
+        this.setTitle("MiTRAQ - Multiple iTRAQ Data Analysis - v" + getVersion() + " beta" + " - " + new File(ratioFile).getName()); // @TODO: remove beta when releasing v1.0
+
         // save the experimental design for later
         File experimentalDesignFile = new File(getJarFilePath() + "/conf/" + new File(ratioFile).getName() + ".config");
         try {
