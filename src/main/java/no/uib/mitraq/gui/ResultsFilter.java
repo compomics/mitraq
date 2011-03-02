@@ -1,4 +1,3 @@
-
 package no.uib.mitraq.gui;
 
 import java.util.ArrayList;
@@ -7,7 +6,9 @@ import java.util.regex.PatternSyntaxException;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.RowFilter;
+import javax.swing.RowFilter.Entry;
 import javax.swing.table.TableRowSorter;
+import no.uib.jsparklines.data.XYDataPoint;
 
 /**
  * A dialog displaying various filters that can be applied to the protein results
@@ -782,15 +783,29 @@ public class ResultsFilter extends javax.swing.JDialog {
         if (foldChangeJTextField.getText().length() > 0) {
 
             try {
-                Double value = new Double(foldChangeJTextField.getText());
+                final Double value = new Double(foldChangeJTextField.getText());
 
-                if (foldChangeGreaterThanJRadioButton.isSelected()) {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.AFTER, value, resultsTable.getColumn("FC").getModelIndex()));
-                } else if (foldChangeEqualJRadioButton.isSelected()) {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.EQUAL, value, resultsTable.getColumn("FC").getModelIndex()));
-                } else {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.BEFORE, value, resultsTable.getColumn("FC").getModelIndex()));
-                }
+                RowFilter<Object, Object> foldChangeFilter = new RowFilter<Object, Object>() {
+
+                    public boolean include(Entry<? extends Object, ? extends Object> entry) {
+
+                        double temp = ((XYDataPoint) entry.getValue(resultsTable.getColumn("FC").getModelIndex())).getX();
+
+                        if (foldChangeGreaterThanJRadioButton.isSelected() && value < temp) {
+                            return true;
+                        } else if (foldChangeEqualJRadioButton.isSelected() && value == temp) {
+                            return true;
+                        } else if (foldChangeLessThanJRadioButton.isSelected() && value > temp) {
+                            return true;
+                        }
+
+                        return false;
+                    }
+                };
+
+
+                filters.add(foldChangeFilter);
+
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Fold change has to be a number!", "Filter Error", JOptionPane.ERROR_MESSAGE);
             }
