@@ -11,6 +11,14 @@ import java.util.ArrayList;
 public class Protein implements Comparable<Object> {
 
     /**
+     * The list of the number of spectra in each experiment.
+     */
+    private ArrayList<Integer> numSpectra;
+    /**
+     * The list of the number of peptides in each experiment.
+     */
+    private ArrayList<Integer> numPeptides;
+    /**
      * The list of ratios in the first group.
      */
     private ArrayList<Double> ratiosGroupA;
@@ -55,15 +63,35 @@ public class Protein implements Comparable<Object> {
      */
     private Double qValue;
     /**
-     * 
+     * @TODO: JavaDoc missing...
      */
     private Double groupAPercent;
+    /**
+     * @TODO: JavaDoc missing...
+     */
     private Double groupBPercent;
 
-    public Protein(ArrayList<Double> ratiosGroupA, ArrayList<Double> ratiosGroupB, String accessionNumber, String accessionNumbersAll, String proteinName,
+    /**
+     * @TODO: JavaDoc missing...
+     *
+     * @param ratiosGroupA
+     * @param ratiosGroupB
+     * @param numSpectra
+     * @param numPeptides
+     * @param accessionNumber
+     * @param accessionNumbersAll
+     * @param proteinName
+     * @param numberUniquePeptides
+     * @param numExperimentsTwoUniquePeptides
+     * @param percentCoverage
+     */
+    public Protein(ArrayList<Double> ratiosGroupA, ArrayList<Double> ratiosGroupB, ArrayList<Integer> numSpectra, ArrayList<Integer> numPeptides,
+            String accessionNumber, String accessionNumbersAll, String proteinName,
             Integer numberUniquePeptides, Integer numExperimentsTwoUniquePeptides, Integer percentCoverage) {
         this.ratiosGroupA = ratiosGroupA;
         this.ratiosGroupB = ratiosGroupB;
+        this.numSpectra = numSpectra;
+        this.numPeptides = numPeptides;
         this.accessionNumber = accessionNumber;
         this.accessionNumbersAll = accessionNumbersAll;
         this.proteinName = proteinName;
@@ -329,5 +357,33 @@ public class Protein implements Comparable<Object> {
      */
     public void setAccessionNumbersAll(String accessionNumbersAll) {
         this.accessionNumbersAll = accessionNumbersAll;
+    }
+
+    /**
+     * @return the numSpectra
+     */
+    public ArrayList<Integer> getNumSpectra() {
+        return numSpectra;
+    }
+
+    /**
+     * @param numSpectra the numSpectra to set
+     */
+    public void setNumSpectra(ArrayList<Integer> numSpectra) {
+        this.numSpectra = numSpectra;
+    }
+
+    /**
+     * @return the numPeptides
+     */
+    public ArrayList<Integer> getNumPeptides() {
+        return numPeptides;
+    }
+
+    /**
+     * @param numPeptides the numPeptides to set
+     */
+    public void setNumPeptides(ArrayList<Integer> numPeptides) {
+        this.numPeptides = numPeptides;
     }
 }
