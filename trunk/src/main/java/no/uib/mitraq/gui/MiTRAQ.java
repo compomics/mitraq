@@ -731,9 +731,9 @@ public class MiTRAQ extends javax.swing.JFrame {
                     datasetErrors.add(null, null, "1", groupALabel + (i + 1));
                     ratioLog2Stats.addValue(currentProtein.getRatiosGroupA().get(i));
                     ratioStats.addValue(antiLog2(currentProtein.getRatiosGroupA().get(i)));
-                    peptideStats.addValue(currentProtein.getNumPeptides().get(i));
-                    spectrumStats.addValue(currentProtein.getNumSpectra().get(i));
-                    labels.add(currentProtein.getNumPeptides().get(i) + " / " + currentProtein.getNumSpectra().get(i));
+                    peptideStats.addValue(currentProtein.getNumPeptidesGroupA().get(i));
+                    spectrumStats.addValue(currentProtein.getNumSpectraGroupA().get(i));
+                    labels.add(currentProtein.getNumPeptidesGroupA().get(i) + " / " + currentProtein.getNumSpectraGroupA().get(i));
                 } else {
                     ratioLog2Dataset.addValue(0, "1", groupALabel + (i + 1));
                     datasetLog2Errors.add(null, null, "1", groupALabel + (i + 1));
@@ -760,8 +760,8 @@ public class MiTRAQ extends javax.swing.JFrame {
                 if (currentProtein.getRatiosGroupB().get(i) != null) {
                     ratioLog2Stats.addValue(currentProtein.getRatiosGroupB().get(i));
                     ratioStats.addValue(antiLog2(currentProtein.getRatiosGroupB().get(i)));
-                    peptideStats.addValue(currentProtein.getNumPeptides().get(i));
-                    spectrumStats.addValue(currentProtein.getNumSpectra().get(i));
+                    peptideStats.addValue(currentProtein.getNumPeptidesGroupB().get(i));
+                    spectrumStats.addValue(currentProtein.getNumSpectraGroupB().get(i));
                 }
             }
 
@@ -778,7 +778,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                     datasetLog2Errors.add(null, null, "1", groupBLabel + (i + 1));
                     ratioDataset.addValue(antiLog2(currentProtein.getRatiosGroupB().get(i)), "1", groupBLabel + (i + 1));
                     datasetErrors.add(null, null, "1", groupBLabel + (i + 1));
-                    labels.add(currentProtein.getNumPeptides().get(i) + " / " + currentProtein.getNumSpectra().get(i));
+                    labels.add(currentProtein.getNumPeptidesGroupB().get(i) + " / " + currentProtein.getNumSpectraGroupB().get(i));
                 } else {
                     ratioLog2Dataset.addValue(0, "1", groupBLabel + (i + 1));
                     datasetLog2Errors.add(null, null, "1", groupBLabel + (i + 1));
@@ -813,9 +813,9 @@ public class MiTRAQ extends javax.swing.JFrame {
 
             // use normal ratio or log 2 ratios
             if (useRatioLog2) {
-                ratioChart = createRatioChart(ratioLog2Dataset, datasetLog2Errors, title, "Ratio (log 2)", ratioBarColors, labels);
+                ratioChart = createRatioChart(ratioLog2Dataset, datasetLog2Errors, title, useRatioLog2, ratioBarColors, labels);
             } else {
-                ratioChart = createRatioChart(ratioDataset, datasetErrors, title, "Ratio", ratioBarColors, labels);
+                ratioChart = createRatioChart(ratioDataset, datasetErrors, title, useRatioLog2, ratioBarColors, labels);
             }
 
             if (highlightAverageBars) {
@@ -1148,7 +1148,15 @@ public class MiTRAQ extends javax.swing.JFrame {
      * @return                  the chart
      */
     private JFreeChart createRatioChart(CategoryDataset dataset, DefaultStatisticalCategoryDataset datasetErrors,
-            String title, String yAxisLabel, ArrayList<Color> barColors, ArrayList<String> customLabels) {
+            String title, boolean logRatios, ArrayList<Color> barColors, ArrayList<String> customLabels) {
+
+        String yAxisLabel;
+
+        if (logRatios) {
+            yAxisLabel = "Ratio (log 2)";
+        } else {
+            yAxisLabel = "Ratio";
+        }
 
         // create the bar chart
         final JFreeChart chart = ChartFactory.createBarChart(
@@ -1189,11 +1197,13 @@ public class MiTRAQ extends javax.swing.JFrame {
         double lowerBound = rangeAxis.getLowerBound();
         double upperBound = rangeAxis.getUpperBound();
 
-        // make sure that the iTRAQ ratio bar chart as a symmetrical y-axis
-        if (Math.abs(lowerBound) > Math.abs(upperBound)) {
-            rangeAxis.setUpperBound(Math.abs(lowerBound));
-        } else {
-            rangeAxis.setLowerBound(-Math.abs(upperBound));
+        // make sure that the iTRAQ ratio bar chart has a symmetrical y-axis
+        if (logRatios) {
+            if (Math.abs(lowerBound) > Math.abs(upperBound)) {
+                rangeAxis.setUpperBound(Math.abs(lowerBound));
+            } else {
+                rangeAxis.setLowerBound(-Math.abs(upperBound));
+            }
         }
 
         // add a second axis on the right, identical to the left one
@@ -1575,13 +1585,16 @@ public class MiTRAQ extends javax.swing.JFrame {
                 ArrayList<Double> ratiosGroupA = new ArrayList<Double>();
                 ArrayList<Double> ratiosGroupB = new ArrayList<Double>();
 
-                ArrayList<Integer> numSpectra = new ArrayList<Integer>();
-                ArrayList<Integer> numPeptides = new ArrayList<Integer>();
+                ArrayList<Integer> numSpectraGroupA = new ArrayList<Integer>();
+                ArrayList<Integer> numPeptidesGroupA = new ArrayList<Integer>();
+
+                ArrayList<Integer> numSpectraGroupB = new ArrayList<Integer>();
+                ArrayList<Integer> numPeptidesGroupB = new ArrayList<Integer>();
+
+                int numUniquePeptides;
+                int numUniqueSpectra;
 
                 for (int i = 0; i < numberOfExperiments; i++) {
-
-                    int numUniquePeptides;
-                    int numUniqueSpectra;
 
                     if (oldDataFormat) {
                         numUniquePeptides = new Integer(rowValues.get(
@@ -1598,9 +1611,6 @@ public class MiTRAQ extends javax.swing.JFrame {
                     }
 
                     for (int j = 0; j < NUMBER_OF_ITRAQ_TAGS - 1; j++) {
-
-                        numSpectra.add(numUniqueSpectra);
-                        numPeptides.add(numUniquePeptides);
 
                         if (columnHeaders.get("Exp" + (i + 1) + " iTRAQ_ratio_" + (j + 1)) != null // new formatting
                                 || columnHeaders.get("Exp. " + (i + 1) + " iTRAQ_" + (j + 1) + " log2 ratio") != null) { // old type formatting
@@ -1620,27 +1630,35 @@ public class MiTRAQ extends javax.swing.JFrame {
 
                             double ratio = new Double(temp).doubleValue();
 
-
-                            // take log 2 of the ratio, NB: not needed for the old data format...
-                            if (!oldDataFormat && ratio != 0) {
-                                ratio = Math.log(ratio) / Math.log(2);
-                            }
-
                             if (experimentLabels[i][j] != null) {
 
-                                if (numUniquePeptides > 0 && ratio != 0) { // @TODO: make this up to the user
-                                    allRatios.get(i + "_" + j).add(ratio);
+                                if (ratio != 0) { // not sure if this is the correct test for the old dataformat...
+                                    // take log 2 of the ratio, NB: not needed for the old data format...
+                                    if (!oldDataFormat) {
+                                        ratio = Math.log(ratio) / Math.log(2);
+                                    }
+                                } else {
+                                    ratio = -1;
                                 }
 
                                 if (numUniqueSpectra < 1) { // @TODO: make this up to the user
-                                    ratio = 0;
+                                    ratio = -1;
+                                }
+
+                                if (numUniquePeptides > 0 && ratio != -1) { // @TODO: make this up to the user
+                                    allRatios.get(i + "_" + j).add(ratio);
                                 }
 
                                 if (experimentLabels[i][j].equalsIgnoreCase(groupALabel)) {
                                     ratiosGroupA.add(ratio);
+                                    numSpectraGroupA.add(numUniqueSpectra);
+                                    numPeptidesGroupA.add(numUniquePeptides);
                                 } else if (experimentLabels[i][j].equalsIgnoreCase(groupBLabel)) {
                                     ratiosGroupB.add(ratio);
+                                    numSpectraGroupB.add(numUniqueSpectra);
+                                    numPeptidesGroupB.add(numUniquePeptides);
                                 }
+
                             }
                         }
                     }
@@ -1656,7 +1674,8 @@ public class MiTRAQ extends javax.swing.JFrame {
                     Integer numberUniquePeptides = new Integer(rowValues.get(columnHeaders.get("numPepsUnique").intValue()));
                     Integer percentCoverage = new Integer(rowValues.get(columnHeaders.get("percentCoverage").intValue()));
 
-                    allProteins.add(new Protein(ratiosGroupA, ratiosGroupB, numSpectra, numPeptides, accessionNumber, accessionNumbersAll,
+                    allProteins.add(new Protein(ratiosGroupA, ratiosGroupB, numSpectraGroupA, numPeptidesGroupA,
+                            numSpectraGroupA, numPeptidesGroupA, accessionNumber, accessionNumbersAll,
                             proteinName, numberUniquePeptides, numExperimentsDetected, percentCoverage));
                 }
 
@@ -1707,7 +1726,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                 for (int k = 0; k < experimentLabels[0].length; k++) {
 
                     if (experimentLabels[j][k] != null && experimentLabels[j][k].equalsIgnoreCase(groupALabel)) {
-                        if (groupAValues.get(groupACounter) == 0) {
+                        if (groupAValues.get(groupACounter) == -1) {
                             groupAValues.set(groupACounter, null);
                         } else {
                             groupAValues.set(groupACounter, groupAValues.get(groupACounter) - medianRatios.get(j + "_" + k));
@@ -1716,7 +1735,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                         groupACounter++;
                     } else if (experimentLabels[j][k] != null && experimentLabels[j][k].equalsIgnoreCase(groupBLabel)) {
 
-                        if (groupBValues.get(groupBCounter) == 0) {
+                        if (groupBValues.get(groupBCounter) == -1) {
                             groupBValues.set(groupBCounter, null);
                         } else {
                             groupBValues.set(groupBCounter, groupBValues.get(groupBCounter) - medianRatios.get(j + "_" + k));
@@ -1784,14 +1803,9 @@ public class MiTRAQ extends javax.swing.JFrame {
             averageSampleA /= sampleACounter;
             averageSampleB /= sampleBCounter;
 
+            // get the group difference
             double groupDiff = (averageSampleA - averageSampleB);
-            double foldChange = 0.0;
-
-            if (groupDiff > 0) {
-                foldChange = Math.pow(2, groupDiff);
-            } else {
-                foldChange = -Math.pow(2, -groupDiff);
-            }
+            double foldChange = getFoldChangeFromLog2(groupDiff);
 
 
             // test if fold change is a number
@@ -2166,12 +2180,12 @@ public class MiTRAQ extends javax.swing.JFrame {
     }
 
     /**
-     * Returns the "antilog" of the provided value.
+     * Returns the group fold change from of the provided log 2 group difference.
      *
-     * @param log2Value the value to take the "antilog" of
-     * @return          the "antilogged" value
+     * @param log2Value the value get the gold change for
+     * @return          the fold change
      */
-    private double antiLog2(double log2Value) {
+    private double getFoldChangeFromLog2(double log2Value) {
 
         double value;
 
@@ -2182,5 +2196,15 @@ public class MiTRAQ extends javax.swing.JFrame {
         }
 
         return value;
+    }
+
+    /**
+     * Returns the "antilog" of the provided value.
+     *
+     * @param log2Value the value to take the "antilog" of
+     * @return          the "antilogged" value
+     */
+    private double antiLog2(double log2Value) {
+        return Math.pow(2, log2Value);
     }
 }
