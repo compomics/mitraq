@@ -13,11 +13,19 @@ public class Protein implements Comparable<Object> {
     /**
      * The list of the number of spectra in each experiment.
      */
-    private ArrayList<Integer> numSpectra;
+    private ArrayList<Integer> numSpectraGroupA;
     /**
      * The list of the number of peptides in each experiment.
      */
-    private ArrayList<Integer> numPeptides;
+    private ArrayList<Integer> numPeptidesGroupA;
+    /**
+     * The list of the number of spectra in each experiment.
+     */
+    private ArrayList<Integer> numSpectraGroupB;
+    /**
+     * The list of the number of peptides in each experiment.
+     */
+    private ArrayList<Integer> numPeptidesGroupB;
     /**
      * The list of ratios in the first group.
      */
@@ -76,8 +84,10 @@ public class Protein implements Comparable<Object> {
      *
      * @param ratiosGroupA
      * @param ratiosGroupB
-     * @param numSpectra
-     * @param numPeptides
+     * @param numSpectraGroupA
+     * @param numPeptidesGroupA
+     * @param numSpectraGroupB
+     * @param numPeptidesGroupB
      * @param accessionNumber
      * @param accessionNumbersAll
      * @param proteinName
@@ -85,13 +95,17 @@ public class Protein implements Comparable<Object> {
      * @param numExperimentsTwoUniquePeptides
      * @param percentCoverage
      */
-    public Protein(ArrayList<Double> ratiosGroupA, ArrayList<Double> ratiosGroupB, ArrayList<Integer> numSpectra, ArrayList<Integer> numPeptides,
+    public Protein(ArrayList<Double> ratiosGroupA, ArrayList<Double> ratiosGroupB,
+            ArrayList<Integer> numSpectraGroupA, ArrayList<Integer> numPeptidesGroupA,
+            ArrayList<Integer> numSpectraGroupB, ArrayList<Integer> numPeptidesGroupB,
             String accessionNumber, String accessionNumbersAll, String proteinName,
             Integer numberUniquePeptides, Integer numExperimentsTwoUniquePeptides, Integer percentCoverage) {
         this.ratiosGroupA = ratiosGroupA;
         this.ratiosGroupB = ratiosGroupB;
-        this.numSpectra = numSpectra;
-        this.numPeptides = numPeptides;
+        this.numSpectraGroupA = numSpectraGroupA;
+        this.numPeptidesGroupA = numPeptidesGroupA;
+        this.numSpectraGroupB = numSpectraGroupB;
+        this.numPeptidesGroupB = numPeptidesGroupB;
         this.accessionNumber = accessionNumber;
         this.accessionNumbersAll = accessionNumbersAll;
         this.proteinName = proteinName;
@@ -362,28 +376,56 @@ public class Protein implements Comparable<Object> {
     /**
      * @return the numSpectra
      */
-    public ArrayList<Integer> getNumSpectra() {
-        return numSpectra;
+    public ArrayList<Integer> getNumSpectraGroupA() {
+        return numSpectraGroupA;
     }
 
     /**
      * @param numSpectra the numSpectra to set
      */
-    public void setNumSpectra(ArrayList<Integer> numSpectra) {
-        this.numSpectra = numSpectra;
+    public void setNumSpectraGroupA(ArrayList<Integer> numSpectra) {
+        this.numSpectraGroupA = numSpectra;
+    }
+
+    /**
+     * @return the numSpectra
+     */
+    public ArrayList<Integer> getNumSpectraGroupB() {
+        return numSpectraGroupB;
+    }
+
+    /**
+     * @param numSpectra the numSpectra to set
+     */
+    public void setNumSpectraGroupB(ArrayList<Integer> numSpectra) {
+        this.numSpectraGroupB = numSpectra;
     }
 
     /**
      * @return the numPeptides
      */
-    public ArrayList<Integer> getNumPeptides() {
-        return numPeptides;
+    public ArrayList<Integer> getNumPeptidesGroupA() {
+        return numPeptidesGroupA;
     }
 
     /**
      * @param numPeptides the numPeptides to set
      */
-    public void setNumPeptides(ArrayList<Integer> numPeptides) {
-        this.numPeptides = numPeptides;
+    public void setNumPeptidesGroupA(ArrayList<Integer> numPeptides) {
+        this.numPeptidesGroupA = numPeptides;
+    }
+
+        /**
+     * @return the numPeptides
+     */
+    public ArrayList<Integer> getNumPeptidesGroupB() {
+        return numPeptidesGroupB;
+    }
+
+    /**
+     * @param numPeptides the numPeptides to set
+     */
+    public void setNumPeptidesGroupB(ArrayList<Integer> numPeptides) {
+        this.numPeptidesGroupB = numPeptides;
     }
 }
