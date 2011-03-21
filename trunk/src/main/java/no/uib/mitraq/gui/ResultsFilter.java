@@ -739,7 +739,7 @@ public class ResultsFilter extends javax.swing.JDialog {
                     filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.BEFORE, value, resultsTable.getColumn("Peptides").getModelIndex()));
                 }
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Peptide count has to be an integer!", "Filter Error", JOptionPane.ERROR_MESSAGE);
+                //JOptionPane.showMessageDialog(this, "Peptide count has to be an integer!", "Filter Error", JOptionPane.ERROR_MESSAGE);
             }
         }
 
@@ -757,7 +757,7 @@ public class ResultsFilter extends javax.swing.JDialog {
                     filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.BEFORE, value, resultsTable.getColumn("Coverage").getModelIndex()));
                 }
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Coverage has to be an integer!", "Filter Error", JOptionPane.ERROR_MESSAGE);
+                //JOptionPane.showMessageDialog(this, "Coverage has to be an integer!", "Filter Error", JOptionPane.ERROR_MESSAGE);
             }
         }
 
@@ -775,7 +775,7 @@ public class ResultsFilter extends javax.swing.JDialog {
                     filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.BEFORE, value, resultsTable.getColumn("Exp. Count").getModelIndex()));
                 }
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Exp. count has to be an integer!", "Filter Error", JOptionPane.ERROR_MESSAGE);
+                //JOptionPane.showMessageDialog(this, "Exp. count has to be an integer!", "Filter Error", JOptionPane.ERROR_MESSAGE);
             }
         }
 
@@ -807,7 +807,7 @@ public class ResultsFilter extends javax.swing.JDialog {
                 filters.add(foldChangeFilter);
 
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Fold change has to be a number!", "Filter Error", JOptionPane.ERROR_MESSAGE);
+                //JOptionPane.showMessageDialog(this, "Fold change has to be a number!", "Filter Error", JOptionPane.ERROR_MESSAGE);
             }
         }
 
@@ -818,14 +818,14 @@ public class ResultsFilter extends javax.swing.JDialog {
                 Double value = new Double(pValueJTextField.getText());
 
                 if (pValueGreaterThanJRadioButton.isSelected()) {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.AFTER, value, resultsTable.getColumn("P-value").getModelIndex()));
+                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.AFTER, value, resultsTable.getColumn("p-value").getModelIndex()));
                 } else if (pValueEqualJRadioButton.isSelected()) {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.EQUAL, value, resultsTable.getColumn("P-value").getModelIndex()));
+                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.EQUAL, value, resultsTable.getColumn("p-value").getModelIndex()));
                 } else {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.BEFORE, value, resultsTable.getColumn("P-value").getModelIndex()));
+                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.BEFORE, value, resultsTable.getColumn("p-value").getModelIndex()));
                 }
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "P-value has to be a number!", "Filter Error", JOptionPane.ERROR_MESSAGE);
+                //JOptionPane.showMessageDialog(this, "p-value has to be a number!", "Filter Error", JOptionPane.ERROR_MESSAGE);
             }
         }
 
@@ -836,14 +836,14 @@ public class ResultsFilter extends javax.swing.JDialog {
                 Double value = new Double(qValueJTextField.getText());
 
                 if (qValueGreaterThanJRadioButton.isSelected()) {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.AFTER, value, resultsTable.getColumn("Q-value").getModelIndex()));
+                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.AFTER, value, resultsTable.getColumn("q-value").getModelIndex()));
                 } else if (qValueEqualJRadioButton.isSelected()) {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.EQUAL, value, resultsTable.getColumn("Q-value").getModelIndex()));
+                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.EQUAL, value, resultsTable.getColumn("q-value").getModelIndex()));
                 } else {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.BEFORE, value, resultsTable.getColumn("Q-value").getModelIndex()));
+                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.BEFORE, value, resultsTable.getColumn("q-value").getModelIndex()));
                 }
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Q-value has to be a number!", "Filter Error", JOptionPane.ERROR_MESSAGE);
+                //JOptionPane.showMessageDialog(this, "q-value has to be a number!", "Filter Error", JOptionPane.ERROR_MESSAGE);
             }
         }
 
