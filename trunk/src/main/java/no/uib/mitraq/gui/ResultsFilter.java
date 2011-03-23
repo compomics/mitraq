@@ -3,7 +3,6 @@ package no.uib.mitraq.gui;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.PatternSyntaxException;
-import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.RowFilter;
 import javax.swing.RowFilter.Entry;
@@ -34,8 +33,9 @@ public class ResultsFilter extends javax.swing.JDialog {
      * @param modal if the dialog is modal or not
      * @param currentFilterValues the current filter text values
      * @param currrentFilterRadioButtonSelections the current filter radio button settings
+     * @param visible if true the dialog is made visible
      */
-    public ResultsFilter(MiTRAQ miTraq, boolean modal, String[] currentFilterValues, Integer[] currrentFilterRadioButtonSelections) {
+    public ResultsFilter(MiTRAQ miTraq, boolean modal, String[] currentFilterValues, Integer[] currrentFilterRadioButtonSelections, boolean visible) {
         super(miTraq, modal);
 
         this.miTraq = miTraq;
@@ -78,7 +78,7 @@ public class ResultsFilter extends javax.swing.JDialog {
         qValueLessThanJRadioButton.setSelected(currrentFilterRadioButtonSelections[5].intValue() == 2);
 
         setLocationRelativeTo(miTraq);
-        setVisible(true);
+        setVisible(visible);
     }
 
     /** This method is called from within the constructor to
@@ -704,10 +704,8 @@ public class ResultsFilter extends javax.swing.JDialog {
 
     /**
      * Filters the results table according to the current filter settings.
-     *
-     * @param evt
      */
-    private void filter() {
+    public void filter() {
 
         List<RowFilter<Object, Object>> filters = new ArrayList<RowFilter<Object, Object>>();
 

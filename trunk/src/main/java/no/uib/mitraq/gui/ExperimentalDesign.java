@@ -84,8 +84,8 @@ public class ExperimentalDesign extends javax.swing.JDialog {
         numberOfGroupsJSpinnerStateChanged(null);
 
         if (currentRatioFile != null) {
-            if (new File(mitraq.getJarFilePath() + "/conf/" + new File(ratioFileJTextField.getText()).getName() + ".config").exists()) {
-                readExpDesignFile(mitraq.getJarFilePath() + "/conf/" + new File(ratioFileJTextField.getText()).getName() + ".config");
+            if (new File(mitraq.getJarFilePath() + "/conf/" + new File(ratioFileJTextField.getText()).getName() + ".exp").exists()) {
+                readExperimentalDesignSettings(mitraq.getJarFilePath() + "/conf/" + new File(ratioFileJTextField.getText()).getName() + ".exp");
             }
         }
 
@@ -434,8 +434,8 @@ public class ExperimentalDesign extends javax.swing.JDialog {
             String path = (chooser.getSelectedFile().getAbsoluteFile().getPath());
             ratioFileJTextField.setText(path);
 
-            if (new File(mitraq.getJarFilePath() + "/conf/" + new File(ratioFileJTextField.getText()).getName() + ".config").exists()) {
-                readExpDesignFile(mitraq.getJarFilePath() + "/conf/" + new File(ratioFileJTextField.getText()).getName() + ".config");
+            if (new File(mitraq.getJarFilePath() + "/conf/" + new File(ratioFileJTextField.getText()).getName() + ".exp").exists()) {
+                readExperimentalDesignSettings(mitraq.getJarFilePath() + "/conf/" + new File(ratioFileJTextField.getText()).getName() + ".exp");
             }
         }
 
@@ -513,7 +513,7 @@ public class ExperimentalDesign extends javax.swing.JDialog {
 
         mitraq.loadItraqData(groupOneLabelJTextField.getText(), groupTwoLabelJTextField.getText(),
                 iTraqTypeJComboBox.getSelectedItem().toString(), iTraqReferenceJComboBox.getSelectedItem().toString(),
-                new Integer(numberOfExperimentsJSpinner.getValue().toString()), experimentalDesignJTable, ratioFileJTextField.getText());
+                new Integer(numberOfExperimentsJSpinner.getValue().toString()), experimentalDesignJTable, ratioFileJTextField.getText(), true);
         this.dispose();
     }//GEN-LAST:event_loadJButtonActionPerformed
 
@@ -620,17 +620,17 @@ public class ExperimentalDesign extends javax.swing.JDialog {
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Tries to read the file containing the experimental design setup for a
+     * Tries to read the file containing the experimental design settings for a
      * previously used iTRAQ data file.
      *
-     * @param expDesignFile the experimental design setup file
+     * @param settingsFile the settings file
      */
-    private void readExpDesignFile(String expDesignFile) {
+    private void readExperimentalDesignSettings(String file) {
 
-        File experimentalDesignFile = new File(expDesignFile);
+        File settingsFile = new File(file);
 
         try {
-            FileReader f = new FileReader(experimentalDesignFile);
+            FileReader f = new FileReader(settingsFile);
             BufferedReader b = new BufferedReader(f);
 
             numberOfExperimentsJSpinner.setValue(new Integer(b.readLine().substring("Number of Experiments: ".length())));

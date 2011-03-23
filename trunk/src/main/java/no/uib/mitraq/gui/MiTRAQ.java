@@ -35,6 +35,7 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import no.uib.jsparklines.data.XYDataPoint;
+import no.uib.jsparklines.extra.NimbusCheckBoxRenderer;
 import no.uib.jsparklines.renderers.JSparklinesBarChartTableCellRenderer;
 import no.uib.jsparklines.extra.TrueFalseIconRenderer;
 import no.uib.jsparklines.renderers.util.BarChartColorRenderer;
@@ -50,11 +51,12 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.labels.ItemLabelAnchor;
 import org.jfree.chart.labels.ItemLabelPosition;
+import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
+import org.jfree.chart.labels.StandardCategoryToolTipGenerator;
 import org.jfree.chart.plot.CategoryMarker;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.DatasetRenderingOrder;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.chart.renderer.category.CategoryItemRenderer;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.data.category.CategoryDataset;
@@ -70,6 +72,11 @@ import org.jfree.ui.TextAnchor;
  */
 public class MiTRAQ extends javax.swing.JFrame {
 
+    /**
+     * Arraylist of the currently selected proteins, i.e., the ones that
+     * have been manually validated and checked in the last column.
+     */
+    private ArrayList<String> selectedProteins;
     /**
      * If true the ratio plot is shown as lines as opposed to bars of not
      * selected.
@@ -177,7 +184,12 @@ public class MiTRAQ extends javax.swing.JFrame {
      */
     private boolean highlightAverageBars = false;
     /**
-     * If true each bar in the bar chart will be labelled with its value.
+     * If true each bar in the bar chart will be labelled with its value, if
+     * false the label will be the number of peptides or spectra.
+     */
+    private boolean showBarChartLabelsAsRatios = true;
+    /**
+     * If true the bar chart labels will be shown.
      */
     private boolean showBarChartLabels = true;
     /**
@@ -228,6 +240,9 @@ public class MiTRAQ extends javax.swing.JFrame {
         resultsJTable.getColumn("Bonferroni").setCellRenderer(new TrueFalseIconRenderer(
                 new ImageIcon(this.getClass().getResource("/icons/accept.png")), new ImageIcon(this.getClass().getResource("/icons/Error_3.png"))));
 
+        // required cell renderer for checkbox columns in Nimbus
+        resultsJTable.getColumn("  ").setCellRenderer(new NimbusCheckBoxRenderer());
+
         // turn off column reordering
         resultsJTable.getTableHeader().setReorderingAllowed(false);
 
@@ -238,6 +253,8 @@ public class MiTRAQ extends javax.swing.JFrame {
         // set the widths of the columns
         resultsJTable.getColumn(" ").setMaxWidth(40);
         resultsJTable.getColumn(" ").setMinWidth(40);
+        resultsJTable.getColumn("  ").setMaxWidth(40);
+        resultsJTable.getColumn("  ").setMinWidth(40);
         resultsJTable.getColumn("Protein").setMinWidth(400);
 
         // set the column header tooltips
@@ -252,6 +269,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         columnHeaderToolTips.add("q-value");
         columnHeaderToolTips.add("Significant/Not Significant t-test");
         columnHeaderToolTips.add("Significant/Not Significant t-test - Bonferroni Corrected");
+        columnHeaderToolTips.add("Manually Validated");
     }
 
     /**
@@ -331,6 +349,7 @@ public class MiTRAQ extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        labelButtonGroup = new javax.swing.ButtonGroup();
         resultsJPanel = new javax.swing.JPanel();
         accessiobNumbersJScrollPane = new javax.swing.JScrollPane();
         accessionNumbersJEditorPane = new javax.swing.JEditorPane();
@@ -362,17 +381,24 @@ public class MiTRAQ extends javax.swing.JFrame {
         menuBar = new javax.swing.JMenuBar();
         fileJMenu = new javax.swing.JMenu();
         openJMenuItem = new javax.swing.JMenuItem();
+        saveJMenuItem = new javax.swing.JMenuItem();
+        jSeparator3 = new javax.swing.JPopupMenu.Separator();
         exitJMenuItem = new javax.swing.JMenuItem();
         editJMenu = new javax.swing.JMenu();
         preferencesJMenuItem = new javax.swing.JMenuItem();
+        exportJMenu = new javax.swing.JMenu();
+        exportAllPlotsJMenuItem = new javax.swing.JMenuItem();
         viewJMenu = new javax.swing.JMenu();
         viewSparklinesJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
         valuesAndChartJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
         errorBarsJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
         highlightAveragesJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
-        spectraAndPeptidesJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
         ratioLogJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
+        labelsJMenu = new javax.swing.JMenu();
+        ratioLabelJRadioButtonMenuItem = new javax.swing.JRadioButtonMenuItem();
+        peptideAndSpectraJRadioButtonMenuItem = new javax.swing.JRadioButtonMenuItem();
+        noLabelJRadioButtonMenuItem = new javax.swing.JRadioButtonMenuItem();
         jSeparator2 = new javax.swing.JPopupMenu.Separator();
         linesJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
         helpJMenu = new javax.swing.JMenu();
@@ -405,14 +431,16 @@ public class MiTRAQ extends javax.swing.JFrame {
 
             },
             new String [] {
-                " ", "Protein", "FC", "Peptides", "Coverage", "Exp. Count", "p-value", "q-value", "Significant", "Bonferroni"
+                " ", "Protein", "FC", "Peptides", "Coverage", "Exp. Count", "p-value", "q-value", "Significant", "Bonferroni", "  "
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Integer.class, java.lang.String.class, XYDataPoint.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.Double.class, java.lang.Double.class, java.lang.Boolean.class, java.lang.Boolean.class
+                java.lang.Integer.class, java.lang.String.class, XYDataPoint.class, java.lang.Integer.class, java.lang.Integer.class,
+                java.lang.Integer.class, java.lang.Double.class, java.lang.Double.class, java.lang.Boolean.class, java.lang.Boolean.class,
+                java.lang.Boolean.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false, false, false, false
+                false, false, false, false, false, false, false, false, false, false, true
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -423,7 +451,6 @@ public class MiTRAQ extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
-        resultsJTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         resultsJTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 resultsJTableMouseClicked(evt);
@@ -521,8 +548,8 @@ public class MiTRAQ extends javax.swing.JFrame {
         chartJPanel.setLayout(new javax.swing.BoxLayout(chartJPanel, javax.swing.BoxLayout.Y_AXIS));
         resultsJSplitPane.setRightComponent(chartJPanel);
 
-        exportPlotJButton.setText("<html>\n<p align=center>\nExport<br>Plot\n</p>\n</html>");
-        exportPlotJButton.setToolTipText("Export the plot to file");
+        exportPlotJButton.setText("<html> <p align=center> Export<br>Plot</p> </html>");
+        exportPlotJButton.setToolTipText("Export the selected plots to file");
         exportPlotJButton.setEnabled(false);
         exportPlotJButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -571,6 +598,19 @@ public class MiTRAQ extends javax.swing.JFrame {
         });
         fileJMenu.add(openJMenuItem);
 
+        saveJMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
+        saveJMenuItem.setMnemonic('S');
+        saveJMenuItem.setText("Save");
+        saveJMenuItem.setToolTipText("Save the selections and settings");
+        saveJMenuItem.setEnabled(false);
+        saveJMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveJMenuItemActionPerformed(evt);
+            }
+        });
+        fileJMenu.add(saveJMenuItem);
+        fileJMenu.add(jSeparator3);
+
         exitJMenuItem.setText("Exit");
         exitJMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -584,6 +624,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         editJMenu.setMnemonic('E');
         editJMenu.setText("Edit");
 
+        preferencesJMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_P, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
         preferencesJMenuItem.setMnemonic('P');
         preferencesJMenuItem.setText("Preferences");
         preferencesJMenuItem.addActionListener(new java.awt.event.ActionListener() {
@@ -595,10 +636,25 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         menuBar.add(editJMenu);
 
+        exportJMenu.setMnemonic('X');
+        exportJMenu.setText("Export");
+
+        exportAllPlotsJMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_X, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        exportAllPlotsJMenuItem.setMnemonic('E');
+        exportAllPlotsJMenuItem.setText("Export All Selected Plots");
+        exportAllPlotsJMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exportAllPlotsJMenuItemActionPerformed(evt);
+            }
+        });
+        exportJMenu.add(exportAllPlotsJMenuItem);
+
+        menuBar.add(exportJMenu);
+
         viewJMenu.setMnemonic('V');
         viewJMenu.setText("View");
 
-        viewSparklinesJCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_L, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        viewSparklinesJCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
         viewSparklinesJCheckBoxMenuItem.setMnemonic('L');
         viewSparklinesJCheckBoxMenuItem.setSelected(true);
         viewSparklinesJCheckBoxMenuItem.setText("JSparklines");
@@ -646,20 +702,8 @@ public class MiTRAQ extends javax.swing.JFrame {
         });
         viewJMenu.add(highlightAveragesJCheckBoxMenuItem);
 
-        spectraAndPeptidesJCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_P, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
-        spectraAndPeptidesJCheckBoxMenuItem.setMnemonic('B');
-        spectraAndPeptidesJCheckBoxMenuItem.setSelected(true);
-        spectraAndPeptidesJCheckBoxMenuItem.setText("Spectra and Peptides");
-        spectraAndPeptidesJCheckBoxMenuItem.setToolTipText("Show the number of spectra and peptides");
-        spectraAndPeptidesJCheckBoxMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                spectraAndPeptidesJCheckBoxMenuItemActionPerformed(evt);
-            }
-        });
-        viewJMenu.add(spectraAndPeptidesJCheckBoxMenuItem);
-
-        ratioLogJCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_R, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
-        ratioLogJCheckBoxMenuItem.setMnemonic('B');
+        ratioLogJCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_L, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        ratioLogJCheckBoxMenuItem.setMnemonic('L');
         ratioLogJCheckBoxMenuItem.setSelected(true);
         ratioLogJCheckBoxMenuItem.setText("Ratios as Log");
         ratioLogJCheckBoxMenuItem.setToolTipText("Show the rartios as log values");
@@ -669,13 +713,51 @@ public class MiTRAQ extends javax.swing.JFrame {
             }
         });
         viewJMenu.add(ratioLogJCheckBoxMenuItem);
+
+        labelsJMenu.setMnemonic('A');
+        labelsJMenu.setText("Ratio Plot Labels");
+
+        ratioLabelJRadioButtonMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_R, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        labelButtonGroup.add(ratioLabelJRadioButtonMenuItem);
+        ratioLabelJRadioButtonMenuItem.setMnemonic('R');
+        ratioLabelJRadioButtonMenuItem.setSelected(true);
+        ratioLabelJRadioButtonMenuItem.setText("Ratios");
+        ratioLabelJRadioButtonMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ratioLabelJRadioButtonMenuItemActionPerformed(evt);
+            }
+        });
+        labelsJMenu.add(ratioLabelJRadioButtonMenuItem);
+
+        peptideAndSpectraJRadioButtonMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_P, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        labelButtonGroup.add(peptideAndSpectraJRadioButtonMenuItem);
+        peptideAndSpectraJRadioButtonMenuItem.setMnemonic('P');
+        peptideAndSpectraJRadioButtonMenuItem.setText("Peptides & Spectra");
+        peptideAndSpectraJRadioButtonMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                peptideAndSpectraJRadioButtonMenuItemActionPerformed(evt);
+            }
+        });
+        labelsJMenu.add(peptideAndSpectraJRadioButtonMenuItem);
+
+        noLabelJRadioButtonMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        labelButtonGroup.add(noLabelJRadioButtonMenuItem);
+        noLabelJRadioButtonMenuItem.setMnemonic('N');
+        noLabelJRadioButtonMenuItem.setText("No Labels");
+        noLabelJRadioButtonMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                noLabelJRadioButtonMenuItemActionPerformed(evt);
+            }
+        });
+        labelsJMenu.add(noLabelJRadioButtonMenuItem);
+
+        viewJMenu.add(labelsJMenu);
         viewJMenu.add(jSeparator2);
 
         linesJCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_I, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
         linesJCheckBoxMenuItem.setMnemonic('L');
-        linesJCheckBoxMenuItem.setText("Lines");
+        linesJCheckBoxMenuItem.setText("Line Plot Type");
         linesJCheckBoxMenuItem.setToolTipText("Show the rartio plot as a line or bar chart");
-        linesJCheckBoxMenuItem.setEnabled(false);
         linesJCheckBoxMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 linesJCheckBoxMenuItemActionPerformed(evt);
@@ -753,7 +835,7 @@ public class MiTRAQ extends javax.swing.JFrame {
     }
 
     /**
-     * Updates the ratio plot according to the currently selected row in the
+     * Updates the ratio plot according to the currently selected rows in the
      * protein table.
      *
      * @param evt
@@ -762,7 +844,7 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         if (resultsJTable.getSelectedRow() != -1) {
 
-            String title = "multiple";
+            String title = " ";
             JFreeChart ratioChart = null;
 
             DefaultCategoryDataset ratioLog2Dataset = new DefaultCategoryDataset();
@@ -771,9 +853,15 @@ public class MiTRAQ extends javax.swing.JFrame {
             if (resultsJTable.getSelectedRows().length > 1) {
                 linesJCheckBoxMenuItem.setSelected(true);
                 linesJCheckBoxMenuItem.setEnabled(false);
+                labelsJMenu.setEnabled(false);
+                errorBarsJCheckBoxMenuItem.setEnabled(false);
+                highlightAveragesJCheckBoxMenuItem.setEnabled(false);
                 showRatioPlotAsLines = true;
             } else {
-                //linesJCheckBoxMenuItem.setEnabled(true);  // @TODO: enable when line type has been implemented
+                linesJCheckBoxMenuItem.setEnabled(true);
+                labelsJMenu.setEnabled(true);
+                errorBarsJCheckBoxMenuItem.setEnabled(true);
+                highlightAveragesJCheckBoxMenuItem.setEnabled(true);
             }
 
             for (int rowCounter = 0; rowCounter < resultsJTable.getSelectedRows().length; rowCounter++) {
@@ -782,8 +870,10 @@ public class MiTRAQ extends javax.swing.JFrame {
                 Protein currentProtein = allValidProteins.get(index);
                 StringTokenizer tok = new StringTokenizer(currentProtein.getAccessionNumbersAll(), "|");
 
+                String dataSeriesTitle = currentProtein.getProteinName() + " (" + currentProtein.getAccessionNumber() + ")";
+
                 if (resultsJTable.getSelectedRows().length == 1) {
-                    title = currentProtein.getProteinName() + " (" + currentProtein.getAccessionNumber() + ")";
+                    title = dataSeriesTitle;
                 }
 
                 DefaultStatisticalCategoryDataset datasetLog2Errors = new DefaultStatisticalCategoryDataset();
@@ -827,65 +917,68 @@ public class MiTRAQ extends javax.swing.JFrame {
                 // add bars for the data values in group A
                 for (int i = 0; i < currentProtein.getRatiosGroupA().size(); i++) {
                     if (currentProtein.getRatiosGroupA().get(i) != null) {
-                        ratioLog2Dataset.addValue(currentProtein.getRatiosGroupA().get(i), "" + rowCounter, groupALabel + (i + 1));
-                        ratioDataset.addValue(antiLog2(currentProtein.getRatiosGroupA().get(i)), "" + rowCounter, groupALabel + (i + 1));
-                        datasetLog2Errors.add(null, null, "" + rowCounter, groupALabel + (i + 1));
-                        datasetErrors.add(null, null, "" + rowCounter, groupALabel + (i + 1));
+                        ratioLog2Dataset.addValue(currentProtein.getRatiosGroupA().get(i), dataSeriesTitle, groupALabel + (i + 1));
+                        ratioDataset.addValue(antiLog2(currentProtein.getRatiosGroupA().get(i)), dataSeriesTitle, groupALabel + (i + 1));
+                        datasetLog2Errors.add(null, null, dataSeriesTitle, groupALabel + (i + 1));
+                        datasetErrors.add(null, null, dataSeriesTitle, groupALabel + (i + 1));
                         ratioLog2Stats.addValue(currentProtein.getRatiosGroupA().get(i));
                         ratioStats.addValue(antiLog2(currentProtein.getRatiosGroupA().get(i)));
                         peptideStats.addValue(currentProtein.getNumPeptidesGroupA().get(i));
                         spectrumStats.addValue(currentProtein.getNumSpectraGroupA().get(i));
                         labels.add(currentProtein.getNumPeptidesGroupA().get(i) + " / " + currentProtein.getNumSpectraGroupA().get(i));
                     } else {
-                        ratioLog2Dataset.addValue(0, "" + rowCounter, groupALabel + (i + 1));
-                        datasetLog2Errors.add(null, null, "" + rowCounter, groupALabel + (i + 1));
-                        ratioDataset.addValue(0, "" + rowCounter, groupALabel + (i + 1));
-                        datasetErrors.add(null, null, "" + rowCounter, groupALabel + (i + 1));
+                        ratioLog2Dataset.addValue(0, dataSeriesTitle, groupALabel + (i + 1));
+                        datasetLog2Errors.add(null, null, dataSeriesTitle, groupALabel + (i + 1));
+                        ratioDataset.addValue(0, dataSeriesTitle, groupALabel + (i + 1));
+                        datasetErrors.add(null, null, dataSeriesTitle, groupALabel + (i + 1));
                         labels.add(null);
                     }
                 }
 
-                // add a bar for the average value in group A
-                ratioLog2Dataset.addValue(ratioLog2Stats.getMean(), "" + rowCounter, groupALabel + " Avg");
-                datasetLog2Errors.add(ratioLog2Stats.getMean(), ratioLog2Stats.getStandardDeviation(), "" + rowCounter, groupALabel + " Avg");
-                ratioDataset.addValue(ratioStats.getMean(), "" + rowCounter, groupALabel + " Avg");
-                datasetErrors.add(ratioStats.getMean(), ratioStats.getStandardDeviation(), "" + rowCounter, groupALabel + " Avg");
-                labels.add(null);
+                if (!showRatioPlotAsLines) {
 
-                ratioLog2Stats = new SummaryStatistics();
-                ratioStats = new SummaryStatistics();
-                peptideStats = new SummaryStatistics();
-                spectrumStats = new SummaryStatistics();
+                    // add a bar for the average value in group A
+                    ratioLog2Dataset.addValue(ratioLog2Stats.getMean(), dataSeriesTitle, groupALabel + " Avg");
+                    datasetLog2Errors.add(ratioLog2Stats.getMean(), ratioLog2Stats.getStandardDeviation(), dataSeriesTitle, groupALabel + " Avg");
+                    ratioDataset.addValue(ratioStats.getMean(), dataSeriesTitle, groupALabel + " Avg");
+                    datasetErrors.add(ratioStats.getMean(), ratioStats.getStandardDeviation(), dataSeriesTitle, groupALabel + " Avg");
+                    labels.add(null);
 
-                // add a bar for the average value in group B
-                for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
-                    if (currentProtein.getRatiosGroupB().get(i) != null) {
-                        ratioLog2Stats.addValue(currentProtein.getRatiosGroupB().get(i));
-                        ratioStats.addValue(antiLog2(currentProtein.getRatiosGroupB().get(i)));
-                        peptideStats.addValue(currentProtein.getNumPeptidesGroupB().get(i));
-                        spectrumStats.addValue(currentProtein.getNumSpectraGroupB().get(i));
+                    ratioLog2Stats = new SummaryStatistics();
+                    ratioStats = new SummaryStatistics();
+                    peptideStats = new SummaryStatistics();
+                    spectrumStats = new SummaryStatistics();
+
+                    // add a bar for the average value in group B
+                    for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
+                        if (currentProtein.getRatiosGroupB().get(i) != null) {
+                            ratioLog2Stats.addValue(currentProtein.getRatiosGroupB().get(i));
+                            ratioStats.addValue(antiLog2(currentProtein.getRatiosGroupB().get(i)));
+                            peptideStats.addValue(currentProtein.getNumPeptidesGroupB().get(i));
+                            spectrumStats.addValue(currentProtein.getNumSpectraGroupB().get(i));
+                        }
                     }
-                }
 
-                ratioLog2Dataset.addValue(ratioLog2Stats.getMean(), "" + rowCounter, groupBLabel + " Avg");
-                datasetLog2Errors.add(ratioLog2Stats.getMean(), ratioLog2Stats.getStandardDeviation(), "" + rowCounter, groupBLabel + " Avg");
-                ratioDataset.addValue(ratioStats.getMean(), "" + rowCounter, groupBLabel + " Avg");
-                datasetErrors.add(ratioStats.getMean(), ratioStats.getStandardDeviation(), "" + rowCounter, groupBLabel + " Avg");
-                labels.add(null);
+                    ratioLog2Dataset.addValue(ratioLog2Stats.getMean(), dataSeriesTitle, groupBLabel + " Avg");
+                    datasetLog2Errors.add(ratioLog2Stats.getMean(), ratioLog2Stats.getStandardDeviation(), dataSeriesTitle, groupBLabel + " Avg");
+                    ratioDataset.addValue(ratioStats.getMean(), dataSeriesTitle, groupBLabel + " Avg");
+                    datasetErrors.add(ratioStats.getMean(), ratioStats.getStandardDeviation(), dataSeriesTitle, groupBLabel + " Avg");
+                    labels.add(null);
+                }
 
                 // add bars for the data values in group B
                 for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
                     if (currentProtein.getRatiosGroupB().get(i) != null) {
-                        ratioLog2Dataset.addValue(currentProtein.getRatiosGroupB().get(i), "" + rowCounter, groupBLabel + (i + 1));
-                        datasetLog2Errors.add(null, null, "" + rowCounter, groupBLabel + (i + 1));
-                        ratioDataset.addValue(antiLog2(currentProtein.getRatiosGroupB().get(i)), "" + rowCounter, groupBLabel + (i + 1));
-                        datasetErrors.add(null, null, "" + rowCounter, groupBLabel + (i + 1));
+                        ratioLog2Dataset.addValue(currentProtein.getRatiosGroupB().get(i), dataSeriesTitle, groupBLabel + (i + 1));
+                        datasetLog2Errors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
+                        ratioDataset.addValue(antiLog2(currentProtein.getRatiosGroupB().get(i)), dataSeriesTitle, groupBLabel + (i + 1));
+                        datasetErrors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
                         labels.add(currentProtein.getNumPeptidesGroupB().get(i) + " / " + currentProtein.getNumSpectraGroupB().get(i));
                     } else {
-                        ratioLog2Dataset.addValue(0, "" + rowCounter, groupBLabel + (i + 1));
-                        datasetLog2Errors.add(null, null, "" + rowCounter, groupBLabel + (i + 1));
-                        ratioDataset.addValue(0, "" + rowCounter, groupBLabel + (i + 1));
-                        datasetErrors.add(null, null, "" + rowCounter, groupBLabel + (i + 1));
+                        ratioLog2Dataset.addValue(0, dataSeriesTitle, groupBLabel + (i + 1));
+                        datasetLog2Errors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
+                        ratioDataset.addValue(0, dataSeriesTitle, groupBLabel + (i + 1));
+                        datasetErrors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
                         labels.add(null);
                     }
                 }
@@ -898,11 +991,14 @@ public class MiTRAQ extends javax.swing.JFrame {
                     ratioBarColors.add(groupAColor);
                 }
 
-                // set the color for the average group A bar
-                ratioBarColors.add(getAverageValueColor(groupAColor));
+                if (!showRatioPlotAsLines) {
 
-                // set the color for the average group B bar
-                ratioBarColors.add(getAverageValueColor(groupBColor));
+                    // set the color for the average group A bar
+                    ratioBarColors.add(getAverageValueColor(groupAColor));
+
+                    // set the color for the average group B bar
+                    ratioBarColors.add(getAverageValueColor(groupBColor));
+                }
 
                 // set the colors for the group B bars
                 for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
@@ -957,7 +1053,7 @@ public class MiTRAQ extends javax.swing.JFrame {
      * @param evt
      */
     private void filterResultsJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterResultsJButtonActionPerformed
-        new ResultsFilter(this, false, currentFilterValues, currrentFilterRadioButtonSelections);
+        new ResultsFilter(this, false, currentFilterValues, currrentFilterRadioButtonSelections, true);
 }//GEN-LAST:event_filterResultsJButtonActionPerformed
 
     /**
@@ -1189,22 +1285,14 @@ public class MiTRAQ extends javax.swing.JFrame {
     }//GEN-LAST:event_highlightAveragesJCheckBoxMenuItemActionPerformed
 
     /**
-     * Turns the display of the labels in the bar charts on or off.
-     * 
-     * @param evt
-     */
-    private void spectraAndPeptidesJCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_spectraAndPeptidesJCheckBoxMenuItemActionPerformed
-        showBarChartLabels = spectraAndPeptidesJCheckBoxMenuItem.isSelected();
-        resultsJTableMouseClicked(null);
-    }//GEN-LAST:event_spectraAndPeptidesJCheckBoxMenuItemActionPerformed
-
-    /**
      * Opens a dialog where the user can select the format to export to plot to.
      * 
      * @param evt
      */
     private void exportPlotJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportPlotJButtonActionPerformed
-        new ExportPlot(this, true, ratioChartPanel);
+        ArrayList<ChartPanel> chartPanels = new ArrayList<ChartPanel>();
+        chartPanels.add(ratioChartPanel);
+        new ExportPlot(this, true, chartPanels);
     }//GEN-LAST:event_exportPlotJButtonActionPerformed
 
     /**
@@ -1238,15 +1326,6 @@ public class MiTRAQ extends javax.swing.JFrame {
     }//GEN-LAST:event_ratioLogJCheckBoxMenuItemActionPerformed
 
     /**
-     * Opens a new PreferencesDialog.
-     *
-     * @param evt
-     */
-    private void preferencesJMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_preferencesJMenuItemActionPerformed
-        new PreferencesDialog(this, true, minNumUniquePeptides, minNumUniqueSpectra, minNumberOfExperiments);
-    }//GEN-LAST:event_preferencesJMenuItemActionPerformed
-
-    /**
      * Clear the current filter, i.e., show all proteins.
      * 
      * @param evt
@@ -1274,10 +1353,105 @@ public class MiTRAQ extends javax.swing.JFrame {
         resultsJTableMouseClicked(null);
     }//GEN-LAST:event_resultsJTableMouseReleased
 
+    /**
+     * Switch to/from showing the ratio plot as lines (or bars).
+     *
+     * @param evt
+     */
     private void linesJCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_linesJCheckBoxMenuItemActionPerformed
         showRatioPlotAsLines = linesJCheckBoxMenuItem.isSelected();
         resultsJTableMouseClicked(null);
     }//GEN-LAST:event_linesJCheckBoxMenuItemActionPerformed
+
+    /**
+     * Update the ratio chart labels.
+     *
+     * @param evt
+     */
+    private void ratioLabelJRadioButtonMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ratioLabelJRadioButtonMenuItemActionPerformed
+        showBarChartLabelsAsRatios = ratioLabelJRadioButtonMenuItem.isSelected();
+        showBarChartLabels = true;
+        resultsJTableMouseClicked(null);
+    }//GEN-LAST:event_ratioLabelJRadioButtonMenuItemActionPerformed
+
+    /**
+     * Update the ratio chart labels.
+     *
+     * @param evt
+     */
+    private void peptideAndSpectraJRadioButtonMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_peptideAndSpectraJRadioButtonMenuItemActionPerformed
+        showBarChartLabelsAsRatios = !peptideAndSpectraJRadioButtonMenuItem.isSelected();
+        showBarChartLabels = true;
+        resultsJTableMouseClicked(null);
+    }//GEN-LAST:event_peptideAndSpectraJRadioButtonMenuItemActionPerformed
+
+    /**
+     * Update the ratio chart labels.
+     *
+     * @param evt
+     */
+    private void noLabelJRadioButtonMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_noLabelJRadioButtonMenuItemActionPerformed
+        showBarChartLabels = !noLabelJRadioButtonMenuItem.isSelected();
+        resultsJTableMouseClicked(null);
+    }//GEN-LAST:event_noLabelJRadioButtonMenuItemActionPerformed
+
+    /**
+     * Export all selected protein plots to file.
+     *
+     * @param evt
+     */
+    private void exportAllPlotsJMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportAllPlotsJMenuItemActionPerformed
+
+        int[] selectedRows = resultsJTable.getSelectedRows();
+
+        ArrayList<ChartPanel> chartPanels = new ArrayList<ChartPanel>();
+
+        for (int i = 0; i < resultsJTable.getRowCount(); i++) {
+
+            if (((Boolean) resultsJTable.getValueAt(i, resultsJTable.getColumn("  ").getModelIndex()))) {
+                resultsJTable.setRowSelectionInterval(i, i);
+                resultsJTableMouseClicked(null);
+                chartPanels.add(ratioChartPanel);
+            }
+        }
+
+        // reset the row selection interval
+        for (int i = 0; i < selectedRows.length; i++) {
+            resultsJTable.addRowSelectionInterval(selectedRows[i], selectedRows[i]);
+        }
+
+        if (chartPanels.size() > 0) {
+            // export the plots
+            new ExportPlot(this, true, chartPanels);
+        } else {
+            JOptionPane.showMessageDialog(this, "No proteins selected!", "Empty Selection", JOptionPane.INFORMATION_MESSAGE);
+        }
+
+    }//GEN-LAST:event_exportAllPlotsJMenuItemActionPerformed
+
+    /**
+     * Saves the selections and the settings.
+     *
+     * @param evt
+     */
+    private void saveJMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveJMenuItemActionPerformed
+
+        if (currentRatioFile != null) {
+            saveSettings(true);
+        } else {
+            JOptionPane.showMessageDialog(this, "No project to save.", "No Project", JOptionPane.INFORMATION_MESSAGE);
+        }
+
+    }//GEN-LAST:event_saveJMenuItemActionPerformed
+
+    /**
+     * Opens a new PreferencesDialog.
+     *
+     * @param evt
+     */
+    private void preferencesJMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_preferencesJMenuItemActionPerformed
+        new PreferencesDialog(this, true, minNumUniquePeptides, minNumUniqueSpectra, minNumberOfExperiments);
+    }//GEN-LAST:event_preferencesJMenuItemActionPerformed
 
     /**
      * Update the minimium number of peptides setting.
@@ -1364,8 +1538,6 @@ public class MiTRAQ extends javax.swing.JFrame {
                     false); // urls
         }
 
-
-
         // set the background and gridline colors
         CategoryPlot plot = chart.getCategoryPlot();
         plot.setBackgroundPaint(Color.WHITE);
@@ -1376,6 +1548,7 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         if (showRatioPlotAsLines) {
             renderer = new LineAndShapeRenderer(true, false);
+            renderer.setBaseToolTipGenerator(new StandardCategoryToolTipGenerator());
         } else {
             renderer = new BarChartColorRenderer(barColors);
         }
@@ -1383,10 +1556,16 @@ public class MiTRAQ extends javax.swing.JFrame {
         renderer.setBaseItemLabelsVisible(true);
 
         // add bar chart labels if selected
-        if (showBarChartLabels) {
-            CustomLabelGenerator labels = new CustomLabelGenerator(customLabels);
-            labels.generateLabel(dataset, WIDTH, WIDTH);
-            renderer.setBaseItemLabelGenerator(labels);
+        if (showBarChartLabels && !showRatioPlotAsLines) {
+
+            if (!showBarChartLabelsAsRatios) {
+                CustomLabelGenerator labels = new CustomLabelGenerator(customLabels);
+                labels.generateLabel(dataset, 0, 0);
+                renderer.setBaseItemLabelGenerator(labels);
+            } else {
+                renderer.setBaseItemLabelGenerator(new StandardCategoryItemLabelGenerator());
+            }
+
             renderer.setBaseNegativeItemLabelPosition(new ItemLabelPosition(ItemLabelAnchor.OUTSIDE12, TextAnchor.BOTTOM_CENTER));
             renderer.setBasePositiveItemLabelPosition(new ItemLabelPosition(ItemLabelAnchor.OUTSIDE12, TextAnchor.BOTTOM_CENTER));
         }
@@ -1484,6 +1663,8 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JMenu editJMenu;
     private javax.swing.JCheckBoxMenuItem errorBarsJCheckBoxMenuItem;
     private javax.swing.JMenuItem exitJMenuItem;
+    private javax.swing.JMenuItem exportAllPlotsJMenuItem;
+    private javax.swing.JMenu exportJMenu;
     private javax.swing.JButton exportPlotJButton;
     private javax.swing.JButton exportProteinListJButton;
     private javax.swing.JMenu fileJMenu;
@@ -1493,20 +1674,26 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JCheckBoxMenuItem highlightAveragesJCheckBoxMenuItem;
     private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JPopupMenu.Separator jSeparator2;
+    private javax.swing.JPopupMenu.Separator jSeparator3;
+    private javax.swing.ButtonGroup labelButtonGroup;
+    private javax.swing.JMenu labelsJMenu;
     private javax.swing.JCheckBoxMenuItem linesJCheckBoxMenuItem;
     private javax.swing.JMenuBar menuBar;
+    private javax.swing.JRadioButtonMenuItem noLabelJRadioButtonMenuItem;
     private javax.swing.JMenuItem openJMenuItem;
+    private javax.swing.JRadioButtonMenuItem peptideAndSpectraJRadioButtonMenuItem;
     private javax.swing.JMenuItem preferencesJMenuItem;
     private javax.swing.JLabel proteinCountJLabel;
+    private javax.swing.JRadioButtonMenuItem ratioLabelJRadioButtonMenuItem;
     private javax.swing.JCheckBoxMenuItem ratioLogJCheckBoxMenuItem;
     private javax.swing.JPanel resultsJPanel;
     private javax.swing.JSplitPane resultsJSplitPane;
     private javax.swing.JTable resultsJTable;
     private javax.swing.JPanel resultsTableJPanel;
     private javax.swing.JScrollPane resultsTableJScrollPane;
+    private javax.swing.JMenuItem saveJMenuItem;
     private javax.swing.JLabel significanceLevelJLabel;
     private javax.swing.JSpinner significanceLevelJSpinner;
-    private javax.swing.JCheckBoxMenuItem spectraAndPeptidesJCheckBoxMenuItem;
     private javax.swing.JCheckBoxMenuItem valuesAndChartJCheckBoxMenuItem;
     private javax.swing.JMenu viewJMenu;
     private javax.swing.JCheckBoxMenuItem viewSparklinesJCheckBoxMenuItem;
@@ -1603,42 +1790,28 @@ public class MiTRAQ extends javax.swing.JFrame {
     }
 
     /**
-     * Reload the iTRAQ file. Used when the preferences has been changed.
+     * Reload the iTRAQ file. Used when the preferences have been changed.
      */
     public void reloadItraqData() {
 
         if (currentRatioFile != null) {
+
+            saveSettings(false);
+
             loadItraqData(groupALabel, groupBLabel, currentITraqType,
                     currentITraqReference, numberOfExperiments,
-                    experimentalDesignJTable, currentRatioFile);
+                    experimentalDesignJTable, currentRatioFile,
+                    false);
         }
     }
 
     /**
-     * Loads the iTRAQ data from the ssv input file.
-     *
-     * @param groupALabel the label to use for group A
-     * @param groupBLabel the label to use for group B
-     * @param currentITraqType the current iTRAQ type (4-plex or 8-plex)
-     * @param currentITraqReference the current iTRAQ reference
-     * @param numberOfExperiments the number of iTRAQ experiments
-     * @param experimentalDesignJTable the experimental design table with the experimental setup
-     * @param ratioFile the ssv file containing the data to load
+     * Saves the experimental design.
      */
-    public void loadItraqData(String groupALabel, String groupBLabel, String currentITraqType,
-            String currentITraqReference, Integer numberOfExperiments, JTable experimentalDesignJTable, String ratioFile) {
+    private void saveExperimentalDesign() {
 
-        this.currentITraqType = currentITraqType;
-        this.currentITraqReference = currentITraqReference;
-        this.numberOfExperiments = numberOfExperiments;
-        this.experimentalDesignJTable = experimentalDesignJTable;
-        currentRatioFile = ratioFile;
+        File experimentalDesignFile = new File(getJarFilePath() + "/conf/" + new File(currentRatioFile).getName() + ".exp");
 
-        // add the title of the project to the dialog header
-        this.setTitle("MiTRAQ - Multiple iTRAQ Data Analysis - v" + getVersion() + " beta" + " - " + new File(ratioFile).getName()); // @TODO: remove beta when releasing v1.0
-
-        // save the experimental design for later
-        File experimentalDesignFile = new File(getJarFilePath() + "/conf/" + new File(ratioFile).getName() + ".config");
         try {
             FileWriter w = new FileWriter(experimentalDesignFile);
             BufferedWriter b = new BufferedWriter(w);
@@ -1668,12 +1841,208 @@ public class MiTRAQ extends javax.swing.JFrame {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Saves the current settings for the project.
+     */
+    private void saveSettings(boolean showMessage) {
+
+        File settingsFile = new File(getJarFilePath() + "/conf/" + new File(currentRatioFile).getName() + ".props");
+
+        try {
+            FileWriter w = new FileWriter(settingsFile);
+            BufferedWriter b = new BufferedWriter(w);
+
+            // significance level
+            b.write("Significance Level: " + ((Double) significanceLevelJSpinner.getValue()) + "\n");
+
+            // preferences
+            b.write("Min number of Peptides: " + minNumUniquePeptides + "\n");
+            b.write("Min number of Spectra: " + minNumUniqueSpectra + "\n");
+            b.write("Min number of Experiments: " + minNumberOfExperiments + "\n");
+
+            // view settings
+            b.write("JSparklines: " + viewSparklinesJCheckBoxMenuItem.isSelected() + "\n");
+            b.write("JSparklines & Values: " + valuesAndChartJCheckBoxMenuItem.isSelected() + "\n");
+            b.write("Error Bars: " + errorBarsJCheckBoxMenuItem.isSelected() + "\n");
+            b.write("Highlight Average: " + highlightAveragesJCheckBoxMenuItem.isSelected() + "\n");
+            b.write("Ratios as log: " + ratioLogJCheckBoxMenuItem.isSelected() + "\n");
+            b.write("Ratio Labels: " + ratioLabelJRadioButtonMenuItem.isSelected() + "\n");
+            b.write("Peptide and Spectra Labels: " + peptideAndSpectraJRadioButtonMenuItem.isSelected() + "\n");
+            b.write("No Labels: " + noLabelJRadioButtonMenuItem.isSelected() + "\n");
+            b.write("Lines plot: " + linesJCheckBoxMenuItem.isSelected() + "\n");
+
+            // filter values
+            b.write("Filter Values:\n");
+            for (int i = 0; i < currentFilterValues.length; i++) {
+                b.write(currentFilterValues[i] + "\n");
+            }
+
+            // filter radio button selections
+            b.write("Filter Radio Button Selections:\n");
+            for (int i = 0; i < currrentFilterRadioButtonSelections.length; i++) {
+                b.write(currrentFilterRadioButtonSelections[i] + "\n");
+            }
+
+            // selected proteins
+            b.write("Selected Proteins:\n");
+            for (int i = 0; i < resultsJTable.getRowCount(); i++) {
+                if (((Boolean) resultsJTable.getValueAt(i, resultsJTable.getColumn("  ").getModelIndex()))) {
+                    b.write(resultsJTable.getValueAt(i, resultsJTable.getColumn("Protein").getModelIndex()) + "\n");
+                }
+            }
+
+            b.close();
+            w.close();
+
+            if (showMessage) {
+                JOptionPane.showMessageDialog(this, "The project has been saved.", "Project Saved", JOptionPane.INFORMATION_MESSAGE);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Tries to read the file containing the settings for a
+     * previously used iTRAQ data file.
+     *
+     * @param settingsFile the settings file
+     */
+    private void readSettings(boolean updateFilter) {
+
+        if (new File(getJarFilePath() + "/conf/" + new File(currentRatioFile).getName() + ".props").exists()) {
+
+            File settingsFile = new File(getJarFilePath() + "/conf/" + new File(currentRatioFile).getName() + ".props");
+
+            try {
+                FileReader f = new FileReader(settingsFile);
+                BufferedReader b = new BufferedReader(f);
+
+                String currentLine = b.readLine();
+
+                significanceLevelJSpinner.setValue(Double.parseDouble(currentLine.substring("Significance Level: ".length())));
+
+                minNumUniquePeptides = new Integer(b.readLine().substring("Min number of Peptides: ".length()));
+                minNumUniqueSpectra = new Integer(b.readLine().substring("Min number of Spectra: ".length()));
+                minNumberOfExperiments = new Integer(b.readLine().substring("Min number of Experiments: ".length()));
+
+                showSparklines = Boolean.parseBoolean(b.readLine().substring("JSparklines: ".length()));
+                viewSparklinesJCheckBoxMenuItem.setSelected(showSparklines);
+                viewSparklinesJCheckBoxMenuItemActionPerformed(null);
+                showValuesAndCharts = Boolean.parseBoolean(b.readLine().substring("JSparklines & Values: ".length()));
+                valuesAndChartJCheckBoxMenuItem.setSelected(showValuesAndCharts);
+                valuesAndChartJCheckBoxMenuItemActionPerformed(null);
+                showErrorBars = Boolean.parseBoolean(b.readLine().substring("Error Bars: ".length()));
+                errorBarsJCheckBoxMenuItem.setSelected(showErrorBars);
+                errorBarsJCheckBoxMenuItemActionPerformed(null);
+                highlightAverageBars = Boolean.parseBoolean(b.readLine().substring("Highlight Average: ".length()));
+                highlightAveragesJCheckBoxMenuItem.setSelected(highlightAverageBars);
+                highlightAveragesJCheckBoxMenuItemActionPerformed(null);
+                useRatioLog2 = Boolean.parseBoolean(b.readLine().substring("Ratios as log: ".length()));
+                ratioLogJCheckBoxMenuItem.setSelected(useRatioLog2);
+                ratioLogJCheckBoxMenuItemActionPerformed(null);
+                showBarChartLabelsAsRatios = Boolean.parseBoolean(b.readLine().substring("Ratio Labels: ".length()));
+                ratioLabelJRadioButtonMenuItem.setSelected(showBarChartLabelsAsRatios);
+                ratioLabelJRadioButtonMenuItemActionPerformed(null);
+                showBarChartLabelsAsRatios = !Boolean.parseBoolean(b.readLine().substring("Peptide and Spectra Labels: ".length()));
+                peptideAndSpectraJRadioButtonMenuItem.setSelected(showBarChartLabelsAsRatios);
+                peptideAndSpectraJRadioButtonMenuItemActionPerformed(null);
+                showBarChartLabels = Boolean.parseBoolean(b.readLine().substring("No Labels: ".length()));
+                noLabelJRadioButtonMenuItem.setSelected(showBarChartLabels);
+                noLabelJRadioButtonMenuItemActionPerformed(null);
+                showRatioPlotAsLines = Boolean.parseBoolean(b.readLine().substring("Lines plot: ".length()));
+                linesJCheckBoxMenuItem.setSelected(showRatioPlotAsLines);
+                linesJCheckBoxMenuItemActionPerformed(null);
+
+                // skip the filter settings line
+                b.readLine();
+
+                int index = 0;
+                currentLine = b.readLine();
+
+                while (!currentLine.startsWith("Filter Radio Button Selections:")) {
+                    currentFilterValues[index++] = currentLine;
+                    currentLine = b.readLine();
+                }
+
+                index = 0;
+                currentLine = b.readLine();
+
+                while (!currentLine.startsWith("Selected Proteins:")) {
+                    currrentFilterRadioButtonSelections[index++] = Integer.parseInt(currentLine);
+                    currentLine = b.readLine();
+                }
+
+                // selected proteins
+                currentLine = b.readLine();
+
+                selectedProteins = new ArrayList<String>();
+
+                while (currentLine != null) {
+                    selectedProteins.add(currentLine);
+                    currentLine = b.readLine();
+                }
+
+                if (updateFilter) {
+                    ResultsFilter filter = new ResultsFilter(this, false, currentFilterValues, currrentFilterRadioButtonSelections, true);
+                    filter.filter();
+                    filter.dispose();
+                }
+
+
+                b.close();
+                f.close();
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            selectedProteins = new ArrayList<String>();
+        }
+    }
+
+    /**
+     * Loads the iTRAQ data from the ssv input file.
+     *
+     * @param groupALabel the label to use for group A
+     * @param groupBLabel the label to use for group B
+     * @param currentITraqType the current iTRAQ type (4-plex or 8-plex)
+     * @param currentITraqReference the current iTRAQ reference
+     * @param numberOfExperiments the number of iTRAQ experiments
+     * @param experimentalDesignJTable the experimental design table with the experimental setup
+     * @param ratioFile the ssv file containing the data to load
+     * @param updateFilter if true the data is "re-filtered"
+     */
+    public void loadItraqData(String groupALabel, String groupBLabel, String currentITraqType,
+            String currentITraqReference, Integer numberOfExperiments, JTable experimentalDesignJTable, String ratioFile,
+            boolean updateFilter) {
+
+        saveJMenuItem.setEnabled(true);
+
+        this.currentITraqType = currentITraqType;
+        this.currentITraqReference = currentITraqReference;
+        this.numberOfExperiments = numberOfExperiments;
+        this.experimentalDesignJTable = experimentalDesignJTable;
+        currentRatioFile = ratioFile;
+
+        // add the title of the project to the dialog header
+        this.setTitle("MiTRAQ - Multiple iTRAQ Data Analysis - v" + getVersion() + " beta" + " - " + new File(ratioFile).getName()); // @TODO: remove beta when releasing v1.0
 
         this.groupALabel = groupALabel;
         this.groupBLabel = groupBLabel;
 
         this.groupAColor = new Color(groupAColor.getRGB());
         this.groupBColor = new Color(groupBColor.getRGB());
+
+        // save the experimental design for later
+        saveExperimentalDesign();
+
+        readSettings(updateFilter);
 
         this.setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
 
@@ -1898,7 +2267,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                     Integer percentCoverage = new Integer(rowValues.get(columnHeaders.get("percentCoverage").intValue()));
 
                     allProteins.add(new Protein(ratiosGroupA, ratiosGroupB, numSpectraGroupA, numPeptidesGroupA,
-                            numSpectraGroupA, numPeptidesGroupA, accessionNumber, accessionNumbersAll,
+                            numSpectraGroupB, numPeptidesGroupB, accessionNumber, accessionNumbersAll,
                             proteinName, numberUniquePeptides, numExperimentsDetected, percentCoverage));
                 }
 
@@ -2220,6 +2589,12 @@ public class MiTRAQ extends javax.swing.JFrame {
         for (int i = 0; i < allValidProteins.size(); i++) {
             Protein currentProtein = allValidProteins.get(i);
 
+            boolean selected = false;
+
+            if (selectedProteins.contains(currentProtein.getProteinName() + " (" + currentProtein.getAccessionNumber() + ")")) {
+                selected = true;
+            }
+
             ((DefaultTableModel) resultsJTable.getModel()).addRow(
                     new Object[]{
                         new Integer(i + 1),
@@ -2231,7 +2606,8 @@ public class MiTRAQ extends javax.swing.JFrame {
                         currentProtein.getPValue(),
                         currentProtein.getQValue(),
                         currentProtein.getPValue() < equallyExpressedSignificanceLevel,
-                        currentProtein.getPValue() < equallyExpressedSignificanceLevel / allValidProteins.size()
+                        currentProtein.getPValue() < equallyExpressedSignificanceLevel / allValidProteins.size(),
+                        selected
                     });
 
             if (Math.abs(currentProtein.getFoldChange()) > maxAbsoluteValueFoldChange) {
@@ -2255,6 +2631,14 @@ public class MiTRAQ extends javax.swing.JFrame {
 
             resultsJTable.setRowSelectionInterval(0, 0);
             resultsJTableMouseClicked(null);
+
+            // a little trick needed for the "manually validated" check box to get the correct background color
+            java.awt.EventQueue.invokeLater(new Runnable() {
+
+                public void run() {
+                    resultsJTable.repaint();
+                }
+            });
         }
 
         exportPlotJButton.setEnabled(true);
