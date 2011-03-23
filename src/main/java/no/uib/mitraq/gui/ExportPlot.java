@@ -3,6 +3,7 @@ package no.uib.mitraq.gui;
 import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import no.uib.mitraq.util.Export;
@@ -15,12 +16,20 @@ import org.jfree.chart.ChartPanel;
  *
  * @author Harald Barsnes
  */
-public class ExportPlot extends javax.swing.JDialog {
+public class ExportPlot extends javax.swing.JDialog implements ProgressDialogParent {
 
+    /**
+     * The progress dialog.
+     */
+    private ProgressDialog progressDialog;
+    /**
+     * Cancels the export.
+     */
+    private boolean cancelExport = false;
     /**
      * The chart panel containing the plot to export.
      */
-    private ChartPanel chartPanel;
+    private ArrayList<ChartPanel> chartPanels;
     /**
      * The parent frame.
      */
@@ -31,11 +40,11 @@ public class ExportPlot extends javax.swing.JDialog {
      *
      * @param parent the parent frame
      * @param modal
-     * @param chartPanel the chart panel containing the plot to export
+     * @param chartPanels the chart panels containing the plots to export
      */
-    public ExportPlot(java.awt.Frame parent, boolean modal, ChartPanel chartPanel) {
+    public ExportPlot(java.awt.Frame parent, boolean modal, ArrayList<ChartPanel> chartPanels) {
         super(parent, modal);
-        this.chartPanel = chartPanel;
+        this.chartPanels = chartPanels;
         this.parent = parent;
         initComponents();
         setLocationRelativeTo(parent);
@@ -150,72 +159,57 @@ public class ExportPlot extends javax.swing.JDialog {
 
         this.setVisible(false);
 
-        JFileChooser chooser = new JFileChooser("user.home");
+        final JFileChooser chooser = new JFileChooser("user.home");
+
+        if (chartPanels.size() > 1) {
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        }
 
         int selection = chooser.showSaveDialog(this);
 
         if (selection == JFileChooser.APPROVE_OPTION) {
-            try {
+
+            if (chartPanels.size() > 1) {
+
+                cancelExport = false;
+
+                progressDialog = new ProgressDialog(this, this, true);
+
+                new Thread(new Runnable() {
+
+                    public void run() {
+                        progressDialog.setIntermidiate(false);
+                        progressDialog.setTitle("Exporting. Please Wait...");
+                        progressDialog.setVisible(true);
+                    }
+                }, "ProgressDialog").start();
+
+                new Thread("ExportThread") {
+
+                    @Override
+                    public void run() {
+
+                        progressDialog.setMax(chartPanels.size());
+
+                        for (int i = 0; i < chartPanels.size() && !cancelExport; i++) {
+
+                            progressDialog.setValue(i);
+
+                            String title = chartPanels.get(i).getChart().getTitle().getText();
+                            String selectedFile = chooser.getSelectedFile().getAbsolutePath() + File.separator + title;
+                            saveChartPanel(chartPanels.get(i), selectedFile, false);
+                        }
+
+                        progressDialog.setVisible(false);
+                        progressDialog.dispose();
+
+                        JOptionPane.showMessageDialog(null, "Plots saved to " + chooser.getSelectedFile().getAbsolutePath(), "Plots Saved", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                }.start();
+
+            } else {
                 String selectedFile = chooser.getSelectedFile().getAbsolutePath();
-
-                if (pngJRadioButton.isSelected()) {
-                    if (!selectedFile.endsWith(ImageType.PNG.getExtension())) {
-                        selectedFile += ImageType.PNG.getExtension();
-                    }
-                } else if (tiffJRadioButton.isSelected()) {
-                    if (!selectedFile.endsWith(ImageType.TIFF.getExtension())) {
-                        selectedFile += ImageType.TIFF.getExtension();
-                    }
-                } else if (pdfJRadioButton.isSelected()) {
-                    if (!selectedFile.endsWith(ImageType.PDF.getExtension())) {
-                        selectedFile += ImageType.PDF.getExtension();
-                    }
-                } else if (svgJRadioButton.isSelected()) {
-                    if (!selectedFile.endsWith(ImageType.SVG.getExtension())) {
-                        selectedFile += ImageType.SVG.getExtension();
-                    }
-                }
-
-                boolean saveFile = true;
-
-                if (new File(selectedFile).exists()) {
-                    int option = JOptionPane.showConfirmDialog(this,
-                            "The file " + selectedFile + " already exists. Overwrite?",
-                            "Overwrite?", JOptionPane.YES_NO_CANCEL_OPTION);
-
-                    if (option != JOptionPane.YES_OPTION) {
-                        saveFile = false;
-                    }
-                }
-
-                if (saveFile) {
-                    setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
-                    parent.setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
-
-                    ImageType currentImageType;
-
-                    if (pngJRadioButton.isSelected()) {
-                        currentImageType = ImageType.PNG;
-                    } else if (tiffJRadioButton.isSelected()) {
-                        currentImageType = ImageType.TIFF;
-                    } else if (pdfJRadioButton.isSelected()) {
-                        currentImageType = ImageType.PDF;
-                    } else { // svg selected
-                        currentImageType = ImageType.SVG;
-                    }
-
-                    Export.exportChart(chartPanel.getChart(), chartPanel.getBounds(), new File(selectedFile), currentImageType);
-
-                    setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-                    parent.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-                    JOptionPane.showMessageDialog(this, "Plot saved to " + selectedFile, "Plot Saved", JOptionPane.INFORMATION_MESSAGE);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Unable to export plot: " + e.getMessage(), "Error Exporting Plot", JOptionPane.INFORMATION_MESSAGE);
-            } catch (TranscoderException e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Unable to export plot: " + e.getMessage(), "Error Exporting Plot", JOptionPane.INFORMATION_MESSAGE);
+                saveChartPanel(chartPanels.get(0), selectedFile, true);
             }
         }
 
@@ -231,4 +225,84 @@ public class ExportPlot extends javax.swing.JDialog {
     private javax.swing.JRadioButton svgJRadioButton;
     private javax.swing.JRadioButton tiffJRadioButton;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * Exports the chart panel to the selected figure format.
+     *
+     * @param chartPanel        the chart panel to export
+     * @param selectedFile      the file or folder to export the chart to
+     * @param showSavedMessage  if true, a message will be when the export is complete
+     */
+    private void saveChartPanel(ChartPanel chartPanel, String selectedFile, boolean showSavedMessage) {
+
+        try {
+
+            if (pngJRadioButton.isSelected()) {
+                if (!selectedFile.endsWith(ImageType.PNG.getExtension())) {
+                    selectedFile += ImageType.PNG.getExtension();
+                }
+            } else if (tiffJRadioButton.isSelected()) {
+                if (!selectedFile.endsWith(ImageType.TIFF.getExtension())) {
+                    selectedFile += ImageType.TIFF.getExtension();
+                }
+            } else if (pdfJRadioButton.isSelected()) {
+                if (!selectedFile.endsWith(ImageType.PDF.getExtension())) {
+                    selectedFile += ImageType.PDF.getExtension();
+                }
+            } else if (svgJRadioButton.isSelected()) {
+                if (!selectedFile.endsWith(ImageType.SVG.getExtension())) {
+                    selectedFile += ImageType.SVG.getExtension();
+                }
+            }
+
+            boolean saveFile = true;
+
+            if (new File(selectedFile).exists()) {
+                int option = JOptionPane.showConfirmDialog(this,
+                        "The file " + selectedFile + " already exists. Overwrite?",
+                        "Overwrite?", JOptionPane.YES_NO_CANCEL_OPTION);
+
+                if (option != JOptionPane.YES_OPTION) {
+                    saveFile = false;
+                }
+            }
+
+            if (saveFile) {
+                setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
+                parent.setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
+
+                ImageType currentImageType;
+
+                if (pngJRadioButton.isSelected()) {
+                    currentImageType = ImageType.PNG;
+                } else if (tiffJRadioButton.isSelected()) {
+                    currentImageType = ImageType.TIFF;
+                } else if (pdfJRadioButton.isSelected()) {
+                    currentImageType = ImageType.PDF;
+                } else { // svg selected
+                    currentImageType = ImageType.SVG;
+                }
+
+                Export.exportChart(chartPanel.getChart(), chartPanel.getBounds(), new File(selectedFile), currentImageType);
+
+                setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+                parent.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+
+                if (showSavedMessage) {
+                    JOptionPane.showMessageDialog(this, "Plot saved to " + selectedFile, "Plot Saved", JOptionPane.INFORMATION_MESSAGE);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Unable to export plot: " + e.getMessage(), "Error Exporting Plot", JOptionPane.INFORMATION_MESSAGE);
+        } catch (TranscoderException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Unable to export plot: " + e.getMessage(), "Error Exporting Plot", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    @Override
+    public void cancelProgress() {
+        cancelExport = true;
+    }
 }

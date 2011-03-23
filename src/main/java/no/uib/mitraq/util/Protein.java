@@ -415,7 +415,7 @@ public class Protein implements Comparable<Object> {
         this.numPeptidesGroupA = numPeptides;
     }
 
-        /**
+    /**
      * @return the numPeptides
      */
     public ArrayList<Integer> getNumPeptidesGroupB() {
