@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.StringTokenizer;
@@ -56,12 +57,18 @@ import org.jfree.chart.labels.StandardCategoryToolTipGenerator;
 import org.jfree.chart.plot.CategoryMarker;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.DatasetRenderingOrder;
+import org.jfree.chart.plot.IntervalMarker;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.category.CategoryItemRenderer;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
+import org.jfree.chart.renderer.xy.StandardXYBarPainter;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.statistics.DefaultStatisticalCategoryDataset;
+import org.jfree.data.statistics.HistogramDataset;
+import org.jfree.data.statistics.HistogramType;
 import org.jfree.ui.Layer;
 import org.jfree.ui.TextAnchor;
 
@@ -72,6 +79,16 @@ import org.jfree.ui.TextAnchor;
  */
 public class MiTRAQ extends javax.swing.JFrame {
 
+    /**
+     * The fold change plot.
+     */
+    private XYPlot foldChangeplot;
+    /**
+     * Turns of the gradient painting for the bar charts.
+     */
+    static {
+        XYBarRenderer.setDefaultBarPainter(new StandardXYBarPainter());
+    }
     /**
      * Arraylist of the currently selected proteins, i.e., the ones that
      * have been manually validated and checked in the last column.
@@ -376,7 +393,10 @@ public class MiTRAQ extends javax.swing.JFrame {
         filterResultsJButton = new javax.swing.JButton();
         exportProteinListJButton = new javax.swing.JButton();
         clearFilterResultsJButton = new javax.swing.JButton();
-        chartJPanel = new javax.swing.JPanel();
+        chartsJPanel = new javax.swing.JPanel();
+        chartsJSplitPane = new javax.swing.JSplitPane();
+        ratioChartJPanel = new javax.swing.JPanel();
+        foldChangeChartJPanel = new javax.swing.JPanel();
         exportPlotJButton = new javax.swing.JButton();
         menuBar = new javax.swing.JMenuBar();
         fileJMenu = new javax.swing.JMenu();
@@ -401,6 +421,11 @@ public class MiTRAQ extends javax.swing.JFrame {
         noLabelJRadioButtonMenuItem = new javax.swing.JRadioButtonMenuItem();
         jSeparator2 = new javax.swing.JPopupMenu.Separator();
         linesJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
+        jSeparator4 = new javax.swing.JPopupMenu.Separator();
+        foldChangePlotJMenu = new javax.swing.JMenu();
+        currentProteinsJCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
+        sd1JCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
+        sd2JCheckBoxMenuItem = new javax.swing.JCheckBoxMenuItem();
         helpJMenu = new javax.swing.JMenu();
         helpJMenuItem = new javax.swing.JMenuItem();
         aboutMenuItem = new javax.swing.JMenuItem();
@@ -422,7 +447,6 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         resultsJSplitPane.setBorder(null);
         resultsJSplitPane.setDividerLocation(350);
-        resultsJSplitPane.setDividerSize(0);
         resultsJSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         resultsJSplitPane.setResizeWeight(1.0);
 
@@ -543,10 +567,31 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         resultsJSplitPane.setTopComponent(resultsTableJPanel);
 
-        chartJPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-        chartJPanel.setMaximumSize(new java.awt.Dimension(4, 200));
-        chartJPanel.setLayout(new javax.swing.BoxLayout(chartJPanel, javax.swing.BoxLayout.Y_AXIS));
-        resultsJSplitPane.setRightComponent(chartJPanel);
+        chartsJPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        chartsJPanel.setMaximumSize(new java.awt.Dimension(4, 200));
+
+        chartsJSplitPane.setBorder(null);
+        chartsJSplitPane.setDividerLocation(800);
+        chartsJSplitPane.setResizeWeight(0.75);
+
+        ratioChartJPanel.setLayout(new javax.swing.BoxLayout(ratioChartJPanel, javax.swing.BoxLayout.LINE_AXIS));
+        chartsJSplitPane.setLeftComponent(ratioChartJPanel);
+
+        foldChangeChartJPanel.setLayout(new javax.swing.BoxLayout(foldChangeChartJPanel, javax.swing.BoxLayout.LINE_AXIS));
+        chartsJSplitPane.setRightComponent(foldChangeChartJPanel);
+
+        javax.swing.GroupLayout chartsJPanelLayout = new javax.swing.GroupLayout(chartsJPanel);
+        chartsJPanel.setLayout(chartsJPanelLayout);
+        chartsJPanelLayout.setHorizontalGroup(
+            chartsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(chartsJSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1129, Short.MAX_VALUE)
+        );
+        chartsJPanelLayout.setVerticalGroup(
+            chartsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(chartsJSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 279, Short.MAX_VALUE)
+        );
+
+        resultsJSplitPane.setRightComponent(chartsJPanel);
 
         exportPlotJButton.setText("<html> <p align=center> Export<br>Plot</p> </html>");
         exportPlotJButton.setToolTipText("Export the selected plots to file");
@@ -729,7 +774,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         });
         labelsJMenu.add(ratioLabelJRadioButtonMenuItem);
 
-        peptideAndSpectraJRadioButtonMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_P, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        peptideAndSpectraJRadioButtonMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_T, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
         labelButtonGroup.add(peptideAndSpectraJRadioButtonMenuItem);
         peptideAndSpectraJRadioButtonMenuItem.setMnemonic('P');
         peptideAndSpectraJRadioButtonMenuItem.setText("Peptides & Spectra");
@@ -764,6 +809,40 @@ public class MiTRAQ extends javax.swing.JFrame {
             }
         });
         viewJMenu.add(linesJCheckBoxMenuItem);
+        viewJMenu.add(jSeparator4);
+
+        foldChangePlotJMenu.setText("Fold Change Plot");
+
+        currentProteinsJCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_U, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        currentProteinsJCheckBoxMenuItem.setSelected(true);
+        currentProteinsJCheckBoxMenuItem.setText("Current Proteins");
+        currentProteinsJCheckBoxMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                currentProteinsJCheckBoxMenuItemActionPerformed(evt);
+            }
+        });
+        foldChangePlotJMenu.add(currentProteinsJCheckBoxMenuItem);
+
+        sd1JCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_1, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        sd1JCheckBoxMenuItem.setText("1 SD");
+        sd1JCheckBoxMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                sd1JCheckBoxMenuItemActionPerformed(evt);
+            }
+        });
+        foldChangePlotJMenu.add(sd1JCheckBoxMenuItem);
+
+        sd2JCheckBoxMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_2, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        sd2JCheckBoxMenuItem.setSelected(true);
+        sd2JCheckBoxMenuItem.setText("2 SD");
+        sd2JCheckBoxMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                sd2JCheckBoxMenuItemActionPerformed(evt);
+            }
+        });
+        foldChangePlotJMenu.add(sd2JCheckBoxMenuItem);
+
+        viewJMenu.add(foldChangePlotJMenu);
 
         menuBar.add(viewJMenu);
 
@@ -821,12 +900,12 @@ public class MiTRAQ extends javax.swing.JFrame {
         if (resultsJTable.getRowCount() > 0) {
             resultsJTableMouseClicked(null);
         } else {
-            chartJPanel.removeAll();
+            foldChangeChartJPanel.removeAll();
 
             java.awt.EventQueue.invokeLater(new Runnable() {
 
                 public void run() {
-                    chartJPanel.repaint();
+                    foldChangeChartJPanel.repaint();
                 }
             });
         }
@@ -864,7 +943,42 @@ public class MiTRAQ extends javax.swing.JFrame {
                 highlightAveragesJCheckBoxMenuItem.setEnabled(true);
             }
 
+            // remove old fold change interval markers
+            if (foldChangeplot.getDomainMarkers(Layer.FOREGROUND) != null) {
+
+                Iterator iterator = foldChangeplot.getDomainMarkers(Layer.FOREGROUND).iterator();
+
+                // store the keys in a list first to escape a ConcurrentModificationException
+                ArrayList<IntervalMarker> tempMarkers = new ArrayList<IntervalMarker>();
+
+                while (iterator.hasNext()) {
+                    tempMarkers.add((IntervalMarker) iterator.next());
+                }
+
+                for (int i = 0; i < tempMarkers.size(); i++) {
+                    foldChangeplot.removeDomainMarker(tempMarkers.get(i));
+                }
+            }
+
+
             for (int rowCounter = 0; rowCounter < resultsJTable.getSelectedRows().length; rowCounter++) {
+
+                // add marker in the fold change plot
+                if (currentProteinsJCheckBoxMenuItem.isSelected()) {
+                    double foldChange = ((XYDataPoint) resultsJTable.getValueAt(resultsJTable.getSelectedRows()[rowCounter], 2)).getX();
+
+                    if (foldChange < 0) {
+                        foldChange = -Math.log(-foldChange) / Math.log(2);
+                    } else {
+                        foldChange = Math.log(foldChange) / Math.log(2);
+                    }
+
+                    double markerWidth = 0.05;
+
+                    IntervalMarker marker = new IntervalMarker(foldChange - (markerWidth/2), foldChange + (markerWidth/2), new Color(1f, 0f, 0f, 0.5f));
+                    foldChangeplot.addDomainMarker(marker, Layer.FOREGROUND);
+                }
+
 
                 int index = new Integer("" + resultsJTable.getValueAt(resultsJTable.getSelectedRows()[rowCounter], 0)) - 1;
                 Protein currentProtein = allValidProteins.get(index);
@@ -1031,9 +1145,9 @@ public class MiTRAQ extends javax.swing.JFrame {
             }
 
             ratioChartPanel = new ChartPanel(ratioChart);
-            chartJPanel.removeAll();
-            chartJPanel.add(ratioChartPanel);
-            chartJPanel.validate();
+            ratioChartJPanel.removeAll();
+            ratioChartJPanel.add(ratioChartPanel);
+            ratioChartJPanel.validate();
         }
     }//GEN-LAST:event_resultsJTableMouseClicked
 
@@ -1454,6 +1568,58 @@ public class MiTRAQ extends javax.swing.JFrame {
     }//GEN-LAST:event_preferencesJMenuItemActionPerformed
 
     /**
+     * Hides or displayes the 1SD interval marker.
+     * 
+     * @param evt
+     */
+    private void sd1JCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sd1JCheckBoxMenuItemActionPerformed
+
+        Iterator iterator = foldChangeplot.getDomainMarkers(Layer.BACKGROUND).iterator();
+
+        while (iterator.hasNext()) {
+            IntervalMarker tempMarker = (IntervalMarker) iterator.next();
+
+            if (tempMarker.getLabel().equalsIgnoreCase("1SD")) {
+                if (sd1JCheckBoxMenuItem.isSelected()) {
+                    tempMarker.setAlpha(1f);
+                } else {
+                    tempMarker.setAlpha(0f);
+                }
+            }
+        }
+    }//GEN-LAST:event_sd1JCheckBoxMenuItemActionPerformed
+
+    /**
+     * Hides or displayes the 2SD interval marker.
+     *
+     * @param evt
+     */
+    private void sd2JCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sd2JCheckBoxMenuItemActionPerformed
+        Iterator iterator = foldChangeplot.getDomainMarkers(Layer.BACKGROUND).iterator();
+
+        while (iterator.hasNext()) {
+            IntervalMarker tempMarker = (IntervalMarker) iterator.next();
+
+            if (tempMarker.getLabel().equalsIgnoreCase("2SD")) {
+                if (sd2JCheckBoxMenuItem.isSelected()) {
+                    tempMarker.setAlpha(1f);
+                } else {
+                    tempMarker.setAlpha(0f);
+                }
+            }
+        }
+    }//GEN-LAST:event_sd2JCheckBoxMenuItemActionPerformed
+
+    /**
+     * Hides or displays the current proteins markers in the fold change plot.
+     *
+     * @param evt
+     */
+    private void currentProteinsJCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_currentProteinsJCheckBoxMenuItemActionPerformed
+        resultsJTableMouseClicked(null);
+    }//GEN-LAST:event_currentProteinsJCheckBoxMenuItemActionPerformed
+
+    /**
      * Update the minimium number of peptides setting.
      *
      * @param minNumUniquePeptides
@@ -1658,8 +1824,10 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JMenuItem aboutMenuItem;
     private javax.swing.JScrollPane accessiobNumbersJScrollPane;
     private javax.swing.JEditorPane accessionNumbersJEditorPane;
-    private javax.swing.JPanel chartJPanel;
+    private javax.swing.JPanel chartsJPanel;
+    private javax.swing.JSplitPane chartsJSplitPane;
     private javax.swing.JButton clearFilterResultsJButton;
+    private javax.swing.JCheckBoxMenuItem currentProteinsJCheckBoxMenuItem;
     private javax.swing.JMenu editJMenu;
     private javax.swing.JCheckBoxMenuItem errorBarsJCheckBoxMenuItem;
     private javax.swing.JMenuItem exitJMenuItem;
@@ -1669,12 +1837,15 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JButton exportProteinListJButton;
     private javax.swing.JMenu fileJMenu;
     private javax.swing.JButton filterResultsJButton;
+    private javax.swing.JPanel foldChangeChartJPanel;
+    private javax.swing.JMenu foldChangePlotJMenu;
     private javax.swing.JMenu helpJMenu;
     private javax.swing.JMenuItem helpJMenuItem;
     private javax.swing.JCheckBoxMenuItem highlightAveragesJCheckBoxMenuItem;
     private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JPopupMenu.Separator jSeparator3;
+    private javax.swing.JPopupMenu.Separator jSeparator4;
     private javax.swing.ButtonGroup labelButtonGroup;
     private javax.swing.JMenu labelsJMenu;
     private javax.swing.JCheckBoxMenuItem linesJCheckBoxMenuItem;
@@ -1684,6 +1855,7 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JRadioButtonMenuItem peptideAndSpectraJRadioButtonMenuItem;
     private javax.swing.JMenuItem preferencesJMenuItem;
     private javax.swing.JLabel proteinCountJLabel;
+    private javax.swing.JPanel ratioChartJPanel;
     private javax.swing.JRadioButtonMenuItem ratioLabelJRadioButtonMenuItem;
     private javax.swing.JCheckBoxMenuItem ratioLogJCheckBoxMenuItem;
     private javax.swing.JPanel resultsJPanel;
@@ -1692,6 +1864,8 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JPanel resultsTableJPanel;
     private javax.swing.JScrollPane resultsTableJScrollPane;
     private javax.swing.JMenuItem saveJMenuItem;
+    private javax.swing.JCheckBoxMenuItem sd1JCheckBoxMenuItem;
+    private javax.swing.JCheckBoxMenuItem sd2JCheckBoxMenuItem;
     private javax.swing.JLabel significanceLevelJLabel;
     private javax.swing.JSpinner significanceLevelJSpinner;
     private javax.swing.JCheckBoxMenuItem valuesAndChartJCheckBoxMenuItem;
@@ -2053,12 +2227,12 @@ public class MiTRAQ extends javax.swing.JFrame {
             ((DefaultTableModel) resultsJTable.getModel()).removeRow(0);
         }
 
-        chartJPanel.removeAll();
+        ratioChartJPanel.removeAll();
 
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             public void run() {
-                chartJPanel.repaint();
+                ratioChartJPanel.repaint();
             }
         });
 
@@ -2404,11 +2578,12 @@ public class MiTRAQ extends javax.swing.JFrame {
             if (!Double.isNaN(foldChange)) {
 
                 try {
-                    allValidFoldChanges.add(groupDiff);
                     currentProtein.setFoldChange(foldChange);
 
                     // require at least a minimum number of the experiments to have values
                     if (sampleACounter >= MINIMUM_NUMBER_OF_RATIOS_FOR_T_TEST && sampleBCounter >= MINIMUM_NUMBER_OF_RATIOS_FOR_T_TEST) {
+
+                        allValidFoldChanges.add(groupDiff);
 
                         currentProtein.setPValue(TestUtils.homoscedasticTTest(sampleA, sampleB));
 
@@ -2549,38 +2724,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         }
 
 
-//        // calculate the upper and lower boudaries for the fold change (+- 2SD)
-//        SummaryStatistics stats = new SummaryStatistics();
-//
-//        double[] tempValues = new double[allValidFoldChanges.size()];
-//
-//        for (int i = 0; i < allValidFoldChanges.size(); i++) {
-//
-//            if (!allValidFoldChanges.get(i).isNaN()) {
-//                stats.addValue(allValidFoldChanges.get(i).doubleValue());
-//                tempValues[i] = allValidFoldChanges.get(i).doubleValue();
-//            }
-//        }
-//
-//        double lowerFoldChangeBoundary = Double.MIN_VALUE;
-//        double upperFoldChangeBoundary = Double.MAX_VALUE;
-
-//        lowerFoldChangeBoundary = StatUtils.percentile(tempValues, 50) - stats.getStandardDeviation() * 2;
-//        upperFoldChangeBoundary = StatUtils.percentile(tempValues, 50) + stats.getStandardDeviation() * 2;
-//
-//        if ((StatUtils.percentile(tempValues, 50) - stats.getStandardDeviation() * 2) > 0) {
-//            lowerFoldChangeBoundary = Math.pow(2, (StatUtils.percentile(tempValues, 50) - stats.getStandardDeviation() * 2));
-//        } else {
-//            lowerFoldChangeBoundary = -Math.pow(2, -(StatUtils.percentile(tempValues, 50) - stats.getStandardDeviation() * 2));
-//        }
-//
-//        if ((StatUtils.percentile(tempValues, 50) + stats.getStandardDeviation() * 2) > 0) {
-//            upperFoldChangeBoundary = Math.pow(2, (StatUtils.percentile(tempValues, 50) + stats.getStandardDeviation() * 2));
-//        } else {
-//            upperFoldChangeBoundary = -Math.pow(2, -(StatUtils.percentile(tempValues, 50) + stats.getStandardDeviation() * 2));
-//        }
-//
-//        sdJLabel.setText("2SD: [" + Util.roundDouble(lowerFoldChangeBoundary, 2) + " - " + Util.roundDouble(upperFoldChangeBoundary, 2) + "]");
+        createFoldChangeHistogram(allValidFoldChanges);
 
         double maxAbsoluteValueFoldChange = 0.0;
         double maxPeptideCount = 0;
@@ -2643,6 +2787,102 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         exportPlotJButton.setEnabled(true);
         this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+    }
+
+    /**
+     * Creates a histograms of the fold changes.
+     *
+     * @param allValidFoldChanges all used fold changes as a list
+     */
+    private void createFoldChangeHistogram(ArrayList<Double> allValidFoldChanges) {
+
+        HistogramDataset dataset = new HistogramDataset();
+        dataset.setType(HistogramType.RELATIVE_FREQUENCY);
+
+        SummaryStatistics stats = new SummaryStatistics();
+
+        double[] tempValues = new double[allValidFoldChanges.size()];
+
+        double maxValue = Double.MIN_VALUE;
+        double minValue = Double.MAX_VALUE;
+
+        for (int i = 0; i < allValidFoldChanges.size(); i++) {
+
+            if (!allValidFoldChanges.get(i).isNaN()) {
+                stats.addValue(allValidFoldChanges.get(i).doubleValue());
+                tempValues[i] = allValidFoldChanges.get(i).doubleValue();
+
+                if (tempValues[i] > maxValue) {
+                    maxValue = tempValues[i];
+                }
+
+                if (tempValues[i] < minValue) {
+                    minValue = tempValues[i];
+                }
+            }
+        }
+
+        double maxAbsValue = Math.max(Math.abs(minValue), Math.abs(maxValue));
+
+        dataset.addSeries("FoldChange", tempValues, 100, -maxAbsValue, maxAbsValue); // @TODO: bin size set by the user
+
+        JFreeChart chart = ChartFactory.createHistogram("Fold Change", "Fold Change (log 2)", "Frequency",
+                    dataset, PlotOrientation.VERTICAL, false, true, false);
+
+        ChartPanel chartPanel = new ChartPanel(chart);
+
+        foldChangeplot = chart.getXYPlot();
+
+        foldChangeplot.setOutlineVisible(false);
+
+        XYBarRenderer renderer = new XYBarRenderer();
+        renderer.setShadowVisible(false);
+        renderer.setSeriesPaint(0, new Color(140, 140, 140));
+        foldChangeplot.setRenderer(renderer);
+
+        foldChangeplot.setBackgroundPaint(Color.WHITE);
+        chartPanel.setBackground(Color.WHITE);
+        chart.setBackgroundPaint(Color.WHITE);
+
+        foldChangeChartJPanel.removeAll();
+        foldChangeChartJPanel.add(chartPanel);
+
+
+        // add markers for 1 SDs
+        double lower2SD = StatUtils.percentile(tempValues, 50) - stats.getStandardDeviation() * 2;
+        double upper2SD = StatUtils.percentile(tempValues, 50) + stats.getStandardDeviation() * 2;
+
+        IntervalMarker marker2SD = new IntervalMarker(lower2SD, upper2SD, new Color(0f, 1f, 0f, 0.1f));
+        marker2SD.setLabel("2SD");
+        marker2SD.setLabelTextAnchor(TextAnchor.TOP_LEFT);
+        foldChangeplot.addDomainMarker(marker2SD, Layer.BACKGROUND);
+
+        // add markers for 2 SDs
+        double lower1SD = StatUtils.percentile(tempValues, 50) - stats.getStandardDeviation();
+        double upper1SD = StatUtils.percentile(tempValues, 50) + stats.getStandardDeviation();
+
+        IntervalMarker marker1SD = new IntervalMarker(lower1SD, upper1SD, new Color(0f, 1f, 1f, 0.1f));
+        marker1SD.setLabel("1SD");
+        marker1SD.setLabelTextAnchor(TextAnchor.TOP_LEFT);
+        foldChangeplot.addDomainMarker(marker1SD, Layer.BACKGROUND);
+
+        sd1JCheckBoxMenuItemActionPerformed(null);
+        sd2JCheckBoxMenuItemActionPerformed(null);
+
+
+//        if ((StatUtils.percentile(tempValues, 50) - stats.getStandardDeviation() * 2) > 0) {
+//            lowerFoldChangeBoundary = Math.pow(2, (StatUtils.percentile(tempValues, 50) - stats.getStandardDeviation() * 2));
+//        } else {
+//            lowerFoldChangeBoundary = -Math.pow(2, -(StatUtils.percentile(tempValues, 50) - stats.getStandardDeviation() * 2));
+//        }
+//
+//        if ((StatUtils.percentile(tempValues, 50) + stats.getStandardDeviation() * 2) > 0) {
+//            upperFoldChangeBoundary = Math.pow(2, (StatUtils.percentile(tempValues, 50) + stats.getStandardDeviation() * 2));
+//        } else {
+//            upperFoldChangeBoundary = -Math.pow(2, -(StatUtils.percentile(tempValues, 50) + stats.getStandardDeviation() * 2));
+//        }
+
+        //sdJLabel.setText("2SD: [" + Util.roundDouble(lowerFoldChangeBoundary, 2) + " - " + Util.roundDouble(upperFoldChangeBoundary, 2) + "]");
     }
 
     /**
