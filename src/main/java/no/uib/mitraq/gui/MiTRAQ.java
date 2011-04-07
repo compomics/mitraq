@@ -80,15 +80,15 @@ import org.jfree.ui.TextAnchor;
 public class MiTRAQ extends javax.swing.JFrame {
 
     /**
-     * The fold change plot.
-     */
-    private XYPlot foldChangeplot;
-    /**
      * Turns of the gradient painting for the bar charts.
      */
     static {
         XYBarRenderer.setDefaultBarPainter(new StandardXYBarPainter());
     }
+    /**
+     * The fold change plot.
+     */
+    private XYPlot foldChangeplot;
     /**
      * Arraylist of the currently selected proteins, i.e., the ones that
      * have been manually validated and checked in the last column.
@@ -178,7 +178,7 @@ public class MiTRAQ extends javax.swing.JFrame {
     /**
      * The current text filter values.
      */
-    private String[] currentFilterValues = {"", "", "", "", "", "", ""};
+    private String[] currentFilterValues = {"", "", "", "", "", "", "", ""};
     /**
      * The current settings for the radio buttons for the filters.
      */
@@ -277,12 +277,13 @@ public class MiTRAQ extends javax.swing.JFrame {
         resultsJTable.getColumn(" ").setMinWidth(40);
         resultsJTable.getColumn("  ").setMaxWidth(40);
         resultsJTable.getColumn("  ").setMinWidth(40);
-        resultsJTable.getColumn("Protein").setMinWidth(400);
+        resultsJTable.getColumn("Protein").setMinWidth(300);
 
         // set the column header tooltips
         columnHeaderToolTips = new Vector();
         columnHeaderToolTips.add(null);
         columnHeaderToolTips.add("Protein Description");
+        columnHeaderToolTips.add("Protein Accession Number");
         columnHeaderToolTips.add("Fold Change - Group 1 / Group 2");
         columnHeaderToolTips.add("Number of Unique Peptides");
         columnHeaderToolTips.add("Sequence Coverage");
@@ -472,16 +473,16 @@ public class MiTRAQ extends javax.swing.JFrame {
 
             },
             new String [] {
-                " ", "Protein", "FC", "Peptides", "Coverage", "Exp. Count", "p-value", "q-value", "Significant", "Bonferroni", "  "
+                " ", "Protein", "Accession", "FC", "Peptides", "Coverage", "Exp. Count", "p-value", "q-value", "Significant", "Bonferroni", "  "
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Integer.class, java.lang.String.class, XYDataPoint.class, java.lang.Integer.class, java.lang.Integer.class,
+                java.lang.Integer.class, java.lang.String.class, java.lang.String.class, XYDataPoint.class, java.lang.Integer.class, java.lang.Integer.class,
                 java.lang.Integer.class, java.lang.Double.class, java.lang.Double.class, java.lang.Boolean.class, java.lang.Boolean.class,
                 java.lang.Boolean.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false, false, false, false, true
+                false, false, false, false, false, false, false, false, false, false, false, true
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -498,6 +499,11 @@ public class MiTRAQ extends javax.swing.JFrame {
             }
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 resultsJTableMouseReleased(evt);
+            }
+        });
+        resultsJTable.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseMoved(java.awt.event.MouseEvent evt) {
+                resultsJTableMouseMoved(evt);
             }
         });
         resultsJTable.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -951,6 +957,31 @@ public class MiTRAQ extends javax.swing.JFrame {
             removeJPopupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
         } else {
 
+            if (evt != null && evt.getButton() == MouseEvent.BUTTON1 && resultsJTable.getSelectedRow() != -1 && resultsJTable.getSelectedColumn() == 2) {
+
+                String tempAccession = (String) resultsJTable.getValueAt(resultsJTable.getSelectedRow(), resultsJTable.getSelectedColumn());
+                tempAccession = tempAccession.substring("<html><u>".length());
+                tempAccession = tempAccession.substring(0, tempAccession.indexOf("<"));
+                String database = null;
+
+                if (tempAccession.toUpperCase().startsWith("IPI")) {
+                    database = "IPI";
+                } else if (tempAccession.toUpperCase().startsWith("SWISS-PROT")
+                        || tempAccession.startsWith("UNI-PROT")) {  // @TODO: untested!!
+                    database = "UNI-PROT";
+                }
+
+                // @TODO: add more databases
+
+                if (database != null) {
+
+                    this.setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
+                    BareBonesBrowserLaunch.openURL("http://srs.ebi.ac.uk/srsbin/cgi-bin/wgetz?-e+%5b"
+                            + database + "-AccNumber:" + tempAccession + "%5d");
+                    this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+                }
+            }
+
             if (resultsJTable.getSelectedRow() != -1) {
 
                 String title = " ";
@@ -995,7 +1026,7 @@ public class MiTRAQ extends javax.swing.JFrame {
 
                     // add marker in the fold change plot
                     if (currentProteinsJCheckBoxMenuItem.isSelected()) {
-                        double foldChange = ((XYDataPoint) resultsJTable.getValueAt(resultsJTable.getSelectedRows()[rowCounter], 2)).getX();
+                        double foldChange = ((XYDataPoint) resultsJTable.getValueAt(resultsJTable.getSelectedRows()[rowCounter], 3)).getX();
 
                         if (foldChange < 0) {
                             foldChange = -Math.log(-foldChange) / Math.log(2);
@@ -1025,7 +1056,7 @@ public class MiTRAQ extends javax.swing.JFrame {
 
                     ArrayList<String> labels = new ArrayList<String>();
 
-                    String accessionNumberLinks = "<html>Accession Numbers: ";
+                    String accessionNumberLinks = "<html>All Accession Numbers: ";
 
                     while (tok.hasMoreTokens()) {
 
@@ -1476,7 +1507,7 @@ public class MiTRAQ extends javax.swing.JFrame {
      * @param evt
      */
     private void clearFilterResultsJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearFilterResultsJButtonActionPerformed
-        currentFilterValues = new String[]{"", "", "", "", "", "", ""};
+        currentFilterValues = new String[]{"", "", "", "", "", "", "", ""};
 
         List<RowFilter<Object, Object>> filters = new ArrayList<RowFilter<Object, Object>>();
         RowFilter<Object, Object> allFilters = RowFilter.andFilter(filters);
@@ -1672,18 +1703,37 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         int[] selectedRows = resultsJTable.getSelectedRows();
 
-        for (int i=0; i<selectedRows.length; i++) {
+        for (int i = 0; i < selectedRows.length; i++) {
 
             int index = new Integer("" + resultsJTable.getValueAt(resultsJTable.getSelectedRows()[i], 0)) - 1;
             Protein currentProtein = allValidProteins.get(index);
 
-            removedProteins.add(currentProtein.getProteinName() + " (" + currentProtein.getAccessionNumber() + ")");
+            removedProteins.add(currentProtein.getProteinName() + "|" + currentProtein.getAccessionNumber());
         }
-        
+
         reloadItraqData();
 
         this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_removeJMenuItemActionPerformed
+
+    /**
+     * Changes the cursor into a hand cursor if the table cell contains an
+     * html link.
+     *
+     * @param evt
+     */
+    private void resultsJTableMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_resultsJTableMouseMoved
+
+        int row = resultsJTable.rowAtPoint(evt.getPoint());
+        int column = resultsJTable.columnAtPoint(evt.getPoint());
+
+        if (row > -1 && column == 2) {
+            this.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        } else {
+            this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        }
+
+    }//GEN-LAST:event_resultsJTableMouseMoved
 
     /**
      * Update the minimium number of peptides setting.
@@ -1951,7 +2001,7 @@ public class MiTRAQ extends javax.swing.JFrame {
     private void addFilterSettings(BufferedWriter w) throws IOException {
 
         w.write("Filter Settings:\n");
-        w.write("Protein Name or Accession Contains: " + currentFilterValues[0] + "\n");
+        w.write("Protein Name: " + currentFilterValues[0] + "\n");
         w.write("#Peptides: ");
 
         if (currrentFilterRadioButtonSelections[0] == 0) {
@@ -2030,6 +2080,8 @@ public class MiTRAQ extends javax.swing.JFrame {
         w.write(currentFilterValues[6] + "\n");
 
         w.write("Significance Level: " + significanceLevelJSpinner.getValue() + "\n");
+
+        w.write("Protein Accession: " + currentFilterValues[7] + "\n");
     }
 
     /**
@@ -2147,7 +2199,8 @@ public class MiTRAQ extends javax.swing.JFrame {
             b.write("Selected Proteins:\n");
             for (int i = 0; i < resultsJTable.getRowCount(); i++) {
                 if (((Boolean) resultsJTable.getValueAt(i, resultsJTable.getColumn("  ").getModelIndex()))) {
-                    b.write(resultsJTable.getValueAt(i, resultsJTable.getColumn("Protein").getModelIndex()) + "\n");
+                    b.write(resultsJTable.getValueAt(i, resultsJTable.getColumn("Protein").getModelIndex()) + " "
+                            + resultsJTable.getValueAt(i, resultsJTable.getColumn("Accession").getModelIndex()) + "\n");
                 }
             }
 
@@ -2263,7 +2316,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                     // selected proteins
                     currentLine = b.readLine();
 
-                    while (currentLine != null ) {
+                    while (currentLine != null) {
                         removedProteins.add(currentLine);
                         currentLine = b.readLine();
                     }
@@ -2279,6 +2332,7 @@ public class MiTRAQ extends javax.swing.JFrame {
             }
         } else {
             selectedProteins = new ArrayList<String>();
+            removedProteins = new ArrayList<String>();
         }
     }
 
@@ -2299,7 +2353,7 @@ public class MiTRAQ extends javax.swing.JFrame {
             boolean updateFilter) {
 
         foldChangeChartJPanel.removeAll();
-        
+
         saveJMenuItem.setEnabled(true);
 
         this.currentITraqType = currentITraqType;
@@ -2544,10 +2598,10 @@ public class MiTRAQ extends javax.swing.JFrame {
                     Integer numberUniquePeptides = new Integer(rowValues.get(columnHeaders.get("numPepsUnique").intValue()));
                     Integer percentCoverage = new Integer(rowValues.get(columnHeaders.get("percentCoverage").intValue()));
 
-                    if (!removedProteins.contains(proteinName + " (" + accessionNumber + ")")) {
+                    if (!removedProteins.contains(proteinName + "|" + accessionNumber)) {
                         allProteins.add(new Protein(ratiosGroupA, ratiosGroupB, numSpectraGroupA, numPeptidesGroupA,
-                            numSpectraGroupB, numPeptidesGroupB, accessionNumber, accessionNumbersAll,
-                            proteinName, numberUniquePeptides, numExperimentsDetected, percentCoverage));
+                                numSpectraGroupB, numPeptidesGroupB, accessionNumber, accessionNumbersAll,
+                                proteinName, numberUniquePeptides, numExperimentsDetected, percentCoverage));
                     }
                 }
 
@@ -2849,7 +2903,8 @@ public class MiTRAQ extends javax.swing.JFrame {
             ((DefaultTableModel) resultsJTable.getModel()).addRow(
                     new Object[]{
                         new Integer(i + 1),
-                        currentProtein.getProteinName() + " (" + currentProtein.getAccessionNumber() + ")",
+                        currentProtein.getProteinName(),
+                        "<html><u>" + currentProtein.getAccessionNumber() + "</u></html>",
                         new XYDataPoint(currentProtein.getFoldChange(), currentProtein.getPValue()),
                         currentProtein.getNumberUniquePeptides(),
                         currentProtein.getPercentCoverage(),
@@ -2882,14 +2937,6 @@ public class MiTRAQ extends javax.swing.JFrame {
 
             resultsJTable.setRowSelectionInterval(0, 0);
             resultsJTableMouseClicked(null);
-
-            // a little trick needed for the "manually validated" check box to get the correct background color
-            java.awt.EventQueue.invokeLater(new Runnable() {
-
-                public void run() {
-                    resultsJTable.repaint();
-                }
-            });
         } else {
             proteinCountJLabel.setText("Protein Count: " + 0);
         }

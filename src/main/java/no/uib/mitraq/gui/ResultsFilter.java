@@ -52,6 +52,10 @@ public class ResultsFilter extends javax.swing.JDialog {
         foldChangeJTextField.setText(currentFilterValues[4]);
         pValueJTextField.setText(currentFilterValues[5]);
         qValueJTextField.setText(currentFilterValues[6]);
+        
+        if (currentFilterValues.length > 7) {
+            accessionJTextField.setText(currentFilterValues[7]);
+        }
 
         peptidesGreaterThanJRadioButton.setSelected(currrentFilterRadioButtonSelections[0].intValue() == 0);
         peptidesEqualJRadioButton.setSelected(currrentFilterRadioButtonSelections[0].intValue() == 1);
@@ -130,6 +134,9 @@ public class ResultsFilter extends javax.swing.JDialog {
         qValueEqualJRadioButton = new javax.swing.JRadioButton();
         qValueLessThanJRadioButton = new javax.swing.JRadioButton();
         jLabel1 = new javax.swing.JLabel();
+        jLabel16 = new javax.swing.JLabel();
+        accessionJTextField = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
         clearJButton = new javax.swing.JButton();
         exitJButton = new javax.swing.JButton();
 
@@ -147,6 +154,7 @@ public class ResultsFilter extends javax.swing.JDialog {
         jLabel9.setText("Protein:");
 
         proteinJTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        proteinJTextField.setToolTipText("<html>\nFind all proteins containing a given string.<br>\nRegular expressions are supported.\n</html>");
         proteinJTextField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 proteinJTextFieldKeyReleased(evt);
@@ -189,7 +197,7 @@ public class ResultsFilter extends javax.swing.JDialog {
             }
         });
 
-        jLabel14.setText("P-value:");
+        jLabel14.setText("p-value:");
 
         pValueJTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         pValueJTextField.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -198,7 +206,7 @@ public class ResultsFilter extends javax.swing.JDialog {
             }
         });
 
-        jLabel15.setText("Q-value:");
+        jLabel15.setText("q-value:");
 
         qValueJTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         qValueJTextField.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -360,6 +368,19 @@ public class ResultsFilter extends javax.swing.JDialog {
         jLabel1.setText("(contains, RegExp)");
         jLabel1.setToolTipText("<html>\nFind all proteins containing a given string.<br>\nRegular expressions are supported.\n</html>");
 
+        jLabel16.setText("Accession:");
+
+        accessionJTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        accessionJTextField.setToolTipText("<html>\nFind all proteins containing a given accession number.<br>\nRegular expressions are supported.\n</html>");
+        accessionJTextField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                accessionJTextFieldKeyReleased(evt);
+            }
+        });
+
+        jLabel2.setText("(contains, RegExp)");
+        jLabel2.setToolTipText("<html>\nFind all proteins containing a given accession number.<br>\nRegular expressions are supported.\n</html>");
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -373,9 +394,11 @@ public class ResultsFilter extends javax.swing.JDialog {
                     .addComponent(jLabel12)
                     .addComponent(jLabel11)
                     .addComponent(jLabel10)
-                    .addComponent(jLabel9))
+                    .addComponent(jLabel9)
+                    .addComponent(jLabel16))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(accessionJTextField, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE)
                     .addComponent(proteinJTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE)
                     .addComponent(peptidesJTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE)
                     .addComponent(coverageJTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE)
@@ -421,8 +444,9 @@ public class ResultsFilter extends javax.swing.JDialog {
                         .addComponent(qValueEqualJRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(qValueLessThanJRadioButton))
+                    .addComponent(jLabel2)
                     .addComponent(jLabel1))
-                .addContainerGap())
+                .addGap(6, 6, 6))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -432,7 +456,12 @@ public class ResultsFilter extends javax.swing.JDialog {
                     .addComponent(proteinJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel9)
                     .addComponent(jLabel1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(accessionJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel16)
+                    .addComponent(jLabel2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(peptidesJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel10)
@@ -497,14 +526,13 @@ public class ResultsFilter extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(clearJButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(exitJButton))
+                    .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(294, Short.MAX_VALUE)
-                .addComponent(clearJButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(exitJButton)
-                .addContainerGap())
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {clearJButton, exitJButton});
@@ -514,7 +542,7 @@ public class ResultsFilter extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(clearJButton)
                     .addComponent(exitJButton))
@@ -627,7 +655,8 @@ public class ResultsFilter extends javax.swing.JDialog {
             expCountJTextField.getText(),
             foldChangeJTextField.getText(),
             pValueJTextField.getText(),
-            qValueJTextField.getText()};
+            qValueJTextField.getText(),
+            accessionJTextField.getText()};
 
         int peptideRadioButtonIndex = 0;
 
@@ -704,6 +733,15 @@ public class ResultsFilter extends javax.swing.JDialog {
 
     /**
      * Filters the results table according to the current filter settings.
+     *
+     * @param evt
+     */
+    private void accessionJTextFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_accessionJTextFieldKeyReleased
+        filter();
+    }//GEN-LAST:event_accessionJTextFieldKeyReleased
+
+    /**
+     * Filters the results table according to the current filter settings.
      */
     public void filter() {
 
@@ -717,6 +755,20 @@ public class ResultsFilter extends javax.swing.JDialog {
         } else {
             try {
                 filters.add(RowFilter.regexFilter(text, resultsTable.getColumn("Protein").getModelIndex()));
+            } catch (PatternSyntaxException pse) {
+                //JOptionPane.showMessageDialog(this, "Bad regex pattern for protein!", "Filter Error", JOptionPane.ERROR_MESSAGE);
+                //pse.printStackTrace();
+            }
+        }
+
+        // protein accession filter
+        text = accessionJTextField.getText();
+
+        if (text == null || text.length() == 0) {
+            filters.add(RowFilter.regexFilter(".*"));
+        } else {
+            try {
+                filters.add(RowFilter.regexFilter(text, resultsTable.getColumn("Accession").getModelIndex()));
             } catch (PatternSyntaxException pse) {
                 //JOptionPane.showMessageDialog(this, "Bad regex pattern for protein!", "Filter Error", JOptionPane.ERROR_MESSAGE);
                 //pse.printStackTrace();
@@ -855,6 +907,7 @@ public class ResultsFilter extends javax.swing.JDialog {
         miTraq.updateResultTableSelection();
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextField accessionJTextField;
     private javax.swing.JButton clearJButton;
     private javax.swing.ButtonGroup coverageButtonGroup;
     private javax.swing.JRadioButton coverageEqualJRadioButton;
@@ -879,6 +932,8 @@ public class ResultsFilter extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel4;
     private javax.swing.ButtonGroup pValueButtonGroup;
