@@ -48,8 +48,11 @@ public class RemovedProteins extends javax.swing.JDialog {
         proteinJTable.getColumn("Removed").setCellRenderer(new NimbusCheckBoxRenderer());
 
         for (int i=0; i<removedProteins.size(); i++) {
+            
+            String temp = removedProteins.get(i);
+
             ((DefaultTableModel) proteinJTable.getModel()).addRow(new Object[] {
-            (i+1), removedProteins.get(i), true});
+            (i+1), temp.substring(0, temp.lastIndexOf("|")), temp.substring(temp.lastIndexOf("|") + 1), true});
         }
 
         setLocationRelativeTo(mitraq);
@@ -90,14 +93,14 @@ public class RemovedProteins extends javax.swing.JDialog {
 
             },
             new String [] {
-                " ", "Protein", "Removed"
+                " ", "Protein", "Accession", "Removed"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Integer.class, java.lang.String.class, java.lang.Boolean.class
+                java.lang.Integer.class, java.lang.String.class, java.lang.String.class, java.lang.Boolean.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, true
+                false, false, false, true
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -189,8 +192,8 @@ public class RemovedProteins extends javax.swing.JDialog {
         removedProteins = new ArrayList<String> ();
 
         for (int i=0; i<proteinJTable.getRowCount(); i++) {
-            if ((Boolean) proteinJTable.getValueAt(i, 2)) {
-                removedProteins.add((String) proteinJTable.getValueAt(i, 1));
+            if ((Boolean) proteinJTable.getValueAt(i, 3)) {
+                removedProteins.add((String) proteinJTable.getValueAt(i, 1) + "|" + (String) proteinJTable.getValueAt(i, 2));
             }
         }
 
