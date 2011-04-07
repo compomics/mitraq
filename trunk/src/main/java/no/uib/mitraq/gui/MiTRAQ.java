@@ -95,6 +95,11 @@ public class MiTRAQ extends javax.swing.JFrame {
      */
     private ArrayList<String> selectedProteins;
     /**
+     * Arraylist of the currently filtered proteins, i.e., not used in the
+     * analysis.
+     */
+    private ArrayList<String> removedProteins;
+    /**
      * If true the ratio plot is shown as lines as opposed to bars of not
      * selected.
      */
@@ -367,6 +372,8 @@ public class MiTRAQ extends javax.swing.JFrame {
     private void initComponents() {
 
         labelButtonGroup = new javax.swing.ButtonGroup();
+        removeJPopupMenu = new javax.swing.JPopupMenu();
+        removeJMenuItem = new javax.swing.JMenuItem();
         resultsJPanel = new javax.swing.JPanel();
         accessiobNumbersJScrollPane = new javax.swing.JScrollPane();
         accessionNumbersJEditorPane = new javax.swing.JEditorPane();
@@ -406,6 +413,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         exitJMenuItem = new javax.swing.JMenuItem();
         editJMenu = new javax.swing.JMenu();
         preferencesJMenuItem = new javax.swing.JMenuItem();
+        removedJMenuItem = new javax.swing.JMenuItem();
         exportJMenu = new javax.swing.JMenu();
         exportAllPlotsJMenuItem = new javax.swing.JMenuItem();
         viewJMenu = new javax.swing.JMenu();
@@ -429,6 +437,15 @@ public class MiTRAQ extends javax.swing.JFrame {
         helpJMenu = new javax.swing.JMenu();
         helpJMenuItem = new javax.swing.JMenuItem();
         aboutMenuItem = new javax.swing.JMenuItem();
+
+        removeJMenuItem.setText("Remove Protein(s)");
+        removeJMenuItem.setToolTipText("Remove selected protein(s) from consideration");
+        removeJMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                removeJMenuItemActionPerformed(evt);
+            }
+        });
+        removeJPopupMenu.add(removeJMenuItem);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("MiTRAQ - Multiple iTRAQ Data Analysis");
@@ -679,6 +696,15 @@ public class MiTRAQ extends javax.swing.JFrame {
         });
         editJMenu.add(preferencesJMenuItem);
 
+        removedJMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        removedJMenuItem.setText("Removed Proteins");
+        removedJMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                removedJMenuItemActionPerformed(evt);
+            }
+        });
+        editJMenu.add(removedJMenuItem);
+
         menuBar.add(editJMenu);
 
         exportJMenu.setMnemonic('X');
@@ -921,233 +947,238 @@ public class MiTRAQ extends javax.swing.JFrame {
      */
     private void resultsJTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_resultsJTableMouseClicked
 
-        if (resultsJTable.getSelectedRow() != -1) {
+        if (evt != null && evt.getButton() == MouseEvent.BUTTON3) {
+            removeJPopupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
+        } else {
 
-            String title = " ";
-            JFreeChart ratioChart = null;
+            if (resultsJTable.getSelectedRow() != -1) {
 
-            DefaultCategoryDataset ratioLog2Dataset = new DefaultCategoryDataset();
-            DefaultCategoryDataset ratioDataset = new DefaultCategoryDataset();
+                String title = " ";
+                JFreeChart ratioChart = null;
 
-            if (resultsJTable.getSelectedRows().length > 1) {
-                linesJCheckBoxMenuItem.setSelected(true);
-                linesJCheckBoxMenuItem.setEnabled(false);
-                labelsJMenu.setEnabled(false);
-                errorBarsJCheckBoxMenuItem.setEnabled(false);
-                highlightAveragesJCheckBoxMenuItem.setEnabled(false);
-                showRatioPlotAsLines = true;
-            } else {
-                linesJCheckBoxMenuItem.setEnabled(true);
-                labelsJMenu.setEnabled(true);
-                errorBarsJCheckBoxMenuItem.setEnabled(true);
-                highlightAveragesJCheckBoxMenuItem.setEnabled(true);
-            }
+                DefaultCategoryDataset ratioLog2Dataset = new DefaultCategoryDataset();
+                DefaultCategoryDataset ratioDataset = new DefaultCategoryDataset();
 
-            // remove old fold change interval markers
-            if (foldChangeplot.getDomainMarkers(Layer.FOREGROUND) != null) {
-
-                Iterator iterator = foldChangeplot.getDomainMarkers(Layer.FOREGROUND).iterator();
-
-                // store the keys in a list first to escape a ConcurrentModificationException
-                ArrayList<IntervalMarker> tempMarkers = new ArrayList<IntervalMarker>();
-
-                while (iterator.hasNext()) {
-                    tempMarkers.add((IntervalMarker) iterator.next());
+                if (resultsJTable.getSelectedRows().length > 1) {
+                    linesJCheckBoxMenuItem.setSelected(true);
+                    linesJCheckBoxMenuItem.setEnabled(false);
+                    labelsJMenu.setEnabled(false);
+                    errorBarsJCheckBoxMenuItem.setEnabled(false);
+                    highlightAveragesJCheckBoxMenuItem.setEnabled(false);
+                    showRatioPlotAsLines = true;
+                } else {
+                    linesJCheckBoxMenuItem.setEnabled(true);
+                    labelsJMenu.setEnabled(true);
+                    errorBarsJCheckBoxMenuItem.setEnabled(true);
+                    highlightAveragesJCheckBoxMenuItem.setEnabled(true);
                 }
 
-                for (int i = 0; i < tempMarkers.size(); i++) {
-                    foldChangeplot.removeDomainMarker(tempMarkers.get(i));
-                }
-            }
+                // remove old fold change interval markers
+                if (foldChangeplot.getDomainMarkers(Layer.FOREGROUND) != null) {
 
+                    Iterator iterator = foldChangeplot.getDomainMarkers(Layer.FOREGROUND).iterator();
 
-            for (int rowCounter = 0; rowCounter < resultsJTable.getSelectedRows().length; rowCounter++) {
+                    // store the keys in a list first to escape a ConcurrentModificationException
+                    ArrayList<IntervalMarker> tempMarkers = new ArrayList<IntervalMarker>();
 
-                // add marker in the fold change plot
-                if (currentProteinsJCheckBoxMenuItem.isSelected()) {
-                    double foldChange = ((XYDataPoint) resultsJTable.getValueAt(resultsJTable.getSelectedRows()[rowCounter], 2)).getX();
-
-                    if (foldChange < 0) {
-                        foldChange = -Math.log(-foldChange) / Math.log(2);
-                    } else {
-                        foldChange = Math.log(foldChange) / Math.log(2);
+                    while (iterator.hasNext()) {
+                        tempMarkers.add((IntervalMarker) iterator.next());
                     }
 
-                    double markerWidth = 0.05;
-
-                    IntervalMarker marker = new IntervalMarker(foldChange - (markerWidth/2), foldChange + (markerWidth/2), new Color(1f, 0f, 0f, 0.5f));
-                    foldChangeplot.addDomainMarker(marker, Layer.FOREGROUND);
-                }
-
-
-                int index = new Integer("" + resultsJTable.getValueAt(resultsJTable.getSelectedRows()[rowCounter], 0)) - 1;
-                Protein currentProtein = allValidProteins.get(index);
-                StringTokenizer tok = new StringTokenizer(currentProtein.getAccessionNumbersAll(), "|");
-
-                String dataSeriesTitle = currentProtein.getProteinName() + " (" + currentProtein.getAccessionNumber() + ")";
-
-                if (resultsJTable.getSelectedRows().length == 1) {
-                    title = dataSeriesTitle;
-                }
-
-                DefaultStatisticalCategoryDataset datasetLog2Errors = new DefaultStatisticalCategoryDataset();
-                DefaultStatisticalCategoryDataset datasetErrors = new DefaultStatisticalCategoryDataset();
-
-                ArrayList<String> labels = new ArrayList<String>();
-
-                String accessionNumberLinks = "<html>Accession Numbers: ";
-
-                while (tok.hasMoreTokens()) {
-
-                    String currentAccessionNumber = tok.nextToken();
-                    String database = null;
-
-                    if (currentAccessionNumber.toUpperCase().startsWith("IPI")) {
-                        database = "IPI";
-                    } else if (currentAccessionNumber.toUpperCase().startsWith("SWISS-PROT")
-                            || currentAccessionNumber.startsWith("UNI-PROT")) {  // @TODO: untested!!
-                        database = "UNI-PROT";
-                    }
-
-                    // @TODO: add more databases
-
-                    if (database != null) {
-                        accessionNumberLinks += "<a href=\"http://srs.ebi.ac.uk/srsbin/cgi-bin/wgetz?-e+%5b"
-                                + database + "-AccNumber:" + currentAccessionNumber
-                                + "%5d\">" + currentAccessionNumber + "</a>, ";
-                    } else {
-                        accessionNumberLinks += currentAccessionNumber + ", ";
+                    for (int i = 0; i < tempMarkers.size(); i++) {
+                        foldChangeplot.removeDomainMarker(tempMarkers.get(i));
                     }
                 }
 
-                accessionNumberLinks = accessionNumberLinks.substring(0, accessionNumberLinks.length() - 2);
-                accessionNumbersJEditorPane.setText(accessionNumberLinks + "</html>");
 
-                SummaryStatistics ratioLog2Stats = new SummaryStatistics();
-                SummaryStatistics ratioStats = new SummaryStatistics();
-                SummaryStatistics peptideStats = new SummaryStatistics();
-                SummaryStatistics spectrumStats = new SummaryStatistics();
+                for (int rowCounter = 0; rowCounter < resultsJTable.getSelectedRows().length; rowCounter++) {
 
-                // add bars for the data values in group A
-                for (int i = 0; i < currentProtein.getRatiosGroupA().size(); i++) {
-                    if (currentProtein.getRatiosGroupA().get(i) != null) {
-                        ratioLog2Dataset.addValue(currentProtein.getRatiosGroupA().get(i), dataSeriesTitle, groupALabel + (i + 1));
-                        ratioDataset.addValue(antiLog2(currentProtein.getRatiosGroupA().get(i)), dataSeriesTitle, groupALabel + (i + 1));
-                        datasetLog2Errors.add(null, null, dataSeriesTitle, groupALabel + (i + 1));
-                        datasetErrors.add(null, null, dataSeriesTitle, groupALabel + (i + 1));
-                        ratioLog2Stats.addValue(currentProtein.getRatiosGroupA().get(i));
-                        ratioStats.addValue(antiLog2(currentProtein.getRatiosGroupA().get(i)));
-                        peptideStats.addValue(currentProtein.getNumPeptidesGroupA().get(i));
-                        spectrumStats.addValue(currentProtein.getNumSpectraGroupA().get(i));
-                        labels.add(currentProtein.getNumPeptidesGroupA().get(i) + " / " + currentProtein.getNumSpectraGroupA().get(i));
-                    } else {
-                        ratioLog2Dataset.addValue(0, dataSeriesTitle, groupALabel + (i + 1));
-                        datasetLog2Errors.add(null, null, dataSeriesTitle, groupALabel + (i + 1));
-                        ratioDataset.addValue(0, dataSeriesTitle, groupALabel + (i + 1));
-                        datasetErrors.add(null, null, dataSeriesTitle, groupALabel + (i + 1));
-                        labels.add(null);
+                    // add marker in the fold change plot
+                    if (currentProteinsJCheckBoxMenuItem.isSelected()) {
+                        double foldChange = ((XYDataPoint) resultsJTable.getValueAt(resultsJTable.getSelectedRows()[rowCounter], 2)).getX();
+
+                        if (foldChange < 0) {
+                            foldChange = -Math.log(-foldChange) / Math.log(2);
+                        } else {
+                            foldChange = Math.log(foldChange) / Math.log(2);
+                        }
+
+                        double markerWidth = 0.05;
+
+                        IntervalMarker marker = new IntervalMarker(foldChange - (markerWidth / 2), foldChange + (markerWidth / 2), new Color(1f, 0f, 0f, 0.5f));
+                        foldChangeplot.addDomainMarker(marker, Layer.FOREGROUND);
                     }
-                }
 
-                if (!showRatioPlotAsLines) {
 
-                    // add a bar for the average value in group A
-                    ratioLog2Dataset.addValue(ratioLog2Stats.getMean(), dataSeriesTitle, groupALabel + " Avg");
-                    datasetLog2Errors.add(ratioLog2Stats.getMean(), ratioLog2Stats.getStandardDeviation(), dataSeriesTitle, groupALabel + " Avg");
-                    ratioDataset.addValue(ratioStats.getMean(), dataSeriesTitle, groupALabel + " Avg");
-                    datasetErrors.add(ratioStats.getMean(), ratioStats.getStandardDeviation(), dataSeriesTitle, groupALabel + " Avg");
-                    labels.add(null);
+                    int index = new Integer("" + resultsJTable.getValueAt(resultsJTable.getSelectedRows()[rowCounter], 0)) - 1;
+                    Protein currentProtein = allValidProteins.get(index);
+                    StringTokenizer tok = new StringTokenizer(currentProtein.getAccessionNumbersAll(), "|");
 
-                    ratioLog2Stats = new SummaryStatistics();
-                    ratioStats = new SummaryStatistics();
-                    peptideStats = new SummaryStatistics();
-                    spectrumStats = new SummaryStatistics();
+                    String dataSeriesTitle = currentProtein.getProteinName() + " (" + currentProtein.getAccessionNumber() + ")";
 
-                    // add a bar for the average value in group B
-                    for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
-                        if (currentProtein.getRatiosGroupB().get(i) != null) {
-                            ratioLog2Stats.addValue(currentProtein.getRatiosGroupB().get(i));
-                            ratioStats.addValue(antiLog2(currentProtein.getRatiosGroupB().get(i)));
-                            peptideStats.addValue(currentProtein.getNumPeptidesGroupB().get(i));
-                            spectrumStats.addValue(currentProtein.getNumSpectraGroupB().get(i));
+                    if (resultsJTable.getSelectedRows().length == 1) {
+                        title = dataSeriesTitle;
+                    }
+
+                    DefaultStatisticalCategoryDataset datasetLog2Errors = new DefaultStatisticalCategoryDataset();
+                    DefaultStatisticalCategoryDataset datasetErrors = new DefaultStatisticalCategoryDataset();
+
+                    ArrayList<String> labels = new ArrayList<String>();
+
+                    String accessionNumberLinks = "<html>Accession Numbers: ";
+
+                    while (tok.hasMoreTokens()) {
+
+                        String currentAccessionNumber = tok.nextToken();
+                        String database = null;
+
+                        if (currentAccessionNumber.toUpperCase().startsWith("IPI")) {
+                            database = "IPI";
+                        } else if (currentAccessionNumber.toUpperCase().startsWith("SWISS-PROT")
+                                || currentAccessionNumber.startsWith("UNI-PROT")) {  // @TODO: untested!!
+                            database = "UNI-PROT";
+                        }
+
+                        // @TODO: add more databases
+
+                        if (database != null) {
+                            accessionNumberLinks += "<a href=\"http://srs.ebi.ac.uk/srsbin/cgi-bin/wgetz?-e+%5b"
+                                    + database + "-AccNumber:" + currentAccessionNumber
+                                    + "%5d\">" + currentAccessionNumber + "</a>, ";
+                        } else {
+                            accessionNumberLinks += currentAccessionNumber + ", ";
                         }
                     }
 
-                    ratioLog2Dataset.addValue(ratioLog2Stats.getMean(), dataSeriesTitle, groupBLabel + " Avg");
-                    datasetLog2Errors.add(ratioLog2Stats.getMean(), ratioLog2Stats.getStandardDeviation(), dataSeriesTitle, groupBLabel + " Avg");
-                    ratioDataset.addValue(ratioStats.getMean(), dataSeriesTitle, groupBLabel + " Avg");
-                    datasetErrors.add(ratioStats.getMean(), ratioStats.getStandardDeviation(), dataSeriesTitle, groupBLabel + " Avg");
-                    labels.add(null);
-                }
+                    accessionNumberLinks = accessionNumberLinks.substring(0, accessionNumberLinks.length() - 2);
+                    accessionNumbersJEditorPane.setText(accessionNumberLinks + "</html>");
 
-                // add bars for the data values in group B
-                for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
-                    if (currentProtein.getRatiosGroupB().get(i) != null) {
-                        ratioLog2Dataset.addValue(currentProtein.getRatiosGroupB().get(i), dataSeriesTitle, groupBLabel + (i + 1));
-                        datasetLog2Errors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
-                        ratioDataset.addValue(antiLog2(currentProtein.getRatiosGroupB().get(i)), dataSeriesTitle, groupBLabel + (i + 1));
-                        datasetErrors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
-                        labels.add(currentProtein.getNumPeptidesGroupB().get(i) + " / " + currentProtein.getNumSpectraGroupB().get(i));
-                    } else {
-                        ratioLog2Dataset.addValue(0, dataSeriesTitle, groupBLabel + (i + 1));
-                        datasetLog2Errors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
-                        ratioDataset.addValue(0, dataSeriesTitle, groupBLabel + (i + 1));
-                        datasetErrors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
+                    SummaryStatistics ratioLog2Stats = new SummaryStatistics();
+                    SummaryStatistics ratioStats = new SummaryStatistics();
+                    SummaryStatistics peptideStats = new SummaryStatistics();
+                    SummaryStatistics spectrumStats = new SummaryStatistics();
+
+                    // add bars for the data values in group A
+                    for (int i = 0; i < currentProtein.getRatiosGroupA().size(); i++) {
+                        if (currentProtein.getRatiosGroupA().get(i) != null) {
+                            ratioLog2Dataset.addValue(currentProtein.getRatiosGroupA().get(i), dataSeriesTitle, groupALabel + (i + 1));
+                            ratioDataset.addValue(antiLog2(currentProtein.getRatiosGroupA().get(i)), dataSeriesTitle, groupALabel + (i + 1));
+                            datasetLog2Errors.add(null, null, dataSeriesTitle, groupALabel + (i + 1));
+                            datasetErrors.add(null, null, dataSeriesTitle, groupALabel + (i + 1));
+                            ratioLog2Stats.addValue(currentProtein.getRatiosGroupA().get(i));
+                            ratioStats.addValue(antiLog2(currentProtein.getRatiosGroupA().get(i)));
+                            peptideStats.addValue(currentProtein.getNumPeptidesGroupA().get(i));
+                            spectrumStats.addValue(currentProtein.getNumSpectraGroupA().get(i));
+                            labels.add(currentProtein.getNumPeptidesGroupA().get(i) + " / " + currentProtein.getNumSpectraGroupA().get(i));
+                        } else {
+                            ratioLog2Dataset.addValue(0, dataSeriesTitle, groupALabel + (i + 1));
+                            datasetLog2Errors.add(null, null, dataSeriesTitle, groupALabel + (i + 1));
+                            ratioDataset.addValue(0, dataSeriesTitle, groupALabel + (i + 1));
+                            datasetErrors.add(null, null, dataSeriesTitle, groupALabel + (i + 1));
+                            labels.add(null);
+                        }
+                    }
+
+                    if (!showRatioPlotAsLines) {
+
+                        // add a bar for the average value in group A
+                        ratioLog2Dataset.addValue(ratioLog2Stats.getMean(), dataSeriesTitle, groupALabel + " Avg");
+                        datasetLog2Errors.add(ratioLog2Stats.getMean(), ratioLog2Stats.getStandardDeviation(), dataSeriesTitle, groupALabel + " Avg");
+                        ratioDataset.addValue(ratioStats.getMean(), dataSeriesTitle, groupALabel + " Avg");
+                        datasetErrors.add(ratioStats.getMean(), ratioStats.getStandardDeviation(), dataSeriesTitle, groupALabel + " Avg");
+                        labels.add(null);
+
+                        ratioLog2Stats = new SummaryStatistics();
+                        ratioStats = new SummaryStatistics();
+                        peptideStats = new SummaryStatistics();
+                        spectrumStats = new SummaryStatistics();
+
+                        // add a bar for the average value in group B
+                        for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
+                            if (currentProtein.getRatiosGroupB().get(i) != null) {
+                                ratioLog2Stats.addValue(currentProtein.getRatiosGroupB().get(i));
+                                ratioStats.addValue(antiLog2(currentProtein.getRatiosGroupB().get(i)));
+                                peptideStats.addValue(currentProtein.getNumPeptidesGroupB().get(i));
+                                spectrumStats.addValue(currentProtein.getNumSpectraGroupB().get(i));
+                            }
+                        }
+
+                        ratioLog2Dataset.addValue(ratioLog2Stats.getMean(), dataSeriesTitle, groupBLabel + " Avg");
+                        datasetLog2Errors.add(ratioLog2Stats.getMean(), ratioLog2Stats.getStandardDeviation(), dataSeriesTitle, groupBLabel + " Avg");
+                        ratioDataset.addValue(ratioStats.getMean(), dataSeriesTitle, groupBLabel + " Avg");
+                        datasetErrors.add(ratioStats.getMean(), ratioStats.getStandardDeviation(), dataSeriesTitle, groupBLabel + " Avg");
                         labels.add(null);
                     }
-                }
 
-                // set up the bar colors
-                ArrayList<Color> ratioBarColors = new ArrayList<Color>();
+                    // add bars for the data values in group B
+                    for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
+                        if (currentProtein.getRatiosGroupB().get(i) != null) {
+                            ratioLog2Dataset.addValue(currentProtein.getRatiosGroupB().get(i), dataSeriesTitle, groupBLabel + (i + 1));
+                            datasetLog2Errors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
+                            ratioDataset.addValue(antiLog2(currentProtein.getRatiosGroupB().get(i)), dataSeriesTitle, groupBLabel + (i + 1));
+                            datasetErrors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
+                            labels.add(currentProtein.getNumPeptidesGroupB().get(i) + " / " + currentProtein.getNumSpectraGroupB().get(i));
+                        } else {
+                            ratioLog2Dataset.addValue(0, dataSeriesTitle, groupBLabel + (i + 1));
+                            datasetLog2Errors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
+                            ratioDataset.addValue(0, dataSeriesTitle, groupBLabel + (i + 1));
+                            datasetErrors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
+                            labels.add(null);
+                        }
+                    }
 
-                // set the colors for the group A bars
-                for (int i = 0; i < currentProtein.getRatiosGroupA().size(); i++) {
-                    ratioBarColors.add(groupAColor);
-                }
+                    // set up the bar colors
+                    ArrayList<Color> ratioBarColors = new ArrayList<Color>();
 
-                if (!showRatioPlotAsLines) {
+                    // set the colors for the group A bars
+                    for (int i = 0; i < currentProtein.getRatiosGroupA().size(); i++) {
+                        ratioBarColors.add(groupAColor);
+                    }
 
-                    // set the color for the average group A bar
-                    ratioBarColors.add(getAverageValueColor(groupAColor));
+                    if (!showRatioPlotAsLines) {
 
-                    // set the color for the average group B bar
-                    ratioBarColors.add(getAverageValueColor(groupBColor));
-                }
+                        // set the color for the average group A bar
+                        ratioBarColors.add(getAverageValueColor(groupAColor));
 
-                // set the colors for the group B bars
-                for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
-                    ratioBarColors.add(groupBColor);
-                }
+                        // set the color for the average group B bar
+                        ratioBarColors.add(getAverageValueColor(groupBColor));
+                    }
 
-                if (resultsJTable.getSelectedRows().length == 1) {
-                    // use normal ratio or log 2 ratios
-                    if (useRatioLog2) {
-                        ratioChart = createRatioChart(ratioLog2Dataset, datasetLog2Errors, title, useRatioLog2, ratioBarColors, labels, showRatioPlotAsLines);
-                    } else {
-                        ratioChart = createRatioChart(ratioDataset, datasetErrors, title, useRatioLog2, ratioBarColors, labels, showRatioPlotAsLines);
+                    // set the colors for the group B bars
+                    for (int i = 0; i < currentProtein.getRatiosGroupB().size(); i++) {
+                        ratioBarColors.add(groupBColor);
+                    }
+
+                    if (resultsJTable.getSelectedRows().length == 1) {
+                        // use normal ratio or log 2 ratios
+                        if (useRatioLog2) {
+                            ratioChart = createRatioChart(ratioLog2Dataset, datasetLog2Errors, title, useRatioLog2, ratioBarColors, labels, showRatioPlotAsLines);
+                        } else {
+                            ratioChart = createRatioChart(ratioDataset, datasetErrors, title, useRatioLog2, ratioBarColors, labels, showRatioPlotAsLines);
+                        }
                     }
                 }
-            }
 
-            if (resultsJTable.getSelectedRows().length > 1) {
-                // use normal ratio or log 2 ratios
-                if (useRatioLog2) {
-                    ratioChart = createRatioChart(ratioLog2Dataset, new DefaultStatisticalCategoryDataset(), title, useRatioLog2, new ArrayList<Color>(), new ArrayList<String>(), true);
-                } else {
-                    ratioChart = createRatioChart(ratioDataset, new DefaultStatisticalCategoryDataset(), title, useRatioLog2, new ArrayList<Color>(), new ArrayList<String>(), true);
+                if (resultsJTable.getSelectedRows().length > 1) {
+                    // use normal ratio or log 2 ratios
+                    if (useRatioLog2) {
+                        ratioChart = createRatioChart(ratioLog2Dataset, new DefaultStatisticalCategoryDataset(), title, useRatioLog2, new ArrayList<Color>(), new ArrayList<String>(), true);
+                    } else {
+                        ratioChart = createRatioChart(ratioDataset, new DefaultStatisticalCategoryDataset(), title, useRatioLog2, new ArrayList<Color>(), new ArrayList<String>(), true);
+                    }
                 }
-            }
 
-            if (highlightAverageBars && resultsJTable.getSelectedRows().length == 1) {
-                CategoryPlot plot = (CategoryPlot) ratioChart.getPlot();
-                plot.addDomainMarker(new CategoryMarker(groupALabel + " Avg", Color.LIGHT_GRAY, new BasicStroke(1.0f), Color.LIGHT_GRAY, new BasicStroke(1.0f), 0.2f), Layer.BACKGROUND);
-                plot.addDomainMarker(new CategoryMarker(groupBLabel + " Avg", Color.LIGHT_GRAY, new BasicStroke(1.0f), Color.LIGHT_GRAY, new BasicStroke(1.0f), 0.2f), Layer.BACKGROUND);
-            }
+                if (highlightAverageBars && resultsJTable.getSelectedRows().length == 1) {
+                    CategoryPlot plot = (CategoryPlot) ratioChart.getPlot();
+                    plot.addDomainMarker(new CategoryMarker(groupALabel + " Avg", Color.LIGHT_GRAY, new BasicStroke(1.0f), Color.LIGHT_GRAY, new BasicStroke(1.0f), 0.2f), Layer.BACKGROUND);
+                    plot.addDomainMarker(new CategoryMarker(groupBLabel + " Avg", Color.LIGHT_GRAY, new BasicStroke(1.0f), Color.LIGHT_GRAY, new BasicStroke(1.0f), 0.2f), Layer.BACKGROUND);
+                }
 
-            ratioChartPanel = new ChartPanel(ratioChart);
-            ratioChartJPanel.removeAll();
-            ratioChartJPanel.add(ratioChartPanel);
-            ratioChartJPanel.validate();
+                ratioChartPanel = new ChartPanel(ratioChart);
+                ratioChartJPanel.removeAll();
+                ratioChartJPanel.add(ratioChartPanel);
+                ratioChartJPanel.validate();
+            }
         }
     }//GEN-LAST:event_resultsJTableMouseClicked
 
@@ -1456,6 +1487,8 @@ public class MiTRAQ extends javax.swing.JFrame {
         }
 
         updateResultTableSelection();
+
+        saveSettings(false);
     }//GEN-LAST:event_clearFilterResultsJButtonActionPerformed
 
     /**
@@ -1618,6 +1651,39 @@ public class MiTRAQ extends javax.swing.JFrame {
     private void currentProteinsJCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_currentProteinsJCheckBoxMenuItemActionPerformed
         resultsJTableMouseClicked(null);
     }//GEN-LAST:event_currentProteinsJCheckBoxMenuItemActionPerformed
+
+    /**
+     * Displays the list of removed proteins for possible re-adding.
+     *
+     * @param evt
+     */
+    private void removedJMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removedJMenuItemActionPerformed
+        new RemovedProteins(this, true, removedProteins);
+    }//GEN-LAST:event_removedJMenuItemActionPerformed
+
+    /**
+     * Removes the selected proteins from the list and reloads the data.
+     *
+     * @param evt
+     */
+    private void removeJMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeJMenuItemActionPerformed
+
+        this.setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
+
+        int[] selectedRows = resultsJTable.getSelectedRows();
+
+        for (int i=0; i<selectedRows.length; i++) {
+
+            int index = new Integer("" + resultsJTable.getValueAt(resultsJTable.getSelectedRows()[i], 0)) - 1;
+            Protein currentProtein = allValidProteins.get(index);
+
+            removedProteins.add(currentProtein.getProteinName() + " (" + currentProtein.getAccessionNumber() + ")");
+        }
+        
+        reloadItraqData();
+
+        this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+    }//GEN-LAST:event_removeJMenuItemActionPerformed
 
     /**
      * Update the minimium number of peptides setting.
@@ -1858,6 +1924,9 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JPanel ratioChartJPanel;
     private javax.swing.JRadioButtonMenuItem ratioLabelJRadioButtonMenuItem;
     private javax.swing.JCheckBoxMenuItem ratioLogJCheckBoxMenuItem;
+    private javax.swing.JMenuItem removeJMenuItem;
+    private javax.swing.JPopupMenu removeJPopupMenu;
+    private javax.swing.JMenuItem removedJMenuItem;
     private javax.swing.JPanel resultsJPanel;
     private javax.swing.JSplitPane resultsJSplitPane;
     private javax.swing.JTable resultsJTable;
@@ -1968,6 +2037,8 @@ public class MiTRAQ extends javax.swing.JFrame {
      */
     public void reloadItraqData() {
 
+        this.setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
+
         if (currentRatioFile != null) {
 
             saveSettings(false);
@@ -1977,6 +2048,19 @@ public class MiTRAQ extends javax.swing.JFrame {
                     experimentalDesignJTable, currentRatioFile,
                     false);
         }
+
+        this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+    }
+
+    /**
+     * Reload the iTRAQ file. Used when the removed proteins have been changed.
+     *
+     * @param removedProteins
+     */
+    public void reloadItraqData(ArrayList<String> removedProteins) {
+
+        this.removedProteins = removedProteins;
+        reloadItraqData();
     }
 
     /**
@@ -2067,6 +2151,12 @@ public class MiTRAQ extends javax.swing.JFrame {
                 }
             }
 
+            // removed proteins
+            b.write("Removed Proteins:\n");
+            for (int i = 0; i < removedProteins.size(); i++) {
+                b.write(removedProteins.get(i) + "\n");
+            }
+
             b.close();
             w.close();
 
@@ -2155,7 +2245,7 @@ public class MiTRAQ extends javax.swing.JFrame {
 
                 selectedProteins = new ArrayList<String>();
 
-                while (currentLine != null) {
+                while (currentLine != null && !currentLine.startsWith("Removed Proteins:")) {
                     selectedProteins.add(currentLine);
                     currentLine = b.readLine();
                 }
@@ -2166,6 +2256,18 @@ public class MiTRAQ extends javax.swing.JFrame {
                     filter.dispose();
                 }
 
+                removedProteins = new ArrayList<String>();
+
+                if (currentLine != null) {
+
+                    // selected proteins
+                    currentLine = b.readLine();
+
+                    while (currentLine != null ) {
+                        removedProteins.add(currentLine);
+                        currentLine = b.readLine();
+                    }
+                }
 
                 b.close();
                 f.close();
@@ -2196,6 +2298,8 @@ public class MiTRAQ extends javax.swing.JFrame {
             String currentITraqReference, Integer numberOfExperiments, JTable experimentalDesignJTable, String ratioFile,
             boolean updateFilter) {
 
+        foldChangeChartJPanel.removeAll();
+        
         saveJMenuItem.setEnabled(true);
 
         this.currentITraqType = currentITraqType;
@@ -2440,9 +2544,11 @@ public class MiTRAQ extends javax.swing.JFrame {
                     Integer numberUniquePeptides = new Integer(rowValues.get(columnHeaders.get("numPepsUnique").intValue()));
                     Integer percentCoverage = new Integer(rowValues.get(columnHeaders.get("percentCoverage").intValue()));
 
-                    allProteins.add(new Protein(ratiosGroupA, ratiosGroupB, numSpectraGroupA, numPeptidesGroupA,
+                    if (!removedProteins.contains(proteinName + " (" + accessionNumber + ")")) {
+                        allProteins.add(new Protein(ratiosGroupA, ratiosGroupB, numSpectraGroupA, numPeptidesGroupA,
                             numSpectraGroupB, numPeptidesGroupB, accessionNumber, accessionNumbersAll,
                             proteinName, numberUniquePeptides, numExperimentsDetected, percentCoverage));
+                    }
                 }
 
                 currentLine = b.readLine();
@@ -2723,8 +2829,9 @@ public class MiTRAQ extends javax.swing.JFrame {
             index = newIndex;
         }
 
-
-        createFoldChangeHistogram(allValidFoldChanges);
+        if (allValidFoldChanges.size() > 0) {
+            createFoldChangeHistogram(allValidFoldChanges);
+        }
 
         double maxAbsoluteValueFoldChange = 0.0;
         double maxPeptideCount = 0;
@@ -2783,6 +2890,8 @@ public class MiTRAQ extends javax.swing.JFrame {
                     resultsJTable.repaint();
                 }
             });
+        } else {
+            proteinCountJLabel.setText("Protein Count: " + 0);
         }
 
         exportPlotJButton.setEnabled(true);
@@ -2827,7 +2936,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         dataset.addSeries("FoldChange", tempValues, 100, -maxAbsValue, maxAbsValue); // @TODO: bin size set by the user
 
         JFreeChart chart = ChartFactory.createHistogram("Fold Change", "Fold Change (log 2)", "Frequency",
-                    dataset, PlotOrientation.VERTICAL, false, true, false);
+                dataset, PlotOrientation.VERTICAL, false, true, false);
 
         ChartPanel chartPanel = new ChartPanel(chart);
 
