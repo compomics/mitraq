@@ -2900,11 +2900,17 @@ public class MiTRAQ extends javax.swing.JFrame {
                 selected = true;
             }
 
+            String tempAccessionNumber = currentProtein.getAccessionNumber();
+
+            if (tempAccessionNumber.toUpperCase().startsWith("IPI")) {
+                tempAccessionNumber = "<html><u>" + tempAccessionNumber + "</u></html>"; // @TODO: support more databases
+            }
+
             ((DefaultTableModel) resultsJTable.getModel()).addRow(
                     new Object[]{
                         new Integer(i + 1),
                         currentProtein.getProteinName(),
-                        "<html><u>" + currentProtein.getAccessionNumber() + "</u></html>",
+                        tempAccessionNumber,
                         new XYDataPoint(currentProtein.getFoldChange(), currentProtein.getPValue()),
                         currentProtein.getNumberUniquePeptides(),
                         currentProtein.getPercentCoverage(),
