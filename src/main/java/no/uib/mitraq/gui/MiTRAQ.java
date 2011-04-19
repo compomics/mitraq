@@ -1701,6 +1701,8 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         this.setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
 
+        int selectedRow = resultsJTable.getSelectedRow();
+
         int[] selectedRows = resultsJTable.getSelectedRows();
 
         for (int i = 0; i < selectedRows.length; i++) {
@@ -1713,6 +1715,14 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         reloadItraqData();
 
+        if (selectedRow != -1 && resultsJTable.getRowCount() >= selectedRow) {
+            if (resultsJTable.getRowCount() == selectedRow) {
+                resultsJTable.setRowSelectionInterval(selectedRow-1, selectedRow-1);
+            } else {
+                resultsJTable.setRowSelectionInterval(selectedRow, selectedRow);
+            }
+        } 
+        
         this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_removeJMenuItemActionPerformed
 
@@ -2199,8 +2209,14 @@ public class MiTRAQ extends javax.swing.JFrame {
             b.write("Selected Proteins:\n");
             for (int i = 0; i < resultsJTable.getRowCount(); i++) {
                 if (((Boolean) resultsJTable.getValueAt(i, resultsJTable.getColumn("  ").getModelIndex()))) {
-                    b.write(resultsJTable.getValueAt(i, resultsJTable.getColumn("Protein").getModelIndex()) + " "
-                            + resultsJTable.getValueAt(i, resultsJTable.getColumn("Accession").getModelIndex()) + "\n");
+
+                    String temp = (String) resultsJTable.getValueAt(i, resultsJTable.getColumn("Accession").getModelIndex());
+
+                    if (temp.startsWith("<html>")) {
+                        temp = temp.substring("<html></u>".length() - 1, temp.length() - "</u></html>".length());
+                    }
+                    
+                    b.write(resultsJTable.getValueAt(i, resultsJTable.getColumn("Protein").getModelIndex()) + " " + temp + "\n");
                 }
             }
 
@@ -2896,7 +2912,7 @@ public class MiTRAQ extends javax.swing.JFrame {
 
             boolean selected = false;
 
-            if (selectedProteins.contains(currentProtein.getProteinName() + " (" + currentProtein.getAccessionNumber() + ")")) {
+            if (selectedProteins.contains(currentProtein.getProteinName() + " " + currentProtein.getAccessionNumber())) {
                 selected = true;
             }
 
