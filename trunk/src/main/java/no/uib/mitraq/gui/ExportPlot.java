@@ -1,6 +1,5 @@
 package no.uib.mitraq.gui;
 
-import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,23 +30,23 @@ public class ExportPlot extends javax.swing.JDialog implements ProgressDialogPar
      */
     private ArrayList<ChartPanel> chartPanels;
     /**
-     * The parent frame.
+     * The MiTRAQ parent frame.
      */
-    private Frame parent;
+    private MiTRAQ mitraq;
 
     /**
      * Create and open a new ExportPlot dialog.
      *
-     * @param parent the parent frame
+     * @param mitraq the parent frame
      * @param modal
      * @param chartPanels the chart panels containing the plots to export
      */
-    public ExportPlot(java.awt.Frame parent, boolean modal, ArrayList<ChartPanel> chartPanels) {
-        super(parent, modal);
+    public ExportPlot(MiTRAQ mitraq, boolean modal, ArrayList<ChartPanel> chartPanels) {
+        super(mitraq, modal);
         this.chartPanels = chartPanels;
-        this.parent = parent;
+        this.mitraq = mitraq;
         initComponents();
-        setLocationRelativeTo(parent);
+        setLocationRelativeTo(mitraq);
         setVisible(true);
     }
 
@@ -159,7 +158,7 @@ public class ExportPlot extends javax.swing.JDialog implements ProgressDialogPar
 
         this.setVisible(false);
 
-        final JFileChooser chooser = new JFileChooser("user.home");
+        final JFileChooser chooser = new JFileChooser(mitraq.getLastSelectedFolder());
 
         if (chartPanels.size() > 1) {
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -168,6 +167,8 @@ public class ExportPlot extends javax.swing.JDialog implements ProgressDialogPar
         int selection = chooser.showSaveDialog(this);
 
         if (selection == JFileChooser.APPROVE_OPTION) {
+
+            mitraq.setLastSelectedFolder(chooser.getCurrentDirectory().getAbsolutePath());
 
             if (chartPanels.size() > 1) {
 
@@ -213,7 +214,7 @@ public class ExportPlot extends javax.swing.JDialog implements ProgressDialogPar
             }
         }
 
-        parent.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        mitraq.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         this.dispose();
     }//GEN-LAST:event_exportJButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -269,7 +270,7 @@ public class ExportPlot extends javax.swing.JDialog implements ProgressDialogPar
 
             if (saveFile) {
                 setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
-                parent.setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
+                mitraq.setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
 
                 ImageType currentImageType;
 
@@ -286,7 +287,7 @@ public class ExportPlot extends javax.swing.JDialog implements ProgressDialogPar
                 Export.exportChart(chartPanel.getChart(), chartPanel.getBounds(), new File(selectedFile), currentImageType);
 
                 setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-                parent.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+                mitraq.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
                 if (showSavedMessage) {
                     JOptionPane.showMessageDialog(this, "Plot saved to " + selectedFile, "Plot Saved", JOptionPane.INFORMATION_MESSAGE);
