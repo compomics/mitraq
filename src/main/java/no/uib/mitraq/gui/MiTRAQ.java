@@ -42,6 +42,7 @@ import no.uib.jsparklines.extra.TrueFalseIconRenderer;
 import no.uib.jsparklines.renderers.util.BarChartColorRenderer;
 import no.uib.jsparklines.renderers.util.StatisticalBarChartColorRenderer;
 import no.uib.mitraq.util.CustomLabelGenerator;
+import no.uib.mitraq.util.Util;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.stat.StatUtils;
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
@@ -52,7 +53,6 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.labels.ItemLabelAnchor;
 import org.jfree.chart.labels.ItemLabelPosition;
-import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
 import org.jfree.chart.labels.StandardCategoryToolTipGenerator;
 import org.jfree.chart.plot.CategoryMarker;
 import org.jfree.chart.plot.CategoryPlot;
@@ -1100,7 +1100,17 @@ public class MiTRAQ extends javax.swing.JFrame {
                             ratioStats.addValue(antiLog2(currentProtein.getRatiosGroupA().get(i)));
                             peptideStats.addValue(currentProtein.getNumPeptidesGroupA().get(i));
                             spectrumStats.addValue(currentProtein.getNumSpectraGroupA().get(i));
-                            labels.add(currentProtein.getNumPeptidesGroupA().get(i) + " / " + currentProtein.getNumSpectraGroupA().get(i));
+
+                            if (peptideAndSpectraJRadioButtonMenuItem.isSelected()) {
+                                labels.add(currentProtein.getNumPeptidesGroupA().get(i) + " / " + currentProtein.getNumSpectraGroupA().get(i));
+                            } else {
+                                if (ratioLogJCheckBoxMenuItem.isSelected()) {
+                                    labels.add("" + Util.roundDouble(currentProtein.getRatiosGroupA().get(i), 2));
+                                } else {
+                                    labels.add("" + Util.roundDouble(antiLog2(currentProtein.getRatiosGroupA().get(i)), 2));
+                                }
+                            }
+                            
                         } else {
                             ratioLog2Dataset.addValue(0, dataSeriesTitle, groupALabel + (i + 1));
                             datasetLog2Errors.add(null, null, dataSeriesTitle, groupALabel + (i + 1));
@@ -1148,7 +1158,17 @@ public class MiTRAQ extends javax.swing.JFrame {
                             datasetLog2Errors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
                             ratioDataset.addValue(antiLog2(currentProtein.getRatiosGroupB().get(i)), dataSeriesTitle, groupBLabel + (i + 1));
                             datasetErrors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
-                            labels.add(currentProtein.getNumPeptidesGroupB().get(i) + " / " + currentProtein.getNumSpectraGroupB().get(i));
+
+                            if (peptideAndSpectraJRadioButtonMenuItem.isSelected()) {
+                                labels.add(currentProtein.getNumPeptidesGroupB().get(i) + " / " + currentProtein.getNumSpectraGroupB().get(i));
+                            } else {
+                                if (ratioLogJCheckBoxMenuItem.isSelected()) {
+                                    labels.add("" + Util.roundDouble(currentProtein.getRatiosGroupB().get(i), 2));
+                                } else {
+                                    labels.add("" + Util.roundDouble(antiLog2(currentProtein.getRatiosGroupB().get(i)), 2));
+                                }
+                            }
+
                         } else {
                             ratioLog2Dataset.addValue(0, dataSeriesTitle, groupBLabel + (i + 1));
                             datasetLog2Errors.add(null, null, dataSeriesTitle, groupBLabel + (i + 1));
@@ -1855,7 +1875,9 @@ public class MiTRAQ extends javax.swing.JFrame {
                 labels.generateLabel(dataset, 0, 0);
                 renderer.setBaseItemLabelGenerator(labels);
             } else {
-                renderer.setBaseItemLabelGenerator(new StandardCategoryItemLabelGenerator());
+                CustomLabelGenerator labels = new CustomLabelGenerator(customLabels);
+                labels.generateLabel(dataset, 0, 0);
+                renderer.setBaseItemLabelGenerator(labels);
             }
 
             renderer.setBaseNegativeItemLabelPosition(new ItemLabelPosition(ItemLabelAnchor.OUTSIDE12, TextAnchor.BOTTOM_CENTER));
