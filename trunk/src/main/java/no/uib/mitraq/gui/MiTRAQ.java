@@ -50,6 +50,7 @@ import org.apache.commons.math.stat.inference.TestUtils;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.labels.ItemLabelAnchor;
 import org.jfree.chart.labels.ItemLabelPosition;
@@ -617,7 +618,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         chartsJPanel.setMaximumSize(new java.awt.Dimension(4, 200));
 
         chartsJSplitPane.setBorder(null);
-        chartsJSplitPane.setDividerLocation(800);
+        chartsJSplitPane.setDividerLocation(700);
         chartsJSplitPane.setResizeWeight(0.75);
 
         ratioChartJPanel.setLayout(new javax.swing.BoxLayout(ratioChartJPanel, javax.swing.BoxLayout.LINE_AXIS));
@@ -1056,6 +1057,25 @@ public class MiTRAQ extends javax.swing.JFrame {
                     }
                 }
 
+                // remove old data point annotations
+                if (foldChangeplot.getAnnotations() != null) {
+
+                    Iterator iterator = foldChangeplot.getAnnotations().iterator();
+
+                    // store the keys in a list first to escape a ConcurrentModificationException
+                    ArrayList<XYTextAnnotation> tempAnnotations = new ArrayList<XYTextAnnotation>();
+
+                    while (iterator.hasNext()) {
+                        tempAnnotations.add((XYTextAnnotation) iterator.next());
+                    }
+
+                    for (int i = 0; i < tempAnnotations.size(); i++) {
+                        if (tempAnnotations.get(i).getText().startsWith("Current: ")) {
+                            foldChangeplot.removeAnnotation(tempAnnotations.get(i));
+                        }
+                    }
+                }
+
 
                 for (int rowCounter = 0; rowCounter < resultsJTable.getSelectedRows().length; rowCounter++) {
 
@@ -1073,6 +1093,14 @@ public class MiTRAQ extends javax.swing.JFrame {
 
                         IntervalMarker marker = new IntervalMarker(foldChange - (markerWidth / 2), foldChange + (markerWidth / 2), new Color(1f, 0f, 0f, 0.5f));
                         foldChangeplot.addDomainMarker(marker, Layer.FOREGROUND);
+
+                        // add annotation of the current fold change
+                        if (resultsJTable.getSelectedRows().length == 1) {
+                            foldChangeplot.addAnnotation(new XYTextAnnotation(
+                                    "Current: " + Util.roundDouble(foldChange, 2),
+                                    foldChangeplot.getDomainAxis().getUpperBound() * 0.75,
+                                    foldChangeplot.getRangeAxis().getUpperBound() * 0.75));
+                        }
                     }
 
 
@@ -1145,7 +1173,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                                     labels.add("" + Util.roundDouble(antiLog2(currentProtein.getRatiosGroupA().get(i)), 2));
                                 }
                             }
-                            
+
                         } else {
                             ratioLog2Dataset.addValue(0, dataSeriesTitle, groupALabel + (i + 1));
                             datasetLog2Errors.add(null, null, dataSeriesTitle, groupALabel + (i + 1));
@@ -1393,6 +1421,10 @@ public class MiTRAQ extends javax.swing.JFrame {
      */
     private void exportProteinListJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportProteinListJButtonActionPerformed
 
+        int option = JOptionPane.showConfirmDialog(this, "Export only selected proteins?", "Export Selected?", JOptionPane.YES_NO_OPTION);
+
+        boolean exportSelected = (option == JOptionPane.YES_OPTION);
+
         JFileChooser chooser = new JFileChooser(currentRatioFile);
         chooser.setDialogTitle("Select the Export File");
         chooser.setSelectedFile(new File(currentRatioFile));
@@ -1422,6 +1454,10 @@ public class MiTRAQ extends javax.swing.JFrame {
 
                     // add the current filter settings at the top of the file
                     addFilterSettings(w);
+
+                    if (exportSelected) {
+                        w.write("Note that only the selected proteins were exported.");
+                    }
 
                     w.write("\nIndex\tProtein Description\tAccession Number\tAccession Numbers\tUnique Peptides\t"
                             + "Coverage\tExperiment Counter\tFold Change\tp-value\tq-value\tSignificant\tBonferroni\t");
@@ -1457,31 +1493,35 @@ public class MiTRAQ extends javax.swing.JFrame {
                         int index = new Integer("" + resultsJTable.getValueAt(i, 0)) - 1;
                         Protein currentProtein = allValidProteins.get(index);
 
-                        w.write((index + 1) + "\t" + currentProtein.getProteinName() + "\t" + currentProtein.getAccessionNumber()
-                                + "\t" + currentProtein.getAccessionNumbersAll() + "\t" + currentProtein.getNumberUniquePeptides()
-                                + "\t" + currentProtein.getPercentCoverage() + "\t" + currentProtein.getNumExperimentsTwoUniquePeptides()
-                                + "\t" + currentProtein.getFoldChange() + "\t" + currentProtein.getPValue()
-                                + "\t" + currentProtein.getQValue()
-                                + "\t" + resultsJTable.getValueAt(i, resultsJTable.getColumn("Significant").getModelIndex())
-                                + "\t" + resultsJTable.getValueAt(i, resultsJTable.getColumn("Bonferroni").getModelIndex()) + "\t");
+                        if ((exportSelected && (Boolean) resultsJTable.getValueAt(i, resultsJTable.getColumn("  ").getModelIndex()))
+                                || !exportSelected) {
 
-                        for (int j = 0; j < currentProtein.getRatiosGroupA().size(); j++) {
-                            if (currentProtein.getRatiosGroupA().get(j) == null) {
-                                w.write("\t");
-                            } else {
-                                w.write(currentProtein.getRatiosGroupA().get(j) + "\t");
+                            w.write((index + 1) + "\t" + currentProtein.getProteinName() + "\t" + currentProtein.getAccessionNumber()
+                                    + "\t" + currentProtein.getAccessionNumbersAll() + "\t" + currentProtein.getNumberUniquePeptides()
+                                    + "\t" + currentProtein.getPercentCoverage() + "\t" + currentProtein.getNumExperimentsTwoUniquePeptides()
+                                    + "\t" + currentProtein.getFoldChange() + "\t" + currentProtein.getPValue()
+                                    + "\t" + currentProtein.getQValue()
+                                    + "\t" + resultsJTable.getValueAt(i, resultsJTable.getColumn("Significant").getModelIndex())
+                                    + "\t" + resultsJTable.getValueAt(i, resultsJTable.getColumn("Bonferroni").getModelIndex()) + "\t");
+
+                            for (int j = 0; j < currentProtein.getRatiosGroupA().size(); j++) {
+                                if (currentProtein.getRatiosGroupA().get(j) == null) {
+                                    w.write("\t");
+                                } else {
+                                    w.write(currentProtein.getRatiosGroupA().get(j) + "\t");
+                                }
                             }
-                        }
 
-                        for (int j = 0; j < currentProtein.getRatiosGroupB().size(); j++) {
-                            if (currentProtein.getRatiosGroupB().get(j) == null) {
-                                w.write("\t");
-                            } else {
-                                w.write(currentProtein.getRatiosGroupB().get(j) + "\t");
+                            for (int j = 0; j < currentProtein.getRatiosGroupB().size(); j++) {
+                                if (currentProtein.getRatiosGroupB().get(j) == null) {
+                                    w.write("\t");
+                                } else {
+                                    w.write(currentProtein.getRatiosGroupB().get(j) + "\t");
+                                }
                             }
-                        }
 
-                        w.write("\n");
+                            w.write("\n");
+                        }
                     }
 
                     w.close();
@@ -1661,6 +1701,7 @@ public class MiTRAQ extends javax.swing.JFrame {
      */
     private void exportAllPlotsJMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportAllPlotsJMenuItemActionPerformed
 
+        int selectedRow = resultsJTable.getSelectedRow();
         int[] selectedRows = resultsJTable.getSelectedRows();
 
         ArrayList<ChartPanel> chartPanels = new ArrayList<ChartPanel>();
@@ -1675,9 +1716,13 @@ public class MiTRAQ extends javax.swing.JFrame {
         }
 
         // reset the row selection interval
+        resultsJTable.setRowSelectionInterval(selectedRow, selectedRow);
+
         for (int i = 0; i < selectedRows.length; i++) {
             resultsJTable.addRowSelectionInterval(selectedRows[i], selectedRows[i]);
         }
+
+        resultsJTableMouseClicked(null);
 
         if (chartPanels.size() > 0) {
             // export the plots
@@ -1798,15 +1843,15 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         if (selectedRow != -1 && resultsJTable.getRowCount() >= selectedRow) {
             if (resultsJTable.getRowCount() == selectedRow) {
-                resultsJTable.setRowSelectionInterval(selectedRow-1, selectedRow-1);
+                resultsJTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
             } else {
                 resultsJTable.setRowSelectionInterval(selectedRow, selectedRow);
             }
 
             // update the plots
             resultsJTableMouseClicked(null);
-        } 
-        
+        }
+
         this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_removeJMenuItemActionPerformed
 
@@ -1835,11 +1880,7 @@ public class MiTRAQ extends javax.swing.JFrame {
      * @param evt
      */
     private void saveAsJMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsJMenuItemActionPerformed
-
-
         // @TODO: implement Save As...?
-
-
 //        final JFileChooser chooser = new JFileChooser(lastSelectedFolder);
 //
 //        int selection = chooser.showSaveDialog(this);
@@ -1869,7 +1910,6 @@ public class MiTRAQ extends javax.swing.JFrame {
 //        } else {
 //            JOptionPane.showMessageDialog(this, "No project to save.", "No Project", JOptionPane.INFORMATION_MESSAGE);
 //        }
-
     }//GEN-LAST:event_saveAsJMenuItemActionPerformed
 
     /**
@@ -2345,7 +2385,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                     if (temp.startsWith("<html>")) {
                         temp = temp.substring("<html></u>".length() - 1, temp.length() - "</u></html>".length());
                     }
-                    
+
                     b.write(resultsJTable.getValueAt(i, resultsJTable.getColumn("Protein").getModelIndex()) + " " + temp + "\n");
                 }
             }
@@ -2499,6 +2539,7 @@ public class MiTRAQ extends javax.swing.JFrame {
             boolean updateFilter) {
 
         foldChangeChartJPanel.removeAll();
+        foldChangeChartJPanel.repaint();
 
         saveJMenuItem.setEnabled(true);
 
@@ -2509,7 +2550,8 @@ public class MiTRAQ extends javax.swing.JFrame {
         currentRatioFile = ratioFile;
 
         // add the title of the project to the dialog header
-        this.setTitle("MiTRAQ - Multiple iTRAQ Data Analysis - v" + getVersion() + " beta" + " - " + new File(ratioFile).getName()); // @TODO: remove beta when releasing v1.0
+        this.setTitle("MiTRAQ - Multiple iTRAQ Data Analysis - v" + getVersion() + " beta"
+                + " - " + new File(ratioFile).getName());
 
         this.groupALabel = groupALabel;
         this.groupBLabel = groupBLabel;
@@ -2526,7 +2568,6 @@ public class MiTRAQ extends javax.swing.JFrame {
 
 
         // clear old data
-
         while (resultsJTable.getRowCount() > 0) {
             ((DefaultTableModel) resultsJTable.getModel()).removeRow(0);
         }
@@ -2971,7 +3012,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                 try {
                     allNonDiffExpressedPValues.add(TestUtils.homoscedasticTTest(sampleA, sampleB));
                 } catch (MathException e) {
-                    System.out.println(currentProtein);
+                    System.out.println("Math Exception: " + currentProtein);
                     e.printStackTrace();
                 }
             }
@@ -3001,7 +3042,7 @@ public class MiTRAQ extends javax.swing.JFrame {
 
             if (currentProtein.getPValue() != null) {
 
-                while (allNonDiffExpressedPValues.get(qValueIndex) < currentProtein.getPValue()) {
+                while (qValueIndex < allNonDiffExpressedPValues.size() && allNonDiffExpressedPValues.get(qValueIndex) < currentProtein.getPValue()) {
                     qValueIndex++;
                 }
 
@@ -3156,7 +3197,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         foldChangeChartJPanel.add(chartPanel);
 
 
-        // add markers for 1 SDs
+        // add markers for 2 SDs
         double lower2SD = StatUtils.percentile(tempValues, 50) - stats.getStandardDeviation() * 2;
         double upper2SD = StatUtils.percentile(tempValues, 50) + stats.getStandardDeviation() * 2;
 
@@ -3165,14 +3206,33 @@ public class MiTRAQ extends javax.swing.JFrame {
         marker2SD.setLabelTextAnchor(TextAnchor.TOP_LEFT);
         foldChangeplot.addDomainMarker(marker2SD, Layer.BACKGROUND);
 
-        // add markers for 2 SDs
+        // add markers for 1 SDs
         double lower1SD = StatUtils.percentile(tempValues, 50) - stats.getStandardDeviation();
         double upper1SD = StatUtils.percentile(tempValues, 50) + stats.getStandardDeviation();
 
-        IntervalMarker marker1SD = new IntervalMarker(lower1SD, upper1SD, new Color(0f, 1f, 1f, 0.1f));
+        IntervalMarker marker1SD = new IntervalMarker(lower1SD, upper1SD, new Color(0f, 0f, 1f, 0.1f));
         marker1SD.setLabel("1SD");
         marker1SD.setLabelTextAnchor(TextAnchor.TOP_LEFT);
         foldChangeplot.addDomainMarker(marker1SD, Layer.BACKGROUND);
+
+
+        // add annotation of the median and standard deviations
+        foldChangeplot.addAnnotation(new XYTextAnnotation(
+                "Median: " + Util.roundDouble(StatUtils.percentile(tempValues, 50), 2),
+                foldChangeplot.getDomainAxis().getUpperBound() * 0.75,
+                foldChangeplot.getRangeAxis().getUpperBound() * 0.96));
+
+        foldChangeplot.addAnnotation(new XYTextAnnotation(
+                "1SD: [" + Util.roundDouble(StatUtils.percentile(tempValues, 50) - stats.getStandardDeviation(), 2)
+                + ", " + Util.roundDouble(StatUtils.percentile(tempValues, 50) + stats.getStandardDeviation(), 2) + "]",
+                foldChangeplot.getDomainAxis().getUpperBound() * 0.75,
+                foldChangeplot.getRangeAxis().getUpperBound() * 0.90));
+
+        foldChangeplot.addAnnotation(new XYTextAnnotation(
+                "2SD: [" + Util.roundDouble(StatUtils.percentile(tempValues, 50) - stats.getStandardDeviation() * 2, 2)
+                + ", " + Util.roundDouble(StatUtils.percentile(tempValues, 50) + stats.getStandardDeviation() * 2, 2) + "]",
+                foldChangeplot.getDomainAxis().getUpperBound() * 0.75,
+                foldChangeplot.getRangeAxis().getUpperBound() * 0.84));
 
         sd1JCheckBoxMenuItemActionPerformed(null);
         sd2JCheckBoxMenuItemActionPerformed(null);

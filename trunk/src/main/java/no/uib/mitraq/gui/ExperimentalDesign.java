@@ -28,7 +28,7 @@ import javax.swing.table.TableColumn;
  *
  * @author Harald Barsnes
  */
-public class ExperimentalDesign extends javax.swing.JDialog {
+public class ExperimentalDesign extends javax.swing.JDialog implements ProgressDialogParent {
 
     /**
      * A reference to the MiTRAQ main frame.
@@ -42,6 +42,14 @@ public class ExperimentalDesign extends javax.swing.JDialog {
      * The labels used in 8-plex iTRAQ.
      */
     private Vector<String> iTraq8PlexLabels = new Vector<String>();
+    /**
+     * If set to true the opening of the file is stopped.
+     */
+    private boolean cancelProgress = false;
+    /**
+     * The progress dialog.
+     */
+    private ProgressDialog progressDialog;
 
     /**
      * Creates a new ExperimentalDesign dialog.
@@ -505,6 +513,7 @@ public class ExperimentalDesign extends javax.swing.JDialog {
      * @param evt
      */
     private void loadJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadJButtonActionPerformed
+
         this.setVisible(false);
 
         // store the group colors
@@ -514,7 +523,47 @@ public class ExperimentalDesign extends javax.swing.JDialog {
         mitraq.loadItraqData(groupOneLabelJTextField.getText(), groupTwoLabelJTextField.getText(),
                 iTraqTypeJComboBox.getSelectedItem().toString(), iTraqReferenceJComboBox.getSelectedItem().toString(),
                 new Integer(numberOfExperimentsJSpinner.getValue().toString()), experimentalDesignJTable, ratioFileJTextField.getText(), true);
+
         this.dispose();
+
+
+        // a try at adding a progress bar when loading the spectra, works, but throws a java null pointer exception...
+
+//        this.setVisible(false);
+//
+//        progressDialog = new ProgressDialog(this, this, true);
+//
+//        new Thread(new Runnable() {
+//
+//            public void run() {
+//                progressDialog.setIntermidiate(true);
+//                progressDialog.setTitle("Loading Data. Please Wait...");
+//                progressDialog.setVisible(true);
+//            }
+//        }, "ProgressDialog").start();
+//
+//        cancelProgress = false;
+//
+//        final ExperimentalDesign temp = this;
+//
+//        new Thread("OpenThread") {
+//
+//            @Override
+//            public void run() {
+//
+//                // store the group colors
+//                mitraq.setGroupAColor(groupAColorJPanel.getBackground());
+//                mitraq.setGroupBColor(groupBColorJPanel.getBackground());
+//
+//                mitraq.loadItraqData(groupOneLabelJTextField.getText(), groupTwoLabelJTextField.getText(),
+//                        iTraqTypeJComboBox.getSelectedItem().toString(), iTraqReferenceJComboBox.getSelectedItem().toString(),
+//                        new Integer(numberOfExperimentsJSpinner.getValue().toString()), experimentalDesignJTable, ratioFileJTextField.getText(), true);
+//                progressDialog.setVisible(false);
+//                progressDialog.dispose();
+//                temp.dispose();
+//            }
+//        }.start();
+
     }//GEN-LAST:event_loadJButtonActionPerformed
 
     /**
@@ -593,7 +642,6 @@ public class ExperimentalDesign extends javax.swing.JDialog {
             mitraq.setGroupBColor(color);
         }
     }//GEN-LAST:event_groupBColorJPanelMouseClicked
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable experimentalDesignJTable;
     private javax.swing.JButton findInputFileJButton;
@@ -756,6 +804,11 @@ public class ExperimentalDesign extends javax.swing.JDialog {
         }
 
         numberOfGroupsJSpinnerStateChanged(null);
+    }
+
+    @Override
+    public void cancelProgress() {
+        cancelProgress = true;
     }
 
     /**
