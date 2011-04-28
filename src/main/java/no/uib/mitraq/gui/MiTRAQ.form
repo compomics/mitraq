@@ -638,7 +638,7 @@
                     <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                       <Border info="null"/>
                     </Property>
-                    <Property name="dividerLocation" type="int" value="800"/>
+                    <Property name="dividerLocation" type="int" value="700"/>
                     <Property name="resizeWeight" type="double" value="0.75"/>
                   </Properties>
 
