@@ -86,6 +86,10 @@ public class MiTRAQ extends javax.swing.JFrame {
         XYBarRenderer.setDefaultBarPainter(new StandardXYBarPainter());
     }
     /**
+     * The last selected folder.
+     */
+    private String lastSelectedFolder = "user.home";
+    /**
      * The fold change plot.
      */
     private XYPlot foldChangeplot;
@@ -327,6 +331,24 @@ public class MiTRAQ extends javax.swing.JFrame {
     }
 
     /**
+     * Set the last selected folder.
+     *
+     * @param lastSelectedFolder
+     */
+    public void setLastSelectedFolder(String lastSelectedFolder) {
+        this.lastSelectedFolder = lastSelectedFolder;
+    }
+
+    /**
+     * Returns the last selected folder.
+     *
+     * @return the last selected folder
+     */
+    public String getLastSelectedFolder() {
+        return lastSelectedFolder;
+    }
+
+    /**
      * Returns the path to the jar file.
      *
      * @return the path to the jar file
@@ -410,6 +432,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         fileJMenu = new javax.swing.JMenu();
         openJMenuItem = new javax.swing.JMenuItem();
         saveJMenuItem = new javax.swing.JMenuItem();
+        saveAsJMenuItem = new javax.swing.JMenuItem();
         jSeparator3 = new javax.swing.JPopupMenu.Separator();
         exitJMenuItem = new javax.swing.JMenuItem();
         editJMenu = new javax.swing.JMenu();
@@ -677,6 +700,18 @@ public class MiTRAQ extends javax.swing.JFrame {
             }
         });
         fileJMenu.add(saveJMenuItem);
+
+        saveAsJMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.ALT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+        saveAsJMenuItem.setMnemonic('S');
+        saveAsJMenuItem.setText("Save As");
+        saveAsJMenuItem.setToolTipText("Save the selections and settings");
+        saveAsJMenuItem.setEnabled(false);
+        saveAsJMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveAsJMenuItemActionPerformed(evt);
+            }
+        });
+        fileJMenu.add(saveAsJMenuItem);
         fileJMenu.add(jSeparator3);
 
         exitJMenuItem.setText("Exit");
@@ -1127,7 +1162,20 @@ public class MiTRAQ extends javax.swing.JFrame {
                         datasetLog2Errors.add(ratioLog2Stats.getMean(), ratioLog2Stats.getStandardDeviation(), dataSeriesTitle, groupALabel + " Avg");
                         ratioDataset.addValue(ratioStats.getMean(), dataSeriesTitle, groupALabel + " Avg");
                         datasetErrors.add(ratioStats.getMean(), ratioStats.getStandardDeviation(), dataSeriesTitle, groupALabel + " Avg");
-                        labels.add(null);
+
+                        if (peptideAndSpectraJRadioButtonMenuItem.isSelected()) {
+                            if (ratioLogJCheckBoxMenuItem.isSelected()) {
+                                labels.add(null); // @TODO: add labels??
+                            } else {
+                                labels.add(null); // @TODO: add labels??
+                            }
+                        } else {
+                            if (ratioLogJCheckBoxMenuItem.isSelected()) {
+                                labels.add("" + Util.roundDouble(ratioLog2Stats.getMean(), 2));
+                            } else {
+                                labels.add("" + Util.roundDouble(antiLog2(ratioLog2Stats.getMean()), 2));
+                            }
+                        }
 
                         ratioLog2Stats = new SummaryStatistics();
                         ratioStats = new SummaryStatistics();
@@ -1148,7 +1196,20 @@ public class MiTRAQ extends javax.swing.JFrame {
                         datasetLog2Errors.add(ratioLog2Stats.getMean(), ratioLog2Stats.getStandardDeviation(), dataSeriesTitle, groupBLabel + " Avg");
                         ratioDataset.addValue(ratioStats.getMean(), dataSeriesTitle, groupBLabel + " Avg");
                         datasetErrors.add(ratioStats.getMean(), ratioStats.getStandardDeviation(), dataSeriesTitle, groupBLabel + " Avg");
-                        labels.add(null);
+
+                        if (peptideAndSpectraJRadioButtonMenuItem.isSelected()) {
+                            if (ratioLogJCheckBoxMenuItem.isSelected()) {
+                                labels.add(null); // @TODO: add labels??
+                            } else {
+                                labels.add(null); // @TODO: add labels??
+                            }
+                        } else {
+                            if (ratioLogJCheckBoxMenuItem.isSelected()) {
+                                labels.add("" + Util.roundDouble(ratioLog2Stats.getMean(), 2));
+                            } else {
+                                labels.add("" + Util.roundDouble(antiLog2(ratioLog2Stats.getMean()), 2));
+                            }
+                        }
                     }
 
                     // add bars for the data values in group B
@@ -1325,7 +1386,7 @@ public class MiTRAQ extends javax.swing.JFrame {
     }//GEN-LAST:event_significanceLevelJSpinnerStateChanged
 
     /**
-     * Tries to export the currently shown proteins in the results tabel to a
+     * Tries to export the currently shown proteins in the results table to a
      * tab separated text file.
      *
      * @param evt
@@ -1741,6 +1802,9 @@ public class MiTRAQ extends javax.swing.JFrame {
             } else {
                 resultsJTable.setRowSelectionInterval(selectedRow, selectedRow);
             }
+
+            // update the plots
+            resultsJTableMouseClicked(null);
         } 
         
         this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -1764,6 +1828,49 @@ public class MiTRAQ extends javax.swing.JFrame {
         }
 
     }//GEN-LAST:event_resultsJTableMouseMoved
+
+    /**
+     * Opens the Save As menu.
+     * 
+     * @param evt
+     */
+    private void saveAsJMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsJMenuItemActionPerformed
+
+
+        // @TODO: implement Save As...?
+
+
+//        final JFileChooser chooser = new JFileChooser(lastSelectedFolder);
+//
+//        int selection = chooser.showSaveDialog(this);
+//
+//        if (selection == JFileChooser.APPROVE_OPTION) {
+//
+//            String path = chooser.getSelectedFile().getAbsoluteFile().getPath();
+//
+//            if (!path.endsWith(".tsv")) {
+//                path = path + ".tsv";
+//            }
+//
+//            boolean save = true;
+//
+//            if (new File(path).exists()) {
+//                int value = JOptionPane.showConfirmDialog(this, "The file already exists. Overwrite?", "Overwrite?",
+//                        JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
+//                save = value == JOptionPane.YES_OPTION;
+//            }
+//
+//            if (save) {
+//
+//            }
+//
+//        if (currentRatioFile != null) {
+//            saveSettings(true);
+//        } else {
+//            JOptionPane.showMessageDialog(this, "No project to save.", "No Project", JOptionPane.INFORMATION_MESSAGE);
+//        }
+
+    }//GEN-LAST:event_saveAsJMenuItemActionPerformed
 
     /**
      * Update the minimium number of peptides setting.
@@ -2014,6 +2121,7 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JTable resultsJTable;
     private javax.swing.JPanel resultsTableJPanel;
     private javax.swing.JScrollPane resultsTableJScrollPane;
+    private javax.swing.JMenuItem saveAsJMenuItem;
     private javax.swing.JMenuItem saveJMenuItem;
     private javax.swing.JCheckBoxMenuItem sd1JCheckBoxMenuItem;
     private javax.swing.JCheckBoxMenuItem sd2JCheckBoxMenuItem;

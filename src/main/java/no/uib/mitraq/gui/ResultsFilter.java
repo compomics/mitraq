@@ -52,7 +52,7 @@ public class ResultsFilter extends javax.swing.JDialog {
         foldChangeJTextField.setText(currentFilterValues[4]);
         pValueJTextField.setText(currentFilterValues[5]);
         qValueJTextField.setText(currentFilterValues[6]);
-        
+
         if (currentFilterValues.length > 7) {
             accessionJTextField.setText(currentFilterValues[7]);
         }
@@ -867,12 +867,15 @@ public class ResultsFilter extends javax.swing.JDialog {
             try {
                 Double value = new Double(pValueJTextField.getText());
 
-                if (pValueGreaterThanJRadioButton.isSelected()) {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.AFTER, value, resultsTable.getColumn("p-value").getModelIndex()));
-                } else if (pValueEqualJRadioButton.isSelected()) {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.EQUAL, value, resultsTable.getColumn("p-value").getModelIndex()));
-                } else {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.BEFORE, value, resultsTable.getColumn("p-value").getModelIndex()));
+                if (value != 0) {
+
+                    if (pValueGreaterThanJRadioButton.isSelected()) {
+                        filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.AFTER, value, resultsTable.getColumn("p-value").getModelIndex()));
+                    } else if (pValueEqualJRadioButton.isSelected()) {
+                        filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.EQUAL, value, resultsTable.getColumn("p-value").getModelIndex()));
+                    } else {
+                        filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.BEFORE, value, resultsTable.getColumn("p-value").getModelIndex()));
+                    }
                 }
             } catch (NumberFormatException e) {
                 //JOptionPane.showMessageDialog(this, "p-value has to be a number!", "Filter Error", JOptionPane.ERROR_MESSAGE);
@@ -885,12 +888,15 @@ public class ResultsFilter extends javax.swing.JDialog {
             try {
                 Double value = new Double(qValueJTextField.getText());
 
-                if (qValueGreaterThanJRadioButton.isSelected()) {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.AFTER, value, resultsTable.getColumn("q-value").getModelIndex()));
-                } else if (qValueEqualJRadioButton.isSelected()) {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.EQUAL, value, resultsTable.getColumn("q-value").getModelIndex()));
-                } else {
-                    filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.BEFORE, value, resultsTable.getColumn("q-value").getModelIndex()));
+                if (value != 0) {
+
+                    if (qValueGreaterThanJRadioButton.isSelected()) {
+                        filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.AFTER, value, resultsTable.getColumn("q-value").getModelIndex()));
+                    } else if (qValueEqualJRadioButton.isSelected()) {
+                        filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.EQUAL, value, resultsTable.getColumn("q-value").getModelIndex()));
+                    } else {
+                        filters.add(RowFilter.numberFilter(RowFilter.ComparisonType.BEFORE, value, resultsTable.getColumn("q-value").getModelIndex()));
+                    }
                 }
             } catch (NumberFormatException e) {
                 //JOptionPane.showMessageDialog(this, "q-value has to be a number!", "Filter Error", JOptionPane.ERROR_MESSAGE);
