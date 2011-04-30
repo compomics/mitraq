@@ -51,6 +51,7 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYTextAnnotation;
+import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.labels.ItemLabelAnchor;
 import org.jfree.chart.labels.ItemLabelPosition;
@@ -968,12 +969,19 @@ public class MiTRAQ extends javax.swing.JFrame {
         if (resultsJTable.getRowCount() > 0) {
             resultsJTableMouseClicked(null);
         } else {
-            foldChangeChartJPanel.removeAll();
+            ratioChartJPanel.removeAll();
+
+            // remove old fold change interval markers
+            removeFoldChangeMarkers();
+
+            // remove old data point annotations
+            removeDataPointAnnotations();
 
             java.awt.EventQueue.invokeLater(new Runnable() {
 
                 public void run() {
                     foldChangeChartJPanel.repaint();
+                    ratioChartJPanel.repaint();
                 }
             });
         }
@@ -1041,41 +1049,10 @@ public class MiTRAQ extends javax.swing.JFrame {
                 }
 
                 // remove old fold change interval markers
-                if (foldChangeplot.getDomainMarkers(Layer.FOREGROUND) != null) {
-
-                    Iterator iterator = foldChangeplot.getDomainMarkers(Layer.FOREGROUND).iterator();
-
-                    // store the keys in a list first to escape a ConcurrentModificationException
-                    ArrayList<IntervalMarker> tempMarkers = new ArrayList<IntervalMarker>();
-
-                    while (iterator.hasNext()) {
-                        tempMarkers.add((IntervalMarker) iterator.next());
-                    }
-
-                    for (int i = 0; i < tempMarkers.size(); i++) {
-                        foldChangeplot.removeDomainMarker(tempMarkers.get(i));
-                    }
-                }
+                removeFoldChangeMarkers();
 
                 // remove old data point annotations
-                if (foldChangeplot.getAnnotations() != null) {
-
-                    Iterator iterator = foldChangeplot.getAnnotations().iterator();
-
-                    // store the keys in a list first to escape a ConcurrentModificationException
-                    ArrayList<XYTextAnnotation> tempAnnotations = new ArrayList<XYTextAnnotation>();
-
-                    while (iterator.hasNext()) {
-                        tempAnnotations.add((XYTextAnnotation) iterator.next());
-                    }
-
-                    for (int i = 0; i < tempAnnotations.size(); i++) {
-                        if (tempAnnotations.get(i).getText().startsWith("Current: ")) {
-                            foldChangeplot.removeAnnotation(tempAnnotations.get(i));
-                        }
-                    }
-                }
-
+                removeDataPointAnnotations();
 
                 for (int rowCounter = 0; rowCounter < resultsJTable.getSelectedRows().length; rowCounter++) {
 
@@ -2032,6 +2009,8 @@ public class MiTRAQ extends javax.swing.JFrame {
         }
 
         plot.setRenderer(renderer);
+
+        //plot.getDomainAxis().setCategoryLabelPositions(CategoryLabelPositions.UP_45); // @TODO: make this a user choice?
 
         // change the margin at the top and bottom of the range axis
         final ValueAxis rangeAxis = plot.getRangeAxis();
@@ -3421,5 +3400,49 @@ public class MiTRAQ extends javax.swing.JFrame {
      */
     private double antiLog2(double log2Value) {
         return Math.pow(2, log2Value);
+    }
+
+    /**
+     * Removes the fold change markers.
+     */
+    private void removeFoldChangeMarkers() {
+        if (foldChangeplot != null && foldChangeplot.getDomainMarkers(Layer.FOREGROUND) != null) {
+
+            Iterator iterator = foldChangeplot.getDomainMarkers(Layer.FOREGROUND).iterator();
+
+            // store the keys in a list first to escape a ConcurrentModificationException
+            ArrayList<IntervalMarker> tempMarkers = new ArrayList<IntervalMarker>();
+
+            while (iterator.hasNext()) {
+                tempMarkers.add((IntervalMarker) iterator.next());
+            }
+
+            for (int i = 0; i < tempMarkers.size(); i++) {
+                foldChangeplot.removeDomainMarker(tempMarkers.get(i));
+            }
+        }
+    }
+
+    /**
+     * Remove the data point annotation in the fold change plot.
+     */
+    private void removeDataPointAnnotations() {
+        if (foldChangeplot != null && foldChangeplot.getAnnotations() != null) {
+
+            Iterator iterator = foldChangeplot.getAnnotations().iterator();
+
+            // store the keys in a list first to escape a ConcurrentModificationException
+            ArrayList<XYTextAnnotation> tempAnnotations = new ArrayList<XYTextAnnotation>();
+
+            while (iterator.hasNext()) {
+                tempAnnotations.add((XYTextAnnotation) iterator.next());
+            }
+
+            for (int i = 0; i < tempAnnotations.size(); i++) {
+                if (tempAnnotations.get(i).getText().startsWith("Current: ")) {
+                    foldChangeplot.removeAnnotation(tempAnnotations.get(i));
+                }
+            }
+        }
     }
 }
