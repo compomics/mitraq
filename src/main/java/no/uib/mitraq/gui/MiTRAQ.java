@@ -1,6 +1,8 @@
 package no.uib.mitraq.gui;
 
-import com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel;
+import com.jgoodies.looks.plastic.PlasticLookAndFeel;
+import com.jgoodies.looks.plastic.PlasticXPLookAndFeel;
+import com.jgoodies.looks.plastic.theme.SkyKrupp;
 import no.uib.mitraq.util.Protein;
 import no.uib.mitraq.util.BareBonesBrowserLaunch;
 import no.uib.mitraq.util.TsvFileFilter;
@@ -30,6 +32,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.RowFilter;
 import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -51,7 +54,6 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYTextAnnotation;
-import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.labels.ItemLabelAnchor;
 import org.jfree.chart.labels.ItemLabelPosition;
@@ -2071,11 +2073,7 @@ public class MiTRAQ extends javax.swing.JFrame {
     public static void main(String args[]) {
 
         // set the look and feel
-        try {
-            UIManager.setLookAndFeel(new NimbusLookAndFeel());
-        } catch (UnsupportedLookAndFeelException e) {
-            // ignore exception, i.e. use default look and feel
-        }
+        setLookAndFeel();
 
         java.awt.EventQueue.invokeLater(new Runnable() {
 
@@ -2093,6 +2091,40 @@ public class MiTRAQ extends javax.swing.JFrame {
                 new ExperimentalDesign(miTRAQ, true, dataFile);
             }
         });
+    }
+
+    /**
+     * Sets the look and feel. First tries to use Nimbus, if Nimbus is not
+     * supported then PlasticXPLookAndFeel is used.
+     *
+     * @return true if the Nimbus look and feel is used, false otherwise
+     */
+    public static boolean setLookAndFeel() {
+
+        boolean nimbusLookAndFeelFound = false;
+
+        try {
+            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    nimbusLookAndFeelFound = true;
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            // ignore error, use look and feel below
+        }
+
+        if (!nimbusLookAndFeelFound) {
+            try {
+                PlasticLookAndFeel.setPlasticTheme(new SkyKrupp());
+                UIManager.setLookAndFeel(new PlasticXPLookAndFeel());
+            } catch (UnsupportedLookAndFeelException ex) {
+                // this should not be possible...
+            }
+        }
+
+        return nimbusLookAndFeelFound;
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem aboutMenuItem;
