@@ -524,6 +524,9 @@ public class MiTRAQ extends javax.swing.JFrame {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 resultsJTableMouseClicked(evt);
             }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                resultsJTableMouseExited(evt);
+            }
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 resultsJTableMouseReleased(evt);
             }
@@ -1014,7 +1017,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                     database = "IPI";
                 } else if (tempAccession.toUpperCase().startsWith("SWISS-PROT")
                         || tempAccession.startsWith("UNI-PROT")) {  // @TODO: untested!!
-                    database = "UNI-PROT";
+                    database = "UNIPROT";
                 }
 
                 // @TODO: add more databases
@@ -1890,6 +1893,15 @@ public class MiTRAQ extends javax.swing.JFrame {
 //            JOptionPane.showMessageDialog(this, "No project to save.", "No Project", JOptionPane.INFORMATION_MESSAGE);
 //        }
     }//GEN-LAST:event_saveAsJMenuItemActionPerformed
+
+    /**
+     * Changes the cursor back to the default cursor a hand.
+     *
+     * @param evt
+     */
+    private void resultsJTableMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_resultsJTableMouseExited
+        this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+    }//GEN-LAST:event_resultsJTableMouseExited
 
     /**
      * Update the minimium number of peptides setting.
