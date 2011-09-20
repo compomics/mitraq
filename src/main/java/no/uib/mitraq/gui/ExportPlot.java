@@ -190,22 +190,33 @@ public class ExportPlot extends javax.swing.JDialog implements ProgressDialogPar
                     @Override
                     public void run() {
 
-                        progressDialog.setMax(chartPanels.size());
+                        boolean makeDir = true;
 
-                        for (int i = 0; i < chartPanels.size() && !cancelExport; i++) {
-
-                            progressDialog.setValue(i);
-
-                            String title = chartPanels.get(i).getChart().getTitle().getText();
-                            String selectedFile = chooser.getSelectedFile().getAbsolutePath() + File.separator + title;
-                            saveChartPanel(chartPanels.get(i), selectedFile, false);
+                        if (!chooser.getSelectedFile().exists()) {
+                            makeDir = chooser.getSelectedFile().mkdir();
                         }
 
+                        if (makeDir) {
+
+                            progressDialog.setMax(chartPanels.size());
+
+                            for (int i = 0; i < chartPanels.size() && !cancelExport; i++) {
+
+                                progressDialog.setValue(i);
+
+                                String title = chartPanels.get(i).getChart().getTitle().getText();
+                                String selectedFile = chooser.getSelectedFile().getAbsolutePath() + File.separator + title;
+                                saveChartPanel(chartPanels.get(i), selectedFile, false);
+                            }
+
+                            JOptionPane.showMessageDialog(null, "Plots saved to " + chooser.getSelectedFile().getAbsolutePath(), "Plots Saved", JOptionPane.INFORMATION_MESSAGE);
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Failed to create folder " + chooser.getSelectedFile(), "Savong Error", JOptionPane.INFORMATION_MESSAGE);
+                        }
+                        
                         progressDialog.setVisible(false);
                         progressDialog.dispose();
-
-                        JOptionPane.showMessageDialog(null, "Plots saved to " + chooser.getSelectedFile().getAbsolutePath(), "Plots Saved", JOptionPane.INFORMATION_MESSAGE);
-                    }
+                    }    
                 }.start();
 
             } else {

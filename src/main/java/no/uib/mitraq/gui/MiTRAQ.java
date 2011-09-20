@@ -1723,7 +1723,7 @@ public class MiTRAQ extends javax.swing.JFrame {
     private void saveJMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveJMenuItemActionPerformed
 
         if (currentRatioFile != null) {
-            saveSettings(true);
+            saveSettings(false);
         } else {
             JOptionPane.showMessageDialog(this, "No project to save.", "No Project", JOptionPane.INFORMATION_MESSAGE);
         }
