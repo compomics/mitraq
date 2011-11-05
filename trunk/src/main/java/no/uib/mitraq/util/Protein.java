@@ -53,7 +53,11 @@ public class Protein implements Comparable<Object> {
     /**
      * The number of experiments in which the given protein has been detected.
      */
-    private Integer numExperimentsTwoUniquePeptides;
+    private Integer numExperimentsDetected;
+    /**
+     * The number of iTRAQ ratios detected for this protein.
+     */
+    private Integer numQuantificationRatios;
     /**
      * The detected sequence coverage.
      */
@@ -92,14 +96,16 @@ public class Protein implements Comparable<Object> {
      * @param accessionNumbersAll
      * @param proteinName
      * @param numberUniquePeptides
-     * @param numExperimentsTwoUniquePeptides
+     * @param numExperimentsDetected
+     * @param numQuantificationRatios 
      * @param percentCoverage
      */
     public Protein(ArrayList<Double> ratiosGroupA, ArrayList<Double> ratiosGroupB,
             ArrayList<Integer> numSpectraGroupA, ArrayList<Integer> numPeptidesGroupA,
             ArrayList<Integer> numSpectraGroupB, ArrayList<Integer> numPeptidesGroupB,
             String accessionNumber, String accessionNumbersAll, String proteinName,
-            Integer numberUniquePeptides, Integer numExperimentsTwoUniquePeptides, Integer percentCoverage) {
+            Integer numberUniquePeptides, Integer numExperimentsDetected, Integer numQuantificationRatios, 
+            Integer percentCoverage) {
         this.ratiosGroupA = ratiosGroupA;
         this.ratiosGroupB = ratiosGroupB;
         this.numSpectraGroupA = numSpectraGroupA;
@@ -110,7 +116,8 @@ public class Protein implements Comparable<Object> {
         this.accessionNumbersAll = accessionNumbersAll;
         this.proteinName = proteinName;
         this.numberUniquePeptides = numberUniquePeptides;
-        this.numExperimentsTwoUniquePeptides = numExperimentsTwoUniquePeptides;
+        this.numExperimentsDetected = numExperimentsDetected;
+        this.numQuantificationRatios = numQuantificationRatios;
         this.percentCoverage = percentCoverage;
         this.foldChange = null;
         this.pValue = null;
@@ -346,17 +353,17 @@ public class Protein implements Comparable<Object> {
     }
 
     /**
-     * @return the numExperimentsTwoUniquePeptides
+     * @return the numExperimentsDetected
      */
-    public Integer getNumExperimentsTwoUniquePeptides() {
-        return numExperimentsTwoUniquePeptides;
+    public Integer getNumExperimentsDetected() {
+        return numExperimentsDetected;
     }
 
     /**
-     * @param numExperimentsTwoUniquePeptides the numExperimentsTwoUniquePeptides to set
+     * @param numExperimentsDetected the numExperimentsDetected to set
      */
-    public void setNumExperimentsTwoUniquePeptides(Integer numExperimentsTwoUniquePeptides) {
-        this.numExperimentsTwoUniquePeptides = numExperimentsTwoUniquePeptides;
+    public void setNumExperimentsDetected(Integer numExperimentsDetected) {
+        this.numExperimentsDetected = numExperimentsDetected;
     }
 
     /**
@@ -427,5 +434,19 @@ public class Protein implements Comparable<Object> {
      */
     public void setNumPeptidesGroupB(ArrayList<Integer> numPeptides) {
         this.numPeptidesGroupB = numPeptides;
+    }
+
+    /**
+     * @return the numQuantificationRatios
+     */
+    public Integer getNumQuantificationRatios() {
+        return numQuantificationRatios;
+    }
+
+    /**
+     * @param numQuantificationRatios the numQuantificationRatios to set
+     */
+    public void setNumQuantificationRatios(Integer numQuantificationRatios) {
+        this.numQuantificationRatios = numQuantificationRatios;
     }
 }

@@ -202,26 +202,52 @@ public class ExportPlot extends javax.swing.JDialog implements ProgressDialogPar
 
                             for (int i = 0; i < chartPanels.size() && !cancelExport; i++) {
 
-                                progressDialog.setValue(i);
+                                progressDialog.setValue(i+1);
 
                                 String title = chartPanels.get(i).getChart().getTitle().getText();
+                                
+                                if (title.equalsIgnoreCase(" ")) {
+                                    title = "multiple_proteins";
+                                }
+                                
                                 String selectedFile = chooser.getSelectedFile().getAbsolutePath() + File.separator + title;
                                 saveChartPanel(chartPanels.get(i), selectedFile, false);
                             }
 
+                            progressDialog.setVisible(false);
+                            progressDialog.dispose();
                             JOptionPane.showMessageDialog(null, "Plots saved to " + chooser.getSelectedFile().getAbsolutePath(), "Plots Saved", JOptionPane.INFORMATION_MESSAGE);
                         } else {
+                            progressDialog.setVisible(false);
+                            progressDialog.dispose();
                             JOptionPane.showMessageDialog(null, "Failed to create folder " + chooser.getSelectedFile(), "Savong Error", JOptionPane.INFORMATION_MESSAGE);
                         }
-                        
-                        progressDialog.setVisible(false);
-                        progressDialog.dispose();
-                    }    
+                    }
                 }.start();
 
             } else {
-                String selectedFile = chooser.getSelectedFile().getAbsolutePath();
-                saveChartPanel(chartPanels.get(0), selectedFile, true);
+
+                progressDialog = new ProgressDialog(this, this, true);
+
+                new Thread(new Runnable() {
+
+                    public void run() {
+                        progressDialog.setIntermidiate(false);
+                        progressDialog.setTitle("Exporting. Please Wait...");
+                        progressDialog.setVisible(true);
+                    }
+                }, "ProgressDialog").start();
+
+                new Thread("ExportThread") {
+
+                    @Override
+                    public void run() {
+                        String selectedFile = chooser.getSelectedFile().getAbsolutePath();
+                        saveChartPanel(chartPanels.get(0), selectedFile, true);
+                        progressDialog.setVisible(false);
+                        progressDialog.dispose();
+                    }
+                }.start();
             }
         }
 

@@ -34,11 +34,13 @@ import javax.swing.RowFilter;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import no.uib.jsparklines.data.XYDataPoint;
+import no.uib.jsparklines.extra.HtmlLinksRenderer;
 import no.uib.jsparklines.extra.NimbusCheckBoxRenderer;
 import no.uib.jsparklines.renderers.JSparklinesBarChartTableCellRenderer;
 import no.uib.jsparklines.extra.TrueFalseIconRenderer;
@@ -81,7 +83,7 @@ import org.jfree.ui.TextAnchor;
  *
  * @author Harald Barsnes
  */
-public class MiTRAQ extends javax.swing.JFrame {
+public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
 
     /**
      * Turns of the gradient painting for the bar charts.
@@ -89,6 +91,10 @@ public class MiTRAQ extends javax.swing.JFrame {
     static {
         XYBarRenderer.setDefaultBarPainter(new StandardXYBarPainter());
     }
+    /**
+     * The progress dialog.
+     */
+    private ProgressDialog progressDialog;
     /**
      * The last selected folder.
      */
@@ -186,11 +192,15 @@ public class MiTRAQ extends javax.swing.JFrame {
     /**
      * The current text filter values.
      */
-    private String[] currentFilterValues = {"", "", "", "", "", "", "", ""};
+    private String[] currentFilterValues = {"", "", "", "", "", "", "", "", ""};
     /**
      * The current settings for the radio buttons for the filters.
      */
-    private Integer[] currrentFilterRadioButtonSelections = {0, 0, 0, 0, 2, 2};
+    private Integer[] currrentFilterRadioButtonSelections = {0, 0, 0, 0, 0, 2, 2};
+    /**
+     * Set if the row filter is to take the absolute value of the fold change.
+     */
+    private boolean foldChangeAbsoluteValue = false;
     /**
      * The results table column header tips.
      */
@@ -227,6 +237,18 @@ public class MiTRAQ extends javax.swing.JFrame {
      */
     private ChartPanel ratioChartPanel = null;
     /**
+     * The current fold change chart panel.
+     */
+    private ChartPanel foldChangeChartPanel = null;
+    /**
+     * The color to use for the HTML tags for the selected rows, in HTML color code.
+     */
+    public String selectedRowHtmlTagFontColor = "#FFFFFF";
+    /**
+     * The color to use for the HTML tags for the rows that are not selected, in HTML color code.
+     */
+    public String notSelectedRowHtmlTagFontColor = "#0101DF";
+    /**
      * If set to true all messages will be sent to a log file.
      */
     private static boolean useLogFile = true;
@@ -246,6 +268,7 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         // set the result table details
         setUpResultsTable();
+        setExtendedState(MAXIMIZED_BOTH);
 
         setLocationRelativeTo(null);
     }
@@ -261,8 +284,10 @@ public class MiTRAQ extends javax.swing.JFrame {
         resultsJTable.getColumn("Peptides").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, true));
         resultsJTable.getColumn("Coverage").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 100.0, true));
         resultsJTable.getColumn("Exp. Count").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, true));
+        resultsJTable.getColumn("Quant. Count").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, true));
         resultsJTable.getColumn("p-value").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, false));
         resultsJTable.getColumn("q-value").setCellRenderer(new JSparklinesBarChartTableCellRenderer(PlotOrientation.HORIZONTAL, 1.0, false));
+        resultsJTable.getColumn("Accession").setCellRenderer(new HtmlLinksRenderer(selectedRowHtmlTagFontColor, notSelectedRowHtmlTagFontColor));
 
         // add the true/false cell renderer
         resultsJTable.getColumn("Significant").setCellRenderer(new TrueFalseIconRenderer(
@@ -295,7 +320,8 @@ public class MiTRAQ extends javax.swing.JFrame {
         columnHeaderToolTips.add("Fold Change - Group 1 / Group 2");
         columnHeaderToolTips.add("Number of Unique Peptides");
         columnHeaderToolTips.add("Sequence Coverage");
-        columnHeaderToolTips.add("Experiment Counter");
+        columnHeaderToolTips.add("Experiment Identification Counter");
+        columnHeaderToolTips.add("Quantification Ratio Counter");
         columnHeaderToolTips.add("p-value for t-test");
         columnHeaderToolTips.add("q-value");
         columnHeaderToolTips.add("Significant/Not Significant t-test");
@@ -421,7 +447,6 @@ public class MiTRAQ extends javax.swing.JFrame {
                 };
             }
         };
-        proteinCountJLabel = new javax.swing.JLabel();
         significanceLevelJLabel = new javax.swing.JLabel();
         significanceLevelJSpinner = new javax.swing.JSpinner();
         filterResultsJButton = new javax.swing.JButton();
@@ -500,16 +525,16 @@ public class MiTRAQ extends javax.swing.JFrame {
 
             },
             new String [] {
-                " ", "Protein", "Accession", "FC", "Peptides", "Coverage", "Exp. Count", "p-value", "q-value", "Significant", "Bonferroni", "  "
+                " ", "Protein", "Accession", "FC", "Peptides", "Coverage", "Exp. Count", "Quant. Count", "p-value", "q-value", "Significant", "Bonferroni", "  "
             }
         ) {
             Class[] types = new Class [] {
                 java.lang.Integer.class, java.lang.String.class, java.lang.String.class, XYDataPoint.class, java.lang.Integer.class, java.lang.Integer.class,
-                java.lang.Integer.class, java.lang.Double.class, java.lang.Double.class, java.lang.Boolean.class, java.lang.Boolean.class,
+                java.lang.Integer.class, java.lang.Integer.class, java.lang.Double.class, java.lang.Double.class, java.lang.Boolean.class, java.lang.Boolean.class,
                 java.lang.Boolean.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false, false, false, false, false, true
+                false, false, false, false, false, false, false, false, false, false, false, false, true
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -542,9 +567,6 @@ public class MiTRAQ extends javax.swing.JFrame {
             }
         });
         resultsTableJScrollPane.setViewportView(resultsJTable);
-
-        proteinCountJLabel.setFont(proteinCountJLabel.getFont().deriveFont((proteinCountJLabel.getFont().getStyle() | java.awt.Font.ITALIC)));
-        proteinCountJLabel.setText("Protein Count: -");
 
         significanceLevelJLabel.setFont(significanceLevelJLabel.getFont().deriveFont((significanceLevelJLabel.getFont().getStyle() | java.awt.Font.ITALIC)));
         significanceLevelJLabel.setText("Significance Level:");
@@ -586,18 +608,18 @@ public class MiTRAQ extends javax.swing.JFrame {
         resultsTableJPanel.setLayout(resultsTableJPanelLayout);
         resultsTableJPanelLayout.setHorizontalGroup(
             resultsTableJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, resultsTableJPanelLayout.createSequentialGroup()
-                .addComponent(proteinCountJLabel)
-                .addGap(41, 41, 41)
+            .addGroup(resultsTableJPanelLayout.createSequentialGroup()
+                .addContainerGap()
                 .addComponent(significanceLevelJLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(significanceLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 642, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 740, Short.MAX_VALUE)
                 .addComponent(filterResultsJButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(clearFilterResultsJButton)
                 .addGap(18, 18, 18)
-                .addComponent(exportProteinListJButton))
+                .addComponent(exportProteinListJButton)
+                .addContainerGap())
             .addComponent(resultsTableJScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1133, Short.MAX_VALUE)
         );
 
@@ -609,10 +631,9 @@ public class MiTRAQ extends javax.swing.JFrame {
                 .addComponent(resultsTableJScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 310, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(resultsTableJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(exportProteinListJButton)
-                    .addComponent(proteinCountJLabel)
                     .addComponent(significanceLevelJSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(significanceLevelJLabel)
+                    .addComponent(exportProteinListJButton)
                     .addComponent(filterResultsJButton)
                     .addComponent(clearFilterResultsJButton))
                 .addContainerGap())
@@ -646,7 +667,7 @@ public class MiTRAQ extends javax.swing.JFrame {
 
         resultsJSplitPane.setRightComponent(chartsJPanel);
 
-        exportPlotJButton.setText("<html> <p align=center> Export<br>Plot</p> </html>");
+        exportPlotJButton.setText("<html> <p align=center> Export<br>Plots</p> </html>");
         exportPlotJButton.setToolTipText("Export the selected plots to file");
         exportPlotJButton.setEnabled(false);
         exportPlotJButton.addActionListener(new java.awt.event.ActionListener() {
@@ -991,7 +1012,9 @@ public class MiTRAQ extends javax.swing.JFrame {
             });
         }
 
-        proteinCountJLabel.setText("Protein Count: " + resultsJTable.getRowCount());
+        ((TitledBorder) resultsJPanel.getBorder()).setTitle("Results (" + resultsJTable.getRowCount() + ")");
+        resultsJPanel.revalidate();
+        resultsJPanel.repaint();
     }
 
     /**
@@ -1006,29 +1029,18 @@ public class MiTRAQ extends javax.swing.JFrame {
             removeJPopupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
         } else {
 
-            if (evt != null && evt.getButton() == MouseEvent.BUTTON1 && resultsJTable.getSelectedRow() != -1 && resultsJTable.getSelectedColumn() == 2) {
+            if (evt != null && evt.getButton() == MouseEvent.BUTTON1 && resultsJTable.getSelectedRow() != -1
+                    && resultsJTable.getSelectedColumn() == 2
+                    && ((String) resultsJTable.getValueAt(resultsJTable.getSelectedRow(),
+                    resultsJTable.getSelectedColumn())).indexOf("<html>") != -1) {
 
-                String tempAccession = (String) resultsJTable.getValueAt(resultsJTable.getSelectedRow(), resultsJTable.getSelectedColumn());
-                tempAccession = tempAccession.substring("<html><u>".length());
-                tempAccession = tempAccession.substring(0, tempAccession.indexOf("<"));
-                String database = null;
+                String link = (String) resultsJTable.getValueAt(resultsJTable.getSelectedRow(), resultsJTable.getSelectedColumn());
+                link = link.substring(link.indexOf("\"") + 1);
+                link = link.substring(0, link.indexOf("\""));
 
-                if (tempAccession.toUpperCase().startsWith("IPI")) {
-                    database = "IPI";
-                } else if (tempAccession.toUpperCase().startsWith("SWISS-PROT")
-                        || tempAccession.startsWith("UNI-PROT")) {  // @TODO: untested!!
-                    database = "UNIPROT";
-                }
-
-                // @TODO: add more databases
-
-                if (database != null) {
-
-                    this.setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
-                    BareBonesBrowserLaunch.openURL("http://srs.ebi.ac.uk/srsbin/cgi-bin/wgetz?-e+%5b"
-                            + database + "-AccNumber:" + tempAccession + "%5d");
-                    this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-                }
+                this.setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
+                BareBonesBrowserLaunch.openURL(link);
+                this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
             }
 
             if (resultsJTable.getSelectedRow() != -1) {
@@ -1320,7 +1332,7 @@ public class MiTRAQ extends javax.swing.JFrame {
      * @param evt
      */
     private void filterResultsJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterResultsJButtonActionPerformed
-        new ResultsFilter(this, false, currentFilterValues, currrentFilterRadioButtonSelections, true);
+        new ResultsFilter(this, false, currentFilterValues, currrentFilterRadioButtonSelections, foldChangeAbsoluteValue, true);
 }//GEN-LAST:event_filterResultsJButtonActionPerformed
 
     /**
@@ -1480,7 +1492,7 @@ public class MiTRAQ extends javax.swing.JFrame {
 
                             w.write((index + 1) + "\t" + currentProtein.getProteinName() + "\t" + currentProtein.getAccessionNumber()
                                     + "\t" + currentProtein.getAccessionNumbersAll() + "\t" + currentProtein.getNumberUniquePeptides()
-                                    + "\t" + currentProtein.getPercentCoverage() + "\t" + currentProtein.getNumExperimentsTwoUniquePeptides()
+                                    + "\t" + currentProtein.getPercentCoverage() + "\t" + currentProtein.getNumExperimentsDetected()
                                     + "\t" + currentProtein.getFoldChange() + "\t" + currentProtein.getPValue()
                                     + "\t" + currentProtein.getQValue()
                                     + "\t" + resultsJTable.getValueAt(i, resultsJTable.getColumn("Significant").getModelIndex())
@@ -1535,6 +1547,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).showNumbers(!showSparklines);
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Peptides").getCellRenderer()).showNumbers(!showSparklines);
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Exp. Count").getCellRenderer()).showNumbers(!showSparklines);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Quant. Count").getCellRenderer()).showNumbers(!showSparklines);
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Coverage").getCellRenderer()).showNumbers(!showSparklines);
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("p-value").getCellRenderer()).showNumbers(!showSparklines);
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("q-value").getCellRenderer()).showNumbers(!showSparklines);
@@ -1571,6 +1584,7 @@ public class MiTRAQ extends javax.swing.JFrame {
     private void exportPlotJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportPlotJButtonActionPerformed
         ArrayList<ChartPanel> chartPanels = new ArrayList<ChartPanel>();
         chartPanels.add(ratioChartPanel);
+        chartPanels.add(foldChangeChartPanel);
         new ExportPlot(this, true, chartPanels);
     }//GEN-LAST:event_exportPlotJButtonActionPerformed
 
@@ -1586,6 +1600,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Peptides").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Exp. Count").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Quant. Count").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Coverage").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("p-value").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
         ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("q-value").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
@@ -1610,7 +1625,7 @@ public class MiTRAQ extends javax.swing.JFrame {
      * @param evt
      */
     private void clearFilterResultsJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearFilterResultsJButtonActionPerformed
-        currentFilterValues = new String[]{"", "", "", "", "", "", "", ""};
+        currentFilterValues = new String[]{"", "", "", "", "", "", "", "", ""};
 
         List<RowFilter<Object, Object>> filters = new ArrayList<RowFilter<Object, Object>>();
         RowFilter<Object, Object> allFilters = RowFilter.andFilter(filters);
@@ -1848,8 +1863,14 @@ public class MiTRAQ extends javax.swing.JFrame {
         int row = resultsJTable.rowAtPoint(evt.getPoint());
         int column = resultsJTable.columnAtPoint(evt.getPoint());
 
-        if (row > -1 && column == 2) {
-            this.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        if (column == resultsJTable.getColumn("Accession").getModelIndex()) {
+            String tempValue = (String) resultsJTable.getValueAt(row, column);
+
+            if (tempValue.lastIndexOf("<html>") != -1) {
+                this.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+            } else {
+                this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+            }
         } else {
             this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         }
@@ -2172,7 +2193,6 @@ public class MiTRAQ extends javax.swing.JFrame {
     private javax.swing.JMenuItem openJMenuItem;
     private javax.swing.JRadioButtonMenuItem peptideAndSpectraJRadioButtonMenuItem;
     private javax.swing.JMenuItem preferencesJMenuItem;
-    private javax.swing.JLabel proteinCountJLabel;
     private javax.swing.JPanel ratioChartJPanel;
     private javax.swing.JRadioButtonMenuItem ratioLabelJRadioButtonMenuItem;
     private javax.swing.JCheckBoxMenuItem ratioLogJCheckBoxMenuItem;
@@ -2513,7 +2533,7 @@ public class MiTRAQ extends javax.swing.JFrame {
                 }
 
                 if (updateFilter) {
-                    ResultsFilter filter = new ResultsFilter(this, false, currentFilterValues, currrentFilterRadioButtonSelections, true);
+                    ResultsFilter filter = new ResultsFilter(this, false, currentFilterValues, currrentFilterRadioButtonSelections, foldChangeAbsoluteValue, false);
                     filter.filter();
                     filter.dispose();
                 }
@@ -2548,23 +2568,30 @@ public class MiTRAQ extends javax.swing.JFrame {
     /**
      * Loads the iTRAQ data from the ssv input file.
      *
-     * @param groupALabel the label to use for group A
-     * @param groupBLabel the label to use for group B
-     * @param currentITraqType the current iTRAQ type (4-plex or 8-plex)
-     * @param currentITraqReference the current iTRAQ reference
-     * @param numberOfExperiments the number of iTRAQ experiments
-     * @param experimentalDesignJTable the experimental design table with the experimental setup
-     * @param ratioFile the ssv file containing the data to load
-     * @param updateFilter if true the data is "re-filtered"
+     * @param iGroupALabel the label to use for group A
+     * @param iGroupBLabel the label to use for group B
+     * @param iCurrentITraqType the current iTRAQ type (4-plex or 8-plex)
+     * @param iCurrentITraqReference the current iTRAQ reference
+     * @param iNumberOfExperiments the number of iTRAQ experiments
+     * @param iExperimentalDesignJTable the experimental design table with the experimental setup
+     * @param iRatioFile the ssv file containing the data to load
+     * @param iUpdateFilter if true the data is "re-filtered"
      */
-    public void loadItraqData(String groupALabel, String groupBLabel, String currentITraqType,
-            String currentITraqReference, Integer numberOfExperiments, JTable experimentalDesignJTable, String ratioFile,
-            boolean updateFilter) {
+    public void loadItraqData(String iGroupALabel, String iGroupBLabel, String iCurrentITraqType,
+            String iCurrentITraqReference, Integer iNumberOfExperiments, JTable iExperimentalDesignJTable, String iRatioFile,
+            boolean iUpdateFilter) {
 
-        foldChangeChartJPanel.removeAll();
-        foldChangeChartJPanel.repaint();
+        final String groupALabel = iGroupALabel;
+        final String groupBLabel = iGroupBLabel;
+        final boolean updateFilter = iUpdateFilter;
+        final String currentITraqType = iCurrentITraqType;
+        final String currentITraqReference = iCurrentITraqReference;
+        final Integer numberOfExperiments = iNumberOfExperiments;
+        final JTable experimentalDesignJTable = iExperimentalDesignJTable;
+        final String ratioFile = iRatioFile;
 
-        saveJMenuItem.setEnabled(true);
+        // needed for threading issues
+        final MiTRAQ tempRef = this;
 
         this.currentITraqType = currentITraqType;
         this.currentITraqReference = currentITraqReference;
@@ -2582,468 +2609,504 @@ public class MiTRAQ extends javax.swing.JFrame {
         this.groupAColor = new Color(groupAColor.getRGB());
         this.groupBColor = new Color(groupBColor.getRGB());
 
-        // save the experimental design for later
-        saveExperimentalDesign();
-
-        readSettings(updateFilter);
-
-        this.setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
-
+        foldChangeChartJPanel.removeAll();
+        foldChangeChartJPanel.repaint();
 
         // clear old data
         while (resultsJTable.getRowCount() > 0) {
             ((DefaultTableModel) resultsJTable.getModel()).removeRow(0);
         }
 
+        resultsJTable.revalidate();
+        resultsJTable.repaint();
+
         ratioChartJPanel.removeAll();
-
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                ratioChartJPanel.repaint();
-            }
-        });
-
+        ratioChartJPanel.repaint();
         accessionNumbersJEditorPane.setText(null);
 
+        progressDialog = new ProgressDialog(this, this, true);
 
-        // set up the experimental design
 
-        final int NUMBER_OF_ITRAQ_TAGS;
+        new Thread(new Runnable() {
 
-        if (currentITraqType.equalsIgnoreCase("4-plex")) {
-            NUMBER_OF_ITRAQ_TAGS = 4;
-        } else {
-            NUMBER_OF_ITRAQ_TAGS = 8;
-        }
+            public void run() {
+                progressDialog.setIntermidiate(true);
+                progressDialog.setTitle("Loading Data. Please Wait...");
+                progressDialog.setVisible(true);
+            }
+        }, "ProgressDialog").start();
 
-        final int MINIMUM_NUMBER_OF_RATIOS_FOR_T_TEST = 2;
+        new Thread("LoadingThread") {
 
-        String[][] experimentLabels = new String[numberOfExperiments][(NUMBER_OF_ITRAQ_TAGS - 1)];
-        HashMap<String, ArrayList<Double>> allRatios = new HashMap<String, ArrayList<Double>>();
+            @Override
+            public void run() {
 
-        int groupANumberOfMembers = 0;
-        int groupBNumberOfMembers = 0;
+                saveJMenuItem.setEnabled(true);
 
-        for (int i = 0; i < experimentalDesignJTable.getRowCount(); i++) {
-            for (int j = 1; j < experimentalDesignJTable.getColumnCount(); j++) {
+                // save the experimental design for later
+                saveExperimentalDesign();
 
-                if (experimentalDesignJTable.getValueAt(i, j) != null) {
+                readSettings(updateFilter);
 
-                    String currentValue = experimentalDesignJTable.getValueAt(i, j).toString();
 
-                    if (!currentValue.equalsIgnoreCase("Ref")) {
-                        experimentLabels[i][j - 2] = currentValue;
-                    }
+                // set up the experimental design
+                final int NUMBER_OF_ITRAQ_TAGS;
 
-                    if (currentValue.equalsIgnoreCase(groupALabel)) {
-                        allRatios.put(i + "_" + (j - 2), new ArrayList<Double>());
-                        groupANumberOfMembers++;
-                    } else if (currentValue.equalsIgnoreCase(groupBLabel)) {
-                        allRatios.put(i + "_" + (j - 2), new ArrayList<Double>());
-                        groupBNumberOfMembers++;
-                    }
+                if (currentITraqType.equalsIgnoreCase("4-plex")) {
+                    NUMBER_OF_ITRAQ_TAGS = 4;
                 } else {
-                    experimentLabels[i][j - 2] = null;
-                }
-            }
-        }
-
-        if (groupANumberOfMembers < 2 || groupBNumberOfMembers < 2) {
-            this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-            JOptionPane.showMessageDialog(this, "At least two members in each group is required.");
-            return;
-        }
-
-
-        // start reading the iTRAQ ssv file
-
-        ArrayList<Protein> allProteins = new ArrayList<Protein>();
-
-        try {
-            FileReader f = new FileReader(ratioFile);
-            BufferedReader b = new BufferedReader(f);
-
-            String headerLine = b.readLine();
-
-            StringTokenizer tok = new StringTokenizer(headerLine, ";");
-
-            HashMap<String, Integer> columnHeaders = new HashMap<String, Integer>();
-
-            int index = 0;
-
-            // parse the column header titles
-            while (tok.hasMoreTokens()) {
-                String token = tok.nextToken();
-
-                if (token.lastIndexOf("/") != -1) {
-                    token = token.substring(token.lastIndexOf("/") + 1);
+                    NUMBER_OF_ITRAQ_TAGS = 8;
                 }
 
-                token = token.trim();
-                columnHeaders.put(token, index++);
-            }
+                final int MINIMUM_NUMBER_OF_RATIOS_FOR_T_TEST = 2;
 
-            String currentLine = b.readLine();
+                String[][] experimentLabels = new String[numberOfExperiments][(NUMBER_OF_ITRAQ_TAGS - 1)];
+                HashMap<String, ArrayList<Double>> allRatios = new HashMap<String, ArrayList<Double>>();
 
-            // read the data lines
-            while (currentLine != null) {
+                int groupANumberOfMembers = 0;
+                int groupBNumberOfMembers = 0;
 
-                tok = new StringTokenizer(currentLine, ";");
+                for (int i = 0; i < experimentalDesignJTable.getRowCount(); i++) {
+                    for (int j = 1; j < experimentalDesignJTable.getColumnCount(); j++) {
 
-                Vector<String> rowValues = new Vector<String>();
+                        if (experimentalDesignJTable.getValueAt(i, j) != null) {
 
-                // store the data for the currrent line
-                while (tok.hasMoreTokens()) {
-                    rowValues.add(tok.nextToken());
-                }
+                            String currentValue = experimentalDesignJTable.getValueAt(i, j).toString();
 
-                int numExperimentsDetected = 0;
+                            if (!currentValue.equalsIgnoreCase("Ref")) {
+                                experimentLabels[i][j - 2] = currentValue;
+                            }
 
-                for (int i = 0; i < numberOfExperiments; i++) {
-
-                    int numUniquePeptides;
-
-                    if (oldDataFormat) {
-                        numUniquePeptides = new Integer(rowValues.get(
-                                columnHeaders.get("Exp. " + (i + 1) + " Unique Peps").intValue())).intValue();
-                    } else {
-                        numUniquePeptides = new Integer(rowValues.get(
-                                columnHeaders.get("Exp" + (i + 1) + " unique_peptides").intValue())).intValue();
-                    }
-
-                    if (numUniquePeptides >= minNumUniquePeptides) {
-                        numExperimentsDetected++;
+                            if (currentValue.equalsIgnoreCase(groupALabel)) {
+                                allRatios.put(i + "_" + (j - 2), new ArrayList<Double>());
+                                groupANumberOfMembers++;
+                            } else if (currentValue.equalsIgnoreCase(groupBLabel)) {
+                                allRatios.put(i + "_" + (j - 2), new ArrayList<Double>());
+                                groupBNumberOfMembers++;
+                            }
+                        } else {
+                            experimentLabels[i][j - 2] = null;
+                        }
                     }
                 }
 
-                ArrayList<Double> ratiosGroupA = new ArrayList<Double>();
-                ArrayList<Double> ratiosGroupB = new ArrayList<Double>();
+                if (groupANumberOfMembers < 2 || groupBNumberOfMembers < 2) {
+                    progressDialog.setVisible(false);
+                    progressDialog.dispose();
+                    JOptionPane.showMessageDialog(tempRef, "At least two members in each group is required.");
+                    return;
+                }
 
-                ArrayList<Integer> numSpectraGroupA = new ArrayList<Integer>();
-                ArrayList<Integer> numPeptidesGroupA = new ArrayList<Integer>();
 
-                ArrayList<Integer> numSpectraGroupB = new ArrayList<Integer>();
-                ArrayList<Integer> numPeptidesGroupB = new ArrayList<Integer>();
+                // start reading the iTRAQ ssv file
 
-                int numUniquePeptides;
-                int numUniqueSpectra;
+                ArrayList<Protein> allProteins = new ArrayList<Protein>();
 
-                for (int i = 0; i < numberOfExperiments; i++) {
+                try {
+                    FileReader f = new FileReader(ratioFile);
+                    BufferedReader b = new BufferedReader(f);
 
-                    if (oldDataFormat) {
-                        numUniquePeptides = new Integer(rowValues.get(
-                                columnHeaders.get("Exp. " + (i + 1) + " Unique Peps").intValue())).intValue();
+                    String headerLine = b.readLine();
 
-                        numUniqueSpectra = new Integer(rowValues.get(
-                                columnHeaders.get("Exp. " + (i + 1) + " num Spectra").intValue())).intValue();
-                    } else {
-                        numUniquePeptides = new Integer(rowValues.get(
-                                columnHeaders.get("Exp" + (i + 1) + " unique_peptides").intValue())).intValue();
+                    StringTokenizer tok = new StringTokenizer(headerLine, ";");
 
-                        numUniqueSpectra = new Integer(rowValues.get(
-                                columnHeaders.get("Exp" + (i + 1) + " numSpectra").intValue())).intValue();
+                    HashMap<String, Integer> columnHeaders = new HashMap<String, Integer>();
+
+                    int index = 0;
+
+                    // parse the column header titles
+                    while (tok.hasMoreTokens()) {
+                        String token = tok.nextToken();
+
+                        if (token.lastIndexOf("/") != -1) {
+                            token = token.substring(token.lastIndexOf("/") + 1);
+                        }
+
+                        token = token.trim();
+                        columnHeaders.put(token, index++);
                     }
 
-                    for (int j = 0; j < NUMBER_OF_ITRAQ_TAGS - 1; j++) {
+                    String currentLine = b.readLine();
 
-                        if (columnHeaders.get("Exp" + (i + 1) + " iTRAQ_ratio_" + (j + 1)) != null // new formatting
-                                || columnHeaders.get("Exp. " + (i + 1) + " iTRAQ_" + (j + 1) + " log2 ratio") != null) { // old type formatting
+                    int rowCounter = 0;
 
-                            String temp;
+                    // read the data lines
+                    while (currentLine != null) {
+
+                        rowCounter++;
+                        progressDialog.setTitle("Loading Data. Please Wait... (" + rowCounter + ")");
+
+                        tok = new StringTokenizer(currentLine, ";");
+
+                        Vector<String> rowValues = new Vector<String>();
+
+                        // store the data for the currrent line
+                        while (tok.hasMoreTokens()) {
+                            rowValues.add(tok.nextToken());
+                        }
+
+                        int numExperimentsDetected = 0;
+                        int numQuantificationRatios = 0;
+
+                        for (int i = 0; i < numberOfExperiments; i++) {
+
+                            int numUniquePeptides;
 
                             if (oldDataFormat) {
-                                temp = rowValues.get(
-                                        columnHeaders.get("Exp. " + (i + 1) + " iTRAQ_" + (j + 1) + " log2 ratio").intValue());
+                                numUniquePeptides = new Integer(rowValues.get(
+                                        columnHeaders.get("Exp. " + (i + 1) + " Unique Peps").intValue())).intValue();
                             } else {
-                                temp = rowValues.get(
-                                        columnHeaders.get("Exp" + (i + 1) + " iTRAQ_ratio_" + (j + 1)).intValue());
+                                numUniquePeptides = new Integer(rowValues.get(
+                                        columnHeaders.get("Exp" + (i + 1) + " unique_peptides").intValue())).intValue();
                             }
 
+                            if (numUniquePeptides >= minNumUniquePeptides) {
+                                numExperimentsDetected++;
+                            }
+                        }
 
-                            temp = temp.replace(",", ".");
+                        ArrayList<Double> ratiosGroupA = new ArrayList<Double>();
+                        ArrayList<Double> ratiosGroupB = new ArrayList<Double>();
 
-                            double ratio = new Double(temp).doubleValue();
+                        ArrayList<Integer> numSpectraGroupA = new ArrayList<Integer>();
+                        ArrayList<Integer> numPeptidesGroupA = new ArrayList<Integer>();
 
-                            if (experimentLabels[i][j] != null) {
+                        ArrayList<Integer> numSpectraGroupB = new ArrayList<Integer>();
+                        ArrayList<Integer> numPeptidesGroupB = new ArrayList<Integer>();
 
-                                if (ratio != 0) { // not sure if this is the correct test for the old dataformat...
-                                    // take log 2 of the ratio, NB: not needed for the old data format...
-                                    if (!oldDataFormat) {
-                                        ratio = Math.log(ratio) / Math.log(2);
+                        int numUniquePeptides;
+                        int numUniqueSpectra;
+
+                        for (int i = 0; i < numberOfExperiments; i++) {
+
+                            if (oldDataFormat) {
+                                numUniquePeptides = new Integer(rowValues.get(
+                                        columnHeaders.get("Exp. " + (i + 1) + " Unique Peps").intValue())).intValue();
+
+                                numUniqueSpectra = new Integer(rowValues.get(
+                                        columnHeaders.get("Exp. " + (i + 1) + " num Spectra").intValue())).intValue();
+                            } else {
+                                numUniquePeptides = new Integer(rowValues.get(
+                                        columnHeaders.get("Exp" + (i + 1) + " unique_peptides").intValue())).intValue();
+
+                                numUniqueSpectra = new Integer(rowValues.get(
+                                        columnHeaders.get("Exp" + (i + 1) + " numSpectra").intValue())).intValue();
+                            }
+
+                            for (int j = 0; j < NUMBER_OF_ITRAQ_TAGS - 1; j++) {
+
+                                if (columnHeaders.get("Exp" + (i + 1) + " iTRAQ_ratio_" + (j + 1)) != null // new formatting
+                                        || columnHeaders.get("Exp. " + (i + 1) + " iTRAQ_" + (j + 1) + " log2 ratio") != null) { // old type formatting
+
+                                    String temp;
+
+                                    if (oldDataFormat) {
+                                        temp = rowValues.get(
+                                                columnHeaders.get("Exp. " + (i + 1) + " iTRAQ_" + (j + 1) + " log2 ratio").intValue());
+                                    } else {
+                                        temp = rowValues.get(
+                                                columnHeaders.get("Exp" + (i + 1) + " iTRAQ_ratio_" + (j + 1)).intValue());
                                     }
+
+
+                                    temp = temp.replace(",", ".");
+
+                                    double ratio = new Double(temp).doubleValue();
+
+                                    if (experimentLabels[i][j] != null) {
+
+                                        if (ratio != 0) { // not sure if this is the correct test for the old dataformat...
+                                            // take log 2 of the ratio, NB: not needed for the old data format...
+                                            if (!oldDataFormat) {
+                                                ratio = Math.log(ratio) / Math.log(2);
+                                            }
+
+                                            numQuantificationRatios++;
+                                        } else {
+                                            ratio = -1;
+                                        }
+
+                                        if (numUniqueSpectra < minNumUniqueSpectra || numUniquePeptides < minNumUniquePeptides) {
+                                            ratio = -1;
+                                        }
+
+                                        if (ratio != -1) {
+                                            allRatios.get(i + "_" + j).add(ratio);
+                                        }
+
+                                        if (experimentLabels[i][j].equalsIgnoreCase(groupALabel)) {
+                                            ratiosGroupA.add(ratio);
+                                            numSpectraGroupA.add(numUniqueSpectra);
+                                            numPeptidesGroupA.add(numUniquePeptides);
+                                        } else if (experimentLabels[i][j].equalsIgnoreCase(groupBLabel)) {
+                                            ratiosGroupB.add(ratio);
+                                            numSpectraGroupB.add(numUniqueSpectra);
+                                            numPeptidesGroupB.add(numUniquePeptides);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // add the wanted details to the protein list
+                        if (numExperimentsDetected >= minNumberOfExperiments) {
+
+                            String proteinName;
+
+                            if (columnHeaders.get("entry_name").intValue() < rowValues.size()) {
+                                proteinName = rowValues.get(columnHeaders.get("entry_name").intValue());
+                            } else {
+                                proteinName = rowValues.get(columnHeaders.get("accession_number").intValue());
+                            }
+
+                            String accessionNumber = rowValues.get(columnHeaders.get("accession_number").intValue());
+                            String accessionNumbersAll = rowValues.get(columnHeaders.get("accession_numbers").intValue());
+
+                            Integer numberUniquePeptides = new Integer(rowValues.get(columnHeaders.get("numPepsUnique").intValue()));
+                            Integer percentCoverage = new Integer(rowValues.get(columnHeaders.get("percentCoverage").intValue()));
+
+                            if (!removedProteins.contains(proteinName + "|" + accessionNumber)) {
+                                allProteins.add(new Protein(ratiosGroupA, ratiosGroupB, numSpectraGroupA, numPeptidesGroupA,
+                                        numSpectraGroupB, numPeptidesGroupB, accessionNumber, accessionNumbersAll,
+                                        proteinName, numberUniquePeptides, numExperimentsDetected, numQuantificationRatios, percentCoverage));
+                            }
+                        }
+
+                        currentLine = b.readLine();
+                    }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+                progressDialog.setTitle("Calculating Median Ratios. Please Wait...");
+
+                // calculate the median ratios
+                HashMap<String, Double> medianRatios = new HashMap<String, Double>();
+
+                for (int i = 0; i < experimentLabels.length; i++) {
+                    for (int j = 0; j < experimentLabels[0].length; j++) {
+
+                        ArrayList<Double> currentRatios = allRatios.get(i + "_" + j);
+
+                        if (currentRatios != null) {
+
+                            double[] tempValues = new double[currentRatios.size()];
+
+                            for (int k = 0; k < currentRatios.size(); k++) {
+                                tempValues[k] = currentRatios.get(k);
+                            }
+
+                            medianRatios.put(i + "_" + j, StatUtils.percentile(tempValues, 50));
+                            //System.out.println(medianRatios.get(i + "_" + j));
+                        }
+                    }
+                }
+
+
+                progressDialog.setTitle("Re-centering Proteins. Please Wait...");
+
+                // re-center the proteins
+                for (int i = 0; i < allProteins.size(); i++) {
+
+                    Protein currentProtein = allProteins.get(i);
+
+                    int groupACounter = 0;
+                    int groupBCounter = 0;
+
+                    ArrayList<Double> groupAValues = currentProtein.getRatiosGroupA();
+                    ArrayList<Double> groupBValues = currentProtein.getRatiosGroupB();
+
+                    for (int j = 0; j < experimentLabels.length; j++) {
+                        for (int k = 0; k < experimentLabels[0].length; k++) {
+
+                            if (experimentLabels[j][k] != null && experimentLabels[j][k].equalsIgnoreCase(groupALabel)) {
+                                if (groupAValues.get(groupACounter) == -1) {
+                                    groupAValues.set(groupACounter, null);
                                 } else {
-                                    ratio = -1;
+                                    groupAValues.set(groupACounter, groupAValues.get(groupACounter) - medianRatios.get(j + "_" + k));
                                 }
 
-                                if (numUniqueSpectra < minNumUniqueSpectra || numUniquePeptides < minNumUniquePeptides) {
-                                    ratio = -1;
+                                groupACounter++;
+                            } else if (experimentLabels[j][k] != null && experimentLabels[j][k].equalsIgnoreCase(groupBLabel)) {
+
+                                if (groupBValues.get(groupBCounter) == -1) {
+                                    groupBValues.set(groupBCounter, null);
+                                } else {
+                                    groupBValues.set(groupBCounter, groupBValues.get(groupBCounter) - medianRatios.get(j + "_" + k));
                                 }
 
-                                if (ratio != -1) {
-                                    allRatios.get(i + "_" + j).add(ratio);
-                                }
-
-                                if (experimentLabels[i][j].equalsIgnoreCase(groupALabel)) {
-                                    ratiosGroupA.add(ratio);
-                                    numSpectraGroupA.add(numUniqueSpectra);
-                                    numPeptidesGroupA.add(numUniquePeptides);
-                                } else if (experimentLabels[i][j].equalsIgnoreCase(groupBLabel)) {
-                                    ratiosGroupB.add(ratio);
-                                    numSpectraGroupB.add(numUniqueSpectra);
-                                    numPeptidesGroupB.add(numUniquePeptides);
-                                }
+                                groupBCounter++;
                             }
                         }
                     }
                 }
 
-                // add the wanted details to the protein list
-                if (numExperimentsDetected >= minNumberOfExperiments) {
+                progressDialog.setTitle("Comparing Groups. Please Wait...");
 
-                    String proteinName = rowValues.get(columnHeaders.get("entry_name").intValue());
-                    String accessionNumber = rowValues.get(columnHeaders.get("accession_number").intValue());
-                    String accessionNumbersAll = rowValues.get(columnHeaders.get("accession_numbers").intValue());
+                // compare the two groups
+                ArrayList<Protein> equallyExpressedProteins = new ArrayList<Protein>();
+                ArrayList<Protein> differentiallyExpressedProteins = new ArrayList<Protein>();
+                allValidProteins = new ArrayList<Protein>();
+                ArrayList<Double> allValidFoldChanges = new ArrayList<Double>();
 
-                    Integer numberUniquePeptides = new Integer(rowValues.get(columnHeaders.get("numPepsUnique").intValue()));
-                    Integer percentCoverage = new Integer(rowValues.get(columnHeaders.get("percentCoverage").intValue()));
+                for (int i = 0; i < allProteins.size(); i++) {
 
-                    if (!removedProteins.contains(proteinName + "|" + accessionNumber)) {
-                        allProteins.add(new Protein(ratiosGroupA, ratiosGroupB, numSpectraGroupA, numPeptidesGroupA,
-                                numSpectraGroupB, numPeptidesGroupB, accessionNumber, accessionNumbersAll,
-                                proteinName, numberUniquePeptides, numExperimentsDetected, percentCoverage));
-                    }
-                }
+                    Protein currentProtein = allProteins.get(i);
 
-                currentLine = b.readLine();
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+                    ArrayList<Double> groupAValues = currentProtein.getRatiosGroupA();
+                    ArrayList<Double> groupBValues = currentProtein.getRatiosGroupB();
 
+                    int sampleACounter = 0;
+                    int sampleBCounter = 0;
 
-        // calculate the median ratios
-        HashMap<String, Double> medianRatios = new HashMap<String, Double>();
-
-        for (int i = 0; i < experimentLabels.length; i++) {
-            for (int j = 0; j < experimentLabels[0].length; j++) {
-
-                ArrayList<Double> currentRatios = allRatios.get(i + "_" + j);
-
-                if (currentRatios != null) {
-
-                    double[] tempValues = new double[currentRatios.size()];
-
-                    for (int k = 0; k < currentRatios.size(); k++) {
-                        tempValues[k] = currentRatios.get(k);
-                    }
-
-                    medianRatios.put(i + "_" + j, StatUtils.percentile(tempValues, 50));
-                    //System.out.println(medianRatios.get(i + "_" + j));
-                }
-            }
-        }
-
-
-        // re-center the proteins
-        for (int i = 0; i < allProteins.size(); i++) {
-
-            Protein currentProtein = allProteins.get(i);
-
-            int groupACounter = 0;
-            int groupBCounter = 0;
-
-            ArrayList<Double> groupAValues = currentProtein.getRatiosGroupA();
-            ArrayList<Double> groupBValues = currentProtein.getRatiosGroupB();
-
-            for (int j = 0; j < experimentLabels.length; j++) {
-                for (int k = 0; k < experimentLabels[0].length; k++) {
-
-                    if (experimentLabels[j][k] != null && experimentLabels[j][k].equalsIgnoreCase(groupALabel)) {
-                        if (groupAValues.get(groupACounter) == -1) {
-                            groupAValues.set(groupACounter, null);
-                        } else {
-                            groupAValues.set(groupACounter, groupAValues.get(groupACounter) - medianRatios.get(j + "_" + k));
+                    // find number of non-zero values
+                    for (int j = 0; j < groupAValues.size(); j++) {
+                        if (groupAValues.get(j) != null) {
+                            sampleACounter++;
                         }
+                    }
 
-                        groupACounter++;
-                    } else if (experimentLabels[j][k] != null && experimentLabels[j][k].equalsIgnoreCase(groupBLabel)) {
-
-                        if (groupBValues.get(groupBCounter) == -1) {
-                            groupBValues.set(groupBCounter, null);
-                        } else {
-                            groupBValues.set(groupBCounter, groupBValues.get(groupBCounter) - medianRatios.get(j + "_" + k));
+                    for (int j = 0; j < groupBValues.size(); j++) {
+                        if (groupBValues.get(j) != null) {
+                            sampleBCounter++;
                         }
+                    }
 
-                        groupBCounter++;
+                    double[] sampleA = new double[sampleACounter];
+                    double[] sampleB = new double[sampleBCounter];
+
+                    double averageSampleA = 0;
+                    double averageSampleB = 0;
+
+                    sampleACounter = 0;
+                    sampleBCounter = 0;
+
+                    for (int j = 0; j < groupAValues.size(); j++) {
+                        if (groupAValues.get(j) != null) {
+                            sampleA[sampleACounter++] = groupAValues.get(j);
+                            averageSampleA += groupAValues.get(j);
+                        }
+                    }
+
+                    for (int j = 0; j < groupBValues.size(); j++) {
+                        if (groupBValues.get(j) != null) {
+                            sampleB[sampleBCounter++] = groupBValues.get(j);
+                            averageSampleB += groupBValues.get(j);
+                        }
+                    }
+
+                    averageSampleA /= sampleACounter;
+                    averageSampleB /= sampleBCounter;
+
+                    // get the group difference
+                    double groupDiff = (averageSampleA - averageSampleB);
+                    double foldChange = getFoldChangeFromLog2(groupDiff);
+
+
+                    // test if fold change is a number
+                    if (!Double.isNaN(foldChange)) {
+
+                        try {
+                            currentProtein.setFoldChange(foldChange);
+
+                            // require at least a minimum number of the experiments to have values
+                            if (sampleACounter >= MINIMUM_NUMBER_OF_RATIOS_FOR_T_TEST && sampleBCounter >= MINIMUM_NUMBER_OF_RATIOS_FOR_T_TEST) {
+
+                                allValidFoldChanges.add(groupDiff);
+
+                                currentProtein.setPValue(TestUtils.homoscedasticTTest(sampleA, sampleB));
+
+                                if (TestUtils.homoscedasticTTest(sampleA, sampleB, equallyExpressedSignificanceLevel)) {
+                                    differentiallyExpressedProteins.add(currentProtein);
+                                } else {
+
+                                    if (!TestUtils.homoscedasticTTest(sampleA, sampleB, differentiallyExpressedSignificanceLevel)) {
+                                        // store all the non-differentially expressed values
+                                        equallyExpressedProteins.add(currentProtein);
+                                    }
+                                }
+
+                                currentProtein.setGroupAPercent((double) sampleACounter / groupANumberOfMembers);
+                                currentProtein.setGroupBPercent((double) sampleBCounter / groupBNumberOfMembers);
+
+                                allValidProteins.add(currentProtein);
+                            }
+
+                        } catch (MathException e) {
+                            System.out.println(currentProtein);
+                            e.printStackTrace();
+                        }
                     }
                 }
-            }
-        }
 
+                progressDialog.setTitle("Calculating q-values. Please Wait...");
 
-        // compare the two groups
-        ArrayList<Protein> equallyExpressedProteins = new ArrayList<Protein>();
-        ArrayList<Protein> differentiallyExpressedProteins = new ArrayList<Protein>();
-        allValidProteins = new ArrayList<Protein>();
-        ArrayList<Double> allValidFoldChanges = new ArrayList<Double>();
+                // create the random non-differentially expressed protein distribution
+                final int NUMBER_OF_SWAPS = 10;
+                final int NUMBER_OF_ITERATIONS = 100;
 
-        for (int i = 0; i < allProteins.size(); i++) {
+                ArrayList<Double> allNonDiffExpressedPValues = new ArrayList<Double>();
 
-            Protein currentProtein = allProteins.get(i);
+                for (int m = 0; m < NUMBER_OF_ITERATIONS; m++) {
 
-            ArrayList<Double> groupAValues = currentProtein.getRatiosGroupA();
-            ArrayList<Double> groupBValues = currentProtein.getRatiosGroupB();
+                    for (int i = 0; i < equallyExpressedProteins.size(); i++) {
 
-            int sampleACounter = 0;
-            int sampleBCounter = 0;
+                        Protein currentProtein = equallyExpressedProteins.get(i);
 
-            // find number of non-zero values
-            for (int j = 0; j < groupAValues.size(); j++) {
-                if (groupAValues.get(j) != null) {
-                    sampleACounter++;
-                }
-            }
+                        ArrayList<Double> nonNullFromGroupA = currentProtein.getAllNonNullFromGroupA();
+                        ArrayList<Double> nonNullFromGroupB = currentProtein.getAllNonNullFromGroupB();
 
-            for (int j = 0; j < groupBValues.size(); j++) {
-                if (groupBValues.get(j) != null) {
-                    sampleBCounter++;
-                }
-            }
+                        int minSize = Math.min(nonNullFromGroupA.size(), nonNullFromGroupB.size());
+                        int maxSize = Math.max(nonNullFromGroupA.size(), nonNullFromGroupB.size());
 
-            double[] sampleA = new double[sampleACounter];
-            double[] sampleB = new double[sampleBCounter];
+                        Random randomNumberGenerator = new Random();
 
-            double averageSampleA = 0;
-            double averageSampleB = 0;
+                        for (int j = 0; j < NUMBER_OF_SWAPS; j++) {
 
-            sampleACounter = 0;
-            sampleBCounter = 0;
+                            if (nonNullFromGroupA.size() < nonNullFromGroupB.size()) {
+                                int randomIndexGroup1 = randomNumberGenerator.nextInt(minSize);
+                                int randomIndexGroup2 = randomNumberGenerator.nextInt(maxSize);
 
-            for (int j = 0; j < groupAValues.size(); j++) {
-                if (groupAValues.get(j) != null) {
-                    sampleA[sampleACounter++] = groupAValues.get(j);
-                    averageSampleA += groupAValues.get(j);
-                }
-            }
+                                Double temp = nonNullFromGroupA.get(randomIndexGroup1);
+                                nonNullFromGroupA.set(randomIndexGroup1, nonNullFromGroupB.get(randomIndexGroup2));
+                                nonNullFromGroupB.set(randomIndexGroup2, temp);
+                            } else {
+                                int randomIndexGroup1 = randomNumberGenerator.nextInt(minSize);
+                                int randomIndexGroup2 = randomNumberGenerator.nextInt(maxSize);
 
-            for (int j = 0; j < groupBValues.size(); j++) {
-                if (groupBValues.get(j) != null) {
-                    sampleB[sampleBCounter++] = groupBValues.get(j);
-                    averageSampleB += groupBValues.get(j);
-                }
-            }
-
-            averageSampleA /= sampleACounter;
-            averageSampleB /= sampleBCounter;
-
-            // get the group difference
-            double groupDiff = (averageSampleA - averageSampleB);
-            double foldChange = getFoldChangeFromLog2(groupDiff);
-
-
-            // test if fold change is a number
-            if (!Double.isNaN(foldChange)) {
-
-                try {
-                    currentProtein.setFoldChange(foldChange);
-
-                    // require at least a minimum number of the experiments to have values
-                    if (sampleACounter >= MINIMUM_NUMBER_OF_RATIOS_FOR_T_TEST && sampleBCounter >= MINIMUM_NUMBER_OF_RATIOS_FOR_T_TEST) {
-
-                        allValidFoldChanges.add(groupDiff);
-
-                        currentProtein.setPValue(TestUtils.homoscedasticTTest(sampleA, sampleB));
-
-                        if (TestUtils.homoscedasticTTest(sampleA, sampleB, equallyExpressedSignificanceLevel)) {
-                            differentiallyExpressedProteins.add(currentProtein);
-                        } else {
-
-                            if (!TestUtils.homoscedasticTTest(sampleA, sampleB, differentiallyExpressedSignificanceLevel)) {
-                                // store all the non-differentially expressed values
-                                equallyExpressedProteins.add(currentProtein);
+                                Double temp = nonNullFromGroupB.get(randomIndexGroup1);
+                                nonNullFromGroupB.set(randomIndexGroup1, nonNullFromGroupA.get(randomIndexGroup2));
+                                nonNullFromGroupA.set(randomIndexGroup2, temp);
                             }
                         }
 
-                        currentProtein.setGroupAPercent((double) sampleACounter / groupANumberOfMembers);
-                        currentProtein.setGroupBPercent((double) sampleBCounter / groupBNumberOfMembers);
+                        // calculate new p-value
+                        double[] sampleA = new double[nonNullFromGroupA.size()];
+                        double[] sampleB = new double[nonNullFromGroupB.size()];
 
-                        allValidProteins.add(currentProtein);
-                    }
+                        for (int j = 0; j < nonNullFromGroupA.size(); j++) {
+                            sampleA[j] = nonNullFromGroupA.get(j);
+                        }
 
-                } catch (MathException e) {
-                    System.out.println(currentProtein);
-                    e.printStackTrace();
-                }
-            }
-        }
+                        for (int j = 0; j < nonNullFromGroupB.size(); j++) {
+                            sampleB[j] = nonNullFromGroupB.get(j);
+                        }
 
-
-        // create the random non-differentially expressed protein distribution
-        final int NUMBER_OF_SWAPS = 10;
-        final int NUMBER_OF_ITERATIONS = 100;
-
-        ArrayList<Double> allNonDiffExpressedPValues = new ArrayList<Double>();
-
-        for (int m = 0; m < NUMBER_OF_ITERATIONS; m++) {
-
-            for (int i = 0; i < equallyExpressedProteins.size(); i++) {
-
-                Protein currentProtein = equallyExpressedProteins.get(i);
-
-                ArrayList<Double> nonNullFromGroupA = currentProtein.getAllNonNullFromGroupA();
-                ArrayList<Double> nonNullFromGroupB = currentProtein.getAllNonNullFromGroupB();
-
-                int minSize = Math.min(nonNullFromGroupA.size(), nonNullFromGroupB.size());
-                int maxSize = Math.max(nonNullFromGroupA.size(), nonNullFromGroupB.size());
-
-                Random randomNumberGenerator = new Random();
-
-                for (int j = 0; j < NUMBER_OF_SWAPS; j++) {
-
-                    if (nonNullFromGroupA.size() < nonNullFromGroupB.size()) {
-                        int randomIndexGroup1 = randomNumberGenerator.nextInt(minSize);
-                        int randomIndexGroup2 = randomNumberGenerator.nextInt(maxSize);
-
-                        Double temp = nonNullFromGroupA.get(randomIndexGroup1);
-                        nonNullFromGroupA.set(randomIndexGroup1, nonNullFromGroupB.get(randomIndexGroup2));
-                        nonNullFromGroupB.set(randomIndexGroup2, temp);
-                    } else {
-                        int randomIndexGroup1 = randomNumberGenerator.nextInt(minSize);
-                        int randomIndexGroup2 = randomNumberGenerator.nextInt(maxSize);
-
-                        Double temp = nonNullFromGroupB.get(randomIndexGroup1);
-                        nonNullFromGroupB.set(randomIndexGroup1, nonNullFromGroupA.get(randomIndexGroup2));
-                        nonNullFromGroupA.set(randomIndexGroup2, temp);
+                        try {
+                            allNonDiffExpressedPValues.add(TestUtils.homoscedasticTTest(sampleA, sampleB));
+                        } catch (MathException e) {
+                            System.out.println("Math Exception: " + currentProtein);
+                            e.printStackTrace();
+                        }
                     }
                 }
 
-                // calculate new p-value
-                double[] sampleA = new double[nonNullFromGroupA.size()];
-                double[] sampleB = new double[nonNullFromGroupB.size()];
 
-                for (int j = 0; j < nonNullFromGroupA.size(); j++) {
-                    sampleA[j] = nonNullFromGroupA.get(j);
-                }
-
-                for (int j = 0; j < nonNullFromGroupB.size(); j++) {
-                    sampleB[j] = nonNullFromGroupB.get(j);
-                }
-
-                try {
-                    allNonDiffExpressedPValues.add(TestUtils.homoscedasticTTest(sampleA, sampleB));
-                } catch (MathException e) {
-                    System.out.println("Math Exception: " + currentProtein);
-                    e.printStackTrace();
-                }
-            }
-        }
-
-
-        // sort the non differentially expressed p-values
-        java.util.Collections.sort(allNonDiffExpressedPValues);
+                // sort the non differentially expressed p-values
+                java.util.Collections.sort(allNonDiffExpressedPValues);
 
 //        // print the sorted p-values
 //        for (int i = 0; i < allNonDiffExpressedPValues.size(); i++) {
@@ -3051,114 +3114,125 @@ public class MiTRAQ extends javax.swing.JFrame {
 //        }
 
 
-        // sort the valid proteins by p-value
-        java.util.Collections.sort(allValidProteins);
+                // sort the valid proteins by p-value
+                java.util.Collections.sort(allValidProteins);
 
 
-        // find the q-values
-        for (int i = 0; i < allValidProteins.size(); i++) {
+                // find the q-values
+                for (int i = 0; i < allValidProteins.size(); i++) {
 
-            Protein currentProtein = allValidProteins.get(i);
+                    Protein currentProtein = allValidProteins.get(i);
 
-            int qValueIndex = 0;
-            double qValue = 1;
+                    int qValueIndex = 0;
+                    double qValue = 1;
 
-            if (currentProtein.getPValue() != null) {
+                    if (currentProtein.getPValue() != null) {
 
-                while (qValueIndex < allNonDiffExpressedPValues.size() && allNonDiffExpressedPValues.get(qValueIndex) < currentProtein.getPValue()) {
-                    qValueIndex++;
+                        while (qValueIndex < allNonDiffExpressedPValues.size() && allNonDiffExpressedPValues.get(qValueIndex) < currentProtein.getPValue()) {
+                            qValueIndex++;
+                        }
+
+                        qValue = ((double) ((qValueIndex + 1) * allValidProteins.size())) / (allNonDiffExpressedPValues.size() * (i + 1));
+
+                        if (qValue > 1) {
+                            qValue = 1;
+                        }
+                    }
+
+                    currentProtein.setqValue(qValue);
                 }
 
-                qValue = ((double) ((qValueIndex + 1) * allValidProteins.size())) / (allNonDiffExpressedPValues.size() * (i + 1));
 
-                if (qValue > 1) {
-                    qValue = 1;
+                // calculate the "true" q-values
+                for (int index = 0; index < allValidProteins.size(); index++) {
+
+                    int newIndex = findIndexOfSmallestValueFromIndex(index, allValidProteins);
+                    double smallestValue = allValidProteins.get(newIndex).getQValue();
+
+                    for (int j = index; j <= newIndex; j++) {
+                        allValidProteins.get(j).setqValue(smallestValue);
+                    }
+
+                    index = newIndex;
                 }
+
+                if (allValidFoldChanges.size() > 0) {
+                    createFoldChangeHistogram(allValidFoldChanges);
+                }
+
+                double maxAbsoluteValueFoldChange = 0.0;
+                double maxPeptideCount = 0;
+
+                // add the proteins to the results table
+                for (int i = 0; i < allValidProteins.size(); i++) {
+                    Protein currentProtein = allValidProteins.get(i);
+
+                    boolean selected = false;
+
+                    if (selectedProteins.contains(currentProtein.getProteinName() + " " + currentProtein.getAccessionNumber())) {
+                        selected = true;
+                    }
+
+                    String tempAccessionNumber = currentProtein.getAccessionNumber();
+
+                    if (tempAccessionNumber.toUpperCase().startsWith("IPI")) {
+                        //tempAccessionNumber = "<html><u>" + tempAccessionNumber + "</u></html>"; // @TODO: support more databases
+
+                        tempAccessionNumber = "<html><a href=\"http://srs.ebi.ac.uk/srsbin/cgi-bin/wgetz?-e+%5bIPI-AccNumber:"
+                                + tempAccessionNumber + "%5d"
+                                + "\"><font color=\"" + notSelectedRowHtmlTagFontColor + "\">"
+                                + tempAccessionNumber + "</font></a></html>";
+                    }
+
+                    ((DefaultTableModel) resultsJTable.getModel()).addRow(
+                            new Object[]{
+                                new Integer(i + 1),
+                                currentProtein.getProteinName(),
+                                tempAccessionNumber,
+                                new XYDataPoint(currentProtein.getFoldChange(), currentProtein.getPValue()),
+                                currentProtein.getNumberUniquePeptides(),
+                                currentProtein.getPercentCoverage(),
+                                currentProtein.getNumExperimentsDetected(),
+                                currentProtein.getNumQuantificationRatios(),
+                                currentProtein.getPValue(),
+                                currentProtein.getQValue(),
+                                currentProtein.getPValue() < equallyExpressedSignificanceLevel,
+                                currentProtein.getPValue() < equallyExpressedSignificanceLevel / allValidProteins.size(),
+                                selected
+                            });
+
+                    if (Math.abs(currentProtein.getFoldChange()) > maxAbsoluteValueFoldChange) {
+                        maxAbsoluteValueFoldChange = Math.abs(currentProtein.getFoldChange());
+                    }
+
+                    if (currentProtein.getNumberUniquePeptides() > maxPeptideCount) {
+                        maxPeptideCount = currentProtein.getNumberUniquePeptides();
+                    }
+                }
+
+                if (resultsJTable.getRowCount() > 0) {
+                    ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).setMaxValue(Math.ceil(maxAbsoluteValueFoldChange));
+                    ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).setMinValue(-Math.ceil(maxAbsoluteValueFoldChange));
+                    ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Peptides").getCellRenderer()).setMaxValue(maxPeptideCount);
+                    ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Exp. Count").getCellRenderer()).setMaxValue(numberOfExperiments);
+                    ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Quant. Count").getCellRenderer()).setMaxValue(groupANumberOfMembers + groupBNumberOfMembers);
+
+                    valuesAndChartJCheckBoxMenuItemActionPerformed(null);
+
+                    resultsJTable.setRowSelectionInterval(0, 0);
+                    resultsJTableMouseClicked(null);
+                }
+
+                ((TitledBorder) resultsJPanel.getBorder()).setTitle("Results (" + resultsJTable.getRowCount() + ")");
+                resultsJPanel.revalidate();
+                resultsJPanel.repaint();
+
+                exportPlotJButton.setEnabled(true);
+
+                progressDialog.setVisible(false);
+                progressDialog.dispose();
             }
-
-            currentProtein.setqValue(qValue);
-        }
-
-
-        // calculate the "true" q-values
-        for (int index = 0; index < allValidProteins.size(); index++) {
-
-            int newIndex = findIndexOfSmallestValueFromIndex(index, allValidProteins);
-            double smallestValue = allValidProteins.get(newIndex).getQValue();
-
-            for (int j = index; j <= newIndex; j++) {
-                allValidProteins.get(j).setqValue(smallestValue);
-            }
-
-            index = newIndex;
-        }
-
-        if (allValidFoldChanges.size() > 0) {
-            createFoldChangeHistogram(allValidFoldChanges);
-        }
-
-        double maxAbsoluteValueFoldChange = 0.0;
-        double maxPeptideCount = 0;
-
-        // add the proteins to the results table
-        for (int i = 0; i < allValidProteins.size(); i++) {
-            Protein currentProtein = allValidProteins.get(i);
-
-            boolean selected = false;
-
-            if (selectedProteins.contains(currentProtein.getProteinName() + " " + currentProtein.getAccessionNumber())) {
-                selected = true;
-            }
-
-            String tempAccessionNumber = currentProtein.getAccessionNumber();
-
-            if (tempAccessionNumber.toUpperCase().startsWith("IPI")) {
-                tempAccessionNumber = "<html><u>" + tempAccessionNumber + "</u></html>"; // @TODO: support more databases
-            }
-
-            ((DefaultTableModel) resultsJTable.getModel()).addRow(
-                    new Object[]{
-                        new Integer(i + 1),
-                        currentProtein.getProteinName(),
-                        tempAccessionNumber,
-                        new XYDataPoint(currentProtein.getFoldChange(), currentProtein.getPValue()),
-                        currentProtein.getNumberUniquePeptides(),
-                        currentProtein.getPercentCoverage(),
-                        currentProtein.getNumExperimentsTwoUniquePeptides(),
-                        currentProtein.getPValue(),
-                        currentProtein.getQValue(),
-                        currentProtein.getPValue() < equallyExpressedSignificanceLevel,
-                        currentProtein.getPValue() < equallyExpressedSignificanceLevel / allValidProteins.size(),
-                        selected
-                    });
-
-            if (Math.abs(currentProtein.getFoldChange()) > maxAbsoluteValueFoldChange) {
-                maxAbsoluteValueFoldChange = Math.abs(currentProtein.getFoldChange());
-            }
-
-            if (currentProtein.getNumberUniquePeptides() > maxPeptideCount) {
-                maxPeptideCount = currentProtein.getNumberUniquePeptides();
-            }
-
-            proteinCountJLabel.setText("Protein Count: " + resultsJTable.getRowCount());
-        }
-
-        if (resultsJTable.getRowCount() > 0) {
-            ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).setMaxValue(Math.ceil(maxAbsoluteValueFoldChange));
-            ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).setMinValue(-Math.ceil(maxAbsoluteValueFoldChange));
-            ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Peptides").getCellRenderer()).setMaxValue(maxPeptideCount);
-            ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Exp. Count").getCellRenderer()).setMaxValue(numberOfExperiments);
-
-            valuesAndChartJCheckBoxMenuItemActionPerformed(null);
-
-            resultsJTable.setRowSelectionInterval(0, 0);
-            resultsJTableMouseClicked(null);
-        } else {
-            proteinCountJLabel.setText("Protein Count: " + 0);
-        }
-
-        exportPlotJButton.setEnabled(true);
-        this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        }.start();
     }
 
     /**
@@ -3201,7 +3275,7 @@ public class MiTRAQ extends javax.swing.JFrame {
         JFreeChart chart = ChartFactory.createHistogram("Fold Change", "Fold Change (log 2)", "Frequency",
                 dataset, PlotOrientation.VERTICAL, false, true, false);
 
-        ChartPanel chartPanel = new ChartPanel(chart);
+        foldChangeChartPanel = new ChartPanel(chart);
 
         foldChangeplot = chart.getXYPlot();
 
@@ -3213,11 +3287,11 @@ public class MiTRAQ extends javax.swing.JFrame {
         foldChangeplot.setRenderer(renderer);
 
         foldChangeplot.setBackgroundPaint(Color.WHITE);
-        chartPanel.setBackground(Color.WHITE);
+        foldChangeChartPanel.setBackground(Color.WHITE);
         chart.setBackgroundPaint(Color.WHITE);
 
         foldChangeChartJPanel.removeAll();
-        foldChangeChartJPanel.add(chartPanel);
+        foldChangeChartJPanel.add(foldChangeChartPanel);
 
 
         // add markers for 2 SDs
@@ -3336,6 +3410,15 @@ public class MiTRAQ extends javax.swing.JFrame {
      */
     public void setCurrrentFilterRadioButtonSelections(Integer[] currrentFilterRadioButtonSelections) {
         this.currrentFilterRadioButtonSelections = currrentFilterRadioButtonSelections;
+    }
+
+    /**
+     * Sets if the filter should take the absolute value of the fold change.
+     * 
+     * @param foldChangeAbsoluteValue 
+     */
+    public void setFilterFoldChangeAbsoluteValue(boolean foldChangeAbsoluteValue) {
+        this.foldChangeAbsoluteValue = foldChangeAbsoluteValue;
     }
 
     /**
@@ -3488,5 +3571,10 @@ public class MiTRAQ extends javax.swing.JFrame {
                 }
             }
         }
+    }
+
+    @Override
+    public void cancelProgress() {
+        // do nothing
     }
 }
