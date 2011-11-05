@@ -55,7 +55,7 @@ public class PreferencesDialog extends javax.swing.JDialog {
         setTitle("Preferences");
         setResizable(false);
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Analysis Settings"));
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Data Import Settings"));
 
         jLabel1.setText("Minimum #Peptides:");
 

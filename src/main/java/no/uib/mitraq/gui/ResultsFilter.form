@@ -8,6 +8,8 @@
     </Component>
     <Component class="javax.swing.ButtonGroup" name="expCountButtonGroup">
     </Component>
+    <Component class="javax.swing.ButtonGroup" name="quantCountButtonGroup">
+    </Component>
     <Component class="javax.swing.ButtonGroup" name="foldChangeButtonGroup">
     </Component>
     <Component class="javax.swing.ButtonGroup" name="pValueButtonGroup">
@@ -43,15 +45,15 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="1" attributes="0">
-                  <Group type="102" alignment="1" attributes="0">
-                      <Component id="clearJButton" linkSize="2" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="exitJButton" linkSize="2" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Component id="jPanel4" alignment="1" min="-2" max="-2" attributes="0"/>
-              </Group>
+              <Component id="jPanel4" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
+          </Group>
+          <Group type="102" alignment="1" attributes="0">
+              <EmptySpace pref="351" max="32767" attributes="0"/>
+              <Component id="clearJButton" linkSize="2" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="okJButton" linkSize="2" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="22" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -63,7 +65,7 @@
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="clearJButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="exitJButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="okJButton" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
@@ -86,28 +88,36 @@
               <Group type="102" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="jLabel13" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="jLabel15" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="jLabel14" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="jLabel12" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="jLabel11" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="jLabel10" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="jLabel9" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="jLabel16" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Group type="102" alignment="1" attributes="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="jLabel9" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel11" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel12" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel17" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel16" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel10" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel13" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel14" alignment="0" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace pref="22" max="32767" attributes="0"/>
+                          <Group type="103" groupAlignment="2" attributes="0">
+                              <Component id="pValueJTextField" linkSize="3" alignment="2" min="-2" pref="187" max="-2" attributes="0"/>
+                              <Component id="foldChangeJTextField" linkSize="3" alignment="2" min="-2" pref="187" max="-2" attributes="0"/>
+                              <Component id="quantCountJTextField" linkSize="3" alignment="2" min="-2" pref="189" max="-2" attributes="0"/>
+                              <Component id="expCountJTextField" linkSize="3" alignment="2" min="-2" pref="187" max="-2" attributes="0"/>
+                              <Component id="coverageJTextField" linkSize="3" alignment="2" min="-2" pref="187" max="-2" attributes="0"/>
+                              <Component id="peptidesJTextField" linkSize="3" alignment="2" min="-2" pref="183" max="-2" attributes="0"/>
+                              <Component id="accessionJTextField" linkSize="3" alignment="2" min="-2" pref="183" max="-2" attributes="0"/>
+                              <Component id="proteinJTextField" linkSize="3" alignment="2" min="-2" pref="187" max="-2" attributes="0"/>
+                              <Component id="qValueJTextField" linkSize="3" alignment="2" min="-2" pref="187" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                      <Component id="jLabel15" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="accessionJTextField" alignment="1" pref="173" max="32767" attributes="0"/>
-                      <Component id="proteinJTextField" alignment="0" pref="173" max="32767" attributes="0"/>
-                      <Component id="peptidesJTextField" alignment="0" pref="173" max="32767" attributes="0"/>
-                      <Component id="coverageJTextField" alignment="0" pref="173" max="32767" attributes="0"/>
-                      <Component id="expCountJTextField" alignment="0" pref="173" max="32767" attributes="0"/>
-                      <Component id="pValueJTextField" alignment="1" pref="173" max="32767" attributes="0"/>
-                      <Component id="foldChangeJTextField" alignment="0" pref="173" max="32767" attributes="0"/>
-                      <Component id="qValueJTextField" alignment="1" pref="173" max="32767" attributes="0"/>
-                  </Group>
-                  <EmptySpace type="separate" max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="jLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="peptidesGreaterThanJRadioButton" min="-2" max="-2" attributes="0"/>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
@@ -130,18 +140,20 @@
                           <Component id="expCountLessThanJRadioButton" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
+                          <Component id="quantCountGreaterThanJRadioButton" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Component id="quantCountEqualJRadioButton" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Component id="quantCountLessThanJRadioButton" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <Group type="102" alignment="0" attributes="0">
                           <Component id="foldChangeGreaterThanJRadioButton" min="-2" max="-2" attributes="0"/>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="foldChangeEqualJRadioButton" min="-2" max="-2" attributes="0"/>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="foldChangeLessThanJRadioButton" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <Group type="102" alignment="0" attributes="0">
-                          <Component id="pValueGreaterThanJRadioButton" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="pValueEqualJRadioButton" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="pValueLessThanJRadioButton" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
+                          <Component id="absoluteValueCheckBox" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="qValueGreaterThanJRadioButton" min="-2" max="-2" attributes="0"/>
@@ -150,10 +162,14 @@
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="qValueLessThanJRadioButton" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <Component id="jLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                      <Group type="102" alignment="0" attributes="0">
+                          <Component id="pValueGreaterThanJRadioButton" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Component id="pValueEqualJRadioButton" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Component id="pValueLessThanJRadioButton" min="-2" max="-2" attributes="0"/>
+                      </Group>
                   </Group>
-                  <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -180,15 +196,15 @@
                       <Component id="peptidesEqualJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="peptidesLessThanJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="jLabel11" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="coverageJTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="coverageGreaterThanJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="coverageJTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="coverageEqualJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="coverageLessThanJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="expCountJTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel12" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -196,27 +212,36 @@
                       <Component id="expCountEqualJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="expCountLessThanJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="quantCountJTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="quantCountGreaterThanJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="jLabel17" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="quantCountEqualJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="quantCountLessThanJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="foldChangeJTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel13" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="foldChangeGreaterThanJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="foldChangeEqualJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="foldChangeLessThanJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="absoluteValueCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="pValueJTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel14" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="pValueGreaterThanJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="pValueJTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="pValueEqualJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="pValueLessThanJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="qValueJTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel15" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="qValueGreaterThanJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="qValueJTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="qValueEqualJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="qValueLessThanJRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -391,7 +416,6 @@
             <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
               <ComponentRef name="expCountButtonGroup"/>
             </Property>
-            <Property name="selected" type="boolean" value="true"/>
             <Property name="text" type="java.lang.String" value="&gt;"/>
           </Properties>
           <Events>
@@ -548,6 +572,62 @@
             <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;&#xa;Find all proteins containing a given accession number.&lt;br&gt;&#xa;Regular expressions are supported.&#xa;&lt;/html&gt;"/>
           </Properties>
         </Component>
+        <Component class="javax.swing.JLabel" name="jLabel17">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Quant. Count:"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="quantCountJTextField">
+          <Properties>
+            <Property name="horizontalAlignment" type="int" value="0"/>
+          </Properties>
+          <Events>
+            <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="quantCountJTextFieldKeyReleased"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JRadioButton" name="quantCountGreaterThanJRadioButton">
+          <Properties>
+            <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+              <ComponentRef name="quantCountButtonGroup"/>
+            </Property>
+            <Property name="selected" type="boolean" value="true"/>
+            <Property name="text" type="java.lang.String" value="&gt;"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="quantCountGreaterThanJRadioButtonradioButtonActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JRadioButton" name="quantCountEqualJRadioButton">
+          <Properties>
+            <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+              <ComponentRef name="quantCountButtonGroup"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="="/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="quantCountEqualJRadioButtonradioButtonActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JRadioButton" name="quantCountLessThanJRadioButton">
+          <Properties>
+            <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+              <ComponentRef name="quantCountButtonGroup"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="&lt;"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="quantCountLessThanJRadioButtonradioButtonActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="absoluteValueCheckBox">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Abs"/>
+            <Property name="toolTipText" type="java.lang.String" value="Absolute Value"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="absoluteValueCheckBoxActionPerformed"/>
+          </Events>
+        </Component>
       </SubComponents>
     </Container>
     <Component class="javax.swing.JButton" name="clearJButton">
@@ -558,12 +638,12 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="clearJButtonActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JButton" name="exitJButton">
+    <Component class="javax.swing.JButton" name="okJButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Exit"/>
+        <Property name="text" type="java.lang.String" value="OK"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exitJButtonActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="okJButtonActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>
