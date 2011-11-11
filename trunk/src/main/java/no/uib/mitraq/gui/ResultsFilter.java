@@ -1,6 +1,10 @@
 package no.uib.mitraq.gui;
 
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.FocusTraversalPolicy;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.regex.PatternSyntaxException;
 import javax.swing.JTable;
@@ -45,13 +49,43 @@ public class ResultsFilter extends javax.swing.JDialog {
         resultsTable = miTraq.getResultsTable();
 
         initComponents();
+        
+        // set the focus traveral policy
+        HashMap<Component, Component> focusMap = new HashMap<Component, Component>();
+        focusMap.put(proteinJTextField, accessionJTextField);
+        focusMap.put(accessionJTextField, peptidesJTextField);
+        focusMap.put(peptidesJTextField, coverageJTextField);
+        focusMap.put(coverageJTextField, expCountJTextField);
+        focusMap.put(expCountJTextField, quantCountJTextField);
+        focusMap.put(quantCountJTextField, foldChangeJTextField);
+        focusMap.put(foldChangeJTextField, pValueJTextField);
+        focusMap.put(pValueJTextField, qValueJTextField);
+        focusMap.put(qValueJTextField, okJButton);
+        focusMap.put(okJButton, clearJButton);
+        focusMap.put(clearJButton, proteinJTextField);
+        
+        HashMap<Component, Component> focusReverseMap = new HashMap<Component, Component>();
+        focusReverseMap.put(proteinJTextField, clearJButton);
+        focusReverseMap.put(accessionJTextField, proteinJTextField);
+        focusReverseMap.put(peptidesJTextField, accessionJTextField);
+        focusReverseMap.put(coverageJTextField, peptidesJTextField);
+        focusReverseMap.put(expCountJTextField, coverageJTextField);
+        focusReverseMap.put(quantCountJTextField, expCountJTextField);
+        focusReverseMap.put(foldChangeJTextField, quantCountJTextField);
+        focusReverseMap.put(pValueJTextField, foldChangeJTextField);
+        focusReverseMap.put(qValueJTextField, pValueJTextField);
+        focusReverseMap.put(okJButton, qValueJTextField);
+        focusReverseMap.put(clearJButton, okJButton);
+        
+        MyFocusPolicy focusPolicy = new MyFocusPolicy(focusMap, focusReverseMap, proteinJTextField, clearJButton);
+        this.setFocusTraversalPolicy(focusPolicy);
 
         // update the filter properties
         proteinJTextField.setText(currentFilterValues[0]);
         peptidesJTextField.setText(currentFilterValues[1]);
         coverageJTextField.setText(currentFilterValues[2]);
         expCountJTextField.setText(currentFilterValues[3]);
-        expCountJTextField.setText(currentFilterValues[4]);
+        quantCountJTextField.setText(currentFilterValues[4]);
         foldChangeJTextField.setText(currentFilterValues[5]);
         pValueJTextField.setText(currentFilterValues[6]);
         qValueJTextField.setText(currentFilterValues[7]);
@@ -110,21 +144,23 @@ public class ResultsFilter extends javax.swing.JDialog {
         foldChangeButtonGroup = new javax.swing.ButtonGroup();
         pValueButtonGroup = new javax.swing.ButtonGroup();
         qValueButtonGroup = new javax.swing.ButtonGroup();
-        jPanel4 = new javax.swing.JPanel();
+        filterPanel = new javax.swing.JPanel();
         jLabel9 = new javax.swing.JLabel();
         proteinJTextField = new javax.swing.JTextField();
-        jLabel10 = new javax.swing.JLabel();
-        jLabel11 = new javax.swing.JLabel();
-        jLabel12 = new javax.swing.JLabel();
-        jLabel13 = new javax.swing.JLabel();
+        accessionJTextField = new javax.swing.JTextField();
         peptidesJTextField = new javax.swing.JTextField();
         coverageJTextField = new javax.swing.JTextField();
         foldChangeJTextField = new javax.swing.JTextField();
         expCountJTextField = new javax.swing.JTextField();
-        jLabel14 = new javax.swing.JLabel();
+        quantCountJTextField = new javax.swing.JTextField();
         pValueJTextField = new javax.swing.JTextField();
-        jLabel15 = new javax.swing.JLabel();
         qValueJTextField = new javax.swing.JTextField();
+        jLabel10 = new javax.swing.JLabel();
+        jLabel11 = new javax.swing.JLabel();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
+        jLabel14 = new javax.swing.JLabel();
+        jLabel15 = new javax.swing.JLabel();
         peptidesGreaterThanJRadioButton = new javax.swing.JRadioButton();
         peptidesEqualJRadioButton = new javax.swing.JRadioButton();
         peptidesLessThanJRadioButton = new javax.swing.JRadioButton();
@@ -145,10 +181,8 @@ public class ResultsFilter extends javax.swing.JDialog {
         qValueLessThanJRadioButton = new javax.swing.JRadioButton();
         jLabel1 = new javax.swing.JLabel();
         jLabel16 = new javax.swing.JLabel();
-        accessionJTextField = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         jLabel17 = new javax.swing.JLabel();
-        quantCountJTextField = new javax.swing.JTextField();
         quantCountGreaterThanJRadioButton = new javax.swing.JRadioButton();
         quantCountEqualJRadioButton = new javax.swing.JRadioButton();
         quantCountLessThanJRadioButton = new javax.swing.JRadioButton();
@@ -165,7 +199,7 @@ public class ResultsFilter extends javax.swing.JDialog {
             }
         });
 
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Results Fillter"));
+        filterPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Results Fillter"));
 
         jLabel9.setText("Protein:");
 
@@ -177,13 +211,13 @@ public class ResultsFilter extends javax.swing.JDialog {
             }
         });
 
-        jLabel10.setText("Peptides:");
-
-        jLabel11.setText("Coverage:");
-
-        jLabel12.setText("Exp. Count:");
-
-        jLabel13.setText("Fold Change:");
+        accessionJTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        accessionJTextField.setToolTipText("<html>\nFind all proteins containing a given accession number.<br>\nRegular expressions are supported.\n</html>");
+        accessionJTextField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                accessionJTextFieldKeyReleased(evt);
+            }
+        });
 
         peptidesJTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         peptidesJTextField.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -213,7 +247,12 @@ public class ResultsFilter extends javax.swing.JDialog {
             }
         });
 
-        jLabel14.setText("p-value:");
+        quantCountJTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        quantCountJTextField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                quantCountJTextFieldKeyReleased(evt);
+            }
+        });
 
         pValueJTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         pValueJTextField.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -222,14 +261,24 @@ public class ResultsFilter extends javax.swing.JDialog {
             }
         });
 
-        jLabel15.setText("q-value:");
-
         qValueJTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         qValueJTextField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 qValueJTextFieldKeyReleased(evt);
             }
         });
+
+        jLabel10.setText("Peptides:");
+
+        jLabel11.setText("Coverage:");
+
+        jLabel12.setText("Exp. Count:");
+
+        jLabel13.setText("Fold Change:");
+
+        jLabel14.setText("p-value:");
+
+        jLabel15.setText("q-value:");
 
         peptidesButtonGroup.add(peptidesGreaterThanJRadioButton);
         peptidesGreaterThanJRadioButton.setSelected(true);
@@ -385,25 +434,10 @@ public class ResultsFilter extends javax.swing.JDialog {
 
         jLabel16.setText("Accession:");
 
-        accessionJTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        accessionJTextField.setToolTipText("<html>\nFind all proteins containing a given accession number.<br>\nRegular expressions are supported.\n</html>");
-        accessionJTextField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                accessionJTextFieldKeyReleased(evt);
-            }
-        });
-
         jLabel2.setText("(contains, RegExp)");
         jLabel2.setToolTipText("<html>\nFind all proteins containing a given accession number.<br>\nRegular expressions are supported.\n</html>");
 
         jLabel17.setText("Quant. Count:");
-
-        quantCountJTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        quantCountJTextField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                quantCountJTextFieldKeyReleased(evt);
-            }
-        });
 
         quantCountButtonGroup.add(quantCountGreaterThanJRadioButton);
         quantCountGreaterThanJRadioButton.setSelected(true);
@@ -438,15 +472,15 @@ public class ResultsFilter extends javax.swing.JDialog {
             }
         });
 
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
+        javax.swing.GroupLayout filterPanelLayout = new javax.swing.GroupLayout(filterPanel);
+        filterPanel.setLayout(filterPanelLayout);
+        filterPanelLayout.setHorizontalGroup(
+            filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(filterPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, filterPanelLayout.createSequentialGroup()
+                        .addGroup(filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel9)
                             .addComponent(jLabel11)
                             .addComponent(jLabel12)
@@ -456,7 +490,7 @@ public class ResultsFilter extends javax.swing.JDialog {
                             .addComponent(jLabel13)
                             .addComponent(jLabel14))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 22, Short.MAX_VALUE)
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                        .addGroup(filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                             .addComponent(pValueJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(foldChangeJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(quantCountJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -468,34 +502,34 @@ public class ResultsFilter extends javax.swing.JDialog {
                             .addComponent(qValueJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addComponent(jLabel15))
                 .addGap(18, 18, 18)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1)
                     .addComponent(jLabel2)
-                    .addGroup(jPanel4Layout.createSequentialGroup()
+                    .addGroup(filterPanelLayout.createSequentialGroup()
                         .addComponent(peptidesGreaterThanJRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(peptidesEqualJRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(peptidesLessThanJRadioButton))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
+                    .addGroup(filterPanelLayout.createSequentialGroup()
                         .addComponent(coverageGreaterThanJRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(coverageEqualJRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(coverageLessThanJRadioButton))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
+                    .addGroup(filterPanelLayout.createSequentialGroup()
                         .addComponent(expCountGreaterThanJRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(expCountEqualJRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(expCountLessThanJRadioButton))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
+                    .addGroup(filterPanelLayout.createSequentialGroup()
                         .addComponent(quantCountGreaterThanJRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(quantCountEqualJRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(quantCountLessThanJRadioButton))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
+                    .addGroup(filterPanelLayout.createSequentialGroup()
                         .addComponent(foldChangeGreaterThanJRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(foldChangeEqualJRadioButton)
@@ -503,13 +537,13 @@ public class ResultsFilter extends javax.swing.JDialog {
                         .addComponent(foldChangeLessThanJRadioButton)
                         .addGap(6, 6, 6)
                         .addComponent(absoluteValueCheckBox))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
+                    .addGroup(filterPanelLayout.createSequentialGroup()
                         .addComponent(qValueGreaterThanJRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(qValueEqualJRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(qValueLessThanJRadioButton))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
+                    .addGroup(filterPanelLayout.createSequentialGroup()
                         .addComponent(pValueGreaterThanJRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(pValueEqualJRadioButton)
@@ -517,51 +551,51 @@ public class ResultsFilter extends javax.swing.JDialog {
                         .addComponent(pValueLessThanJRadioButton))))
         );
 
-        jPanel4Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {accessionJTextField, coverageJTextField, expCountJTextField, foldChangeJTextField, pValueJTextField, peptidesJTextField, proteinJTextField, qValueJTextField, quantCountJTextField});
+        filterPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {accessionJTextField, coverageJTextField, expCountJTextField, foldChangeJTextField, pValueJTextField, peptidesJTextField, proteinJTextField, qValueJTextField, quantCountJTextField});
 
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
+        filterPanelLayout.setVerticalGroup(
+            filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(filterPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(proteinJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel9)
                     .addComponent(jLabel1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(accessionJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel16)
                     .addComponent(jLabel2))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(peptidesJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel10)
                     .addComponent(peptidesGreaterThanJRadioButton)
                     .addComponent(peptidesEqualJRadioButton)
                     .addComponent(peptidesLessThanJRadioButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel11)
                     .addComponent(coverageGreaterThanJRadioButton)
                     .addComponent(coverageJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(coverageEqualJRadioButton)
                     .addComponent(coverageLessThanJRadioButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(expCountJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel12)
                     .addComponent(expCountGreaterThanJRadioButton)
                     .addComponent(expCountEqualJRadioButton)
                     .addComponent(expCountLessThanJRadioButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(quantCountJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(quantCountGreaterThanJRadioButton)
                     .addComponent(jLabel17)
                     .addComponent(quantCountEqualJRadioButton)
                     .addComponent(quantCountLessThanJRadioButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(foldChangeJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel13)
                     .addComponent(foldChangeGreaterThanJRadioButton)
@@ -569,14 +603,14 @@ public class ResultsFilter extends javax.swing.JDialog {
                     .addComponent(foldChangeLessThanJRadioButton)
                     .addComponent(absoluteValueCheckBox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel14)
                     .addComponent(pValueGreaterThanJRadioButton)
                     .addComponent(pValueJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(pValueEqualJRadioButton)
                     .addComponent(pValueLessThanJRadioButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(filterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel15)
                     .addComponent(qValueGreaterThanJRadioButton)
                     .addComponent(qValueJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -605,13 +639,13 @@ public class ResultsFilter extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(filterPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(351, Short.MAX_VALUE)
-                .addComponent(clearJButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(okJButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(clearJButton)
                 .addGap(22, 22, 22))
         );
 
@@ -621,7 +655,7 @@ public class ResultsFilter extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(filterPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(clearJButton)
@@ -805,6 +839,8 @@ public class ResultsFilter extends javax.swing.JDialog {
             foldChangeRadioButtonIndex,
             pValueRadioButtonIndex,
             qValueRadioButtonIndex};
+        
+        miTraq.setFilterFoldChangeAbsoluteValue(absoluteValueCheckBox.isSelected());
 
         miTraq.setCurrentFilterValues(currentFilterValues);
         miTraq.setCurrrentFilterRadioButtonSelections(currrentFilterRadioButtonSelections);
@@ -1065,13 +1101,16 @@ public class ResultsFilter extends javax.swing.JDialog {
         }
 
         RowFilter<Object, Object> allFilters = RowFilter.andFilter(filters);
-        ((TableRowSorter) resultsTable.getRowSorter()).setRowFilter(allFilters);
-
-        if (resultsTable.getRowCount() > 0) {
-            resultsTable.setRowSelectionInterval(0, 0);
-        }
         
-        miTraq.updateResultTableSelection();
+        if (resultsTable.getRowSorter() != null) {
+            ((TableRowSorter) resultsTable.getRowSorter()).setRowFilter(allFilters);
+            
+            if (resultsTable.getRowCount() > 0) {
+                resultsTable.setRowSelectionInterval(0, 0);
+            }
+
+            miTraq.updateResultTableSelection();
+        } 
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox absoluteValueCheckBox;
@@ -1087,6 +1126,7 @@ public class ResultsFilter extends javax.swing.JDialog {
     private javax.swing.JRadioButton expCountGreaterThanJRadioButton;
     private javax.swing.JTextField expCountJTextField;
     private javax.swing.JRadioButton expCountLessThanJRadioButton;
+    private javax.swing.JPanel filterPanel;
     private javax.swing.ButtonGroup foldChangeButtonGroup;
     private javax.swing.JRadioButton foldChangeEqualJRadioButton;
     private javax.swing.JRadioButton foldChangeGreaterThanJRadioButton;
@@ -1103,7 +1143,6 @@ public class ResultsFilter extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel4;
     private javax.swing.JButton okJButton;
     private javax.swing.ButtonGroup pValueButtonGroup;
     private javax.swing.JRadioButton pValueEqualJRadioButton;
@@ -1127,4 +1166,47 @@ public class ResultsFilter extends javax.swing.JDialog {
     private javax.swing.JTextField quantCountJTextField;
     private javax.swing.JRadioButton quantCountLessThanJRadioButton;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * The focus traversal policy map.
+     */
+    class MyFocusPolicy extends FocusTraversalPolicy {
+
+        private HashMap<Component, Component> focusMap;
+        private HashMap<Component, Component> focusReverseMap;
+        private Component first;
+        private Component last;
+        
+        public MyFocusPolicy (HashMap<Component, Component> focusMap, HashMap<Component, Component> focusReverseMap, Component first, Component last) {
+            this.focusMap = focusMap;
+            this.focusReverseMap = focusReverseMap;
+            this.first = first;
+            this.last = last;
+        }
+        
+        @Override
+        public Component getComponentAfter(Container aContainer, Component aComponent) {
+            return focusMap.get(aComponent);  
+        } 
+
+        @Override
+        public Component getComponentBefore(Container aContainer, Component aComponent) {
+            return focusReverseMap.get(aComponent);  
+        }
+
+        @Override
+        public Component getFirstComponent(Container aContainer) {
+            return first;
+        }
+
+        @Override
+        public Component getLastComponent(Container aContainer) {
+            return last;
+        }
+
+        @Override
+        public Component getDefaultComponent(Container aContainer) {
+            return first;
+        }
+    }
 }

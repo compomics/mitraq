@@ -31,6 +31,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.RowFilter;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -200,7 +201,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
     /**
      * Set if the row filter is to take the absolute value of the fold change.
      */
-    private boolean foldChangeAbsoluteValue = false;
+    private boolean foldChangeAbsoluteValue = true;
     /**
      * The results table column header tips.
      */
@@ -268,7 +269,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
 
         // set the result table details
         setUpResultsTable();
-        setExtendedState(MAXIMIZED_BOTH);
+        //setExtendedState(MAXIMIZED_BOTH);
 
         setLocationRelativeTo(null);
     }
@@ -301,7 +302,6 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
         // turn off column reordering
         resultsJTable.getTableHeader().setReorderingAllowed(false);
 
-        // enable sorting by clicking on the column headers
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(resultsJTable.getModel());
         resultsJTable.setRowSorter(sorter);
 
@@ -467,6 +467,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
         editJMenu = new javax.swing.JMenu();
         preferencesJMenuItem = new javax.swing.JMenuItem();
         removedJMenuItem = new javax.swing.JMenuItem();
+        filterJMenuItem = new javax.swing.JMenuItem();
         exportJMenu = new javax.swing.JMenu();
         exportAllPlotsJMenuItem = new javax.swing.JMenuItem();
         viewJMenu = new javax.swing.JMenu();
@@ -773,6 +774,15 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
             }
         });
         editJMenu.add(removedJMenuItem);
+
+        filterJMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F, java.awt.event.InputEvent.CTRL_MASK));
+        filterJMenuItem.setText("Filter Proteins");
+        filterJMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                filterJMenuItemActionPerformed(evt);
+            }
+        });
+        editJMenu.add(filterJMenuItem);
 
         menuBar.add(editJMenu);
 
@@ -1925,6 +1935,15 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
     }//GEN-LAST:event_resultsJTableMouseExited
 
     /**
+     * Open the filter 
+     * 
+     * @param evt 
+     */
+    private void filterJMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterJMenuItemActionPerformed
+        new ResultsFilter(this, false, currentFilterValues, currrentFilterRadioButtonSelections, foldChangeAbsoluteValue, true);
+    }//GEN-LAST:event_filterJMenuItemActionPerformed
+
+    /**
      * Update the minimium number of peptides setting.
      *
      * @param minNumUniquePeptides
@@ -2175,6 +2194,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
     private javax.swing.JButton exportPlotJButton;
     private javax.swing.JButton exportProteinListJButton;
     private javax.swing.JMenu fileJMenu;
+    private javax.swing.JMenuItem filterJMenuItem;
     private javax.swing.JButton filterResultsJButton;
     private javax.swing.JPanel foldChangeChartJPanel;
     private javax.swing.JMenu foldChangePlotJMenu;
@@ -2262,9 +2282,9 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
         }
 
         w.write(currentFilterValues[3] + "\n");
-
-
-        w.write("Fold Change: ");
+        
+        
+        w.write("Quantification Count: ");
 
         if (currrentFilterRadioButtonSelections[3] == 0) {
             w.write("> ");
@@ -2277,7 +2297,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
         w.write(currentFilterValues[4] + "\n");
 
 
-        w.write("p-value: ");
+        w.write("Fold Change: ");
 
         if (currrentFilterRadioButtonSelections[4] == 0) {
             w.write("> ");
@@ -2290,7 +2310,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
         w.write(currentFilterValues[5] + "\n");
 
 
-        w.write("q-value: ");
+        w.write("p-value: ");
 
         if (currrentFilterRadioButtonSelections[5] == 0) {
             w.write("> ");
@@ -2302,11 +2322,71 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
 
         w.write(currentFilterValues[6] + "\n");
 
+
+        w.write("q-value: ");
+
+        if (currrentFilterRadioButtonSelections[6] == 0) {
+            w.write("> ");
+        } else if (currrentFilterRadioButtonSelections[6] == 1) {
+            w.write("= ");
+        } else {
+            w.write("< ");
+        }
+
+        w.write(currentFilterValues[7] + "\n");
+
         w.write("Significance Level: " + significanceLevelJSpinner.getValue() + "\n");
 
-        w.write("Protein Accession: " + currentFilterValues[7] + "\n");
+        w.write("Protein Accession: " + currentFilterValues[8] + "\n");
     }
 
+    /**
+     * Clear the previous data.
+     */
+    public void clearOldData() {
+        
+        foldChangeChartJPanel.removeAll();
+        foldChangeChartJPanel.repaint();
+
+        resultsJTable.setRowSorter(null);
+        
+        // clear old data
+        while (resultsJTable.getRowCount() > 0) {
+            ((DefaultTableModel) resultsJTable.getModel()).removeRow(0);
+        }
+        
+        // reset the filters
+        currentFilterValues = new String[9]; //{"", "", "", "", "", "", "", "", ""};
+        currentFilterValues[0] = "";
+        currentFilterValues[1] = "";
+        currentFilterValues[2] = "";
+        currentFilterValues[3] = "";
+        currentFilterValues[4] = "";
+        currentFilterValues[5] = "";
+        currentFilterValues[6] = "";
+        currentFilterValues[7] = "";
+        currentFilterValues[8] = "";
+        
+        currrentFilterRadioButtonSelections = new Integer[7];
+        currrentFilterRadioButtonSelections[0] = 0;
+        currrentFilterRadioButtonSelections[1] = 0;
+        currrentFilterRadioButtonSelections[2] = 0;
+        currrentFilterRadioButtonSelections[3] = 0;
+        currrentFilterRadioButtonSelections[4] = 0;
+        currrentFilterRadioButtonSelections[5] = 2;
+        currrentFilterRadioButtonSelections[6] = 2;
+        
+        foldChangeAbsoluteValue = true;
+        
+        ratioChartJPanel.removeAll();
+        ratioChartJPanel.repaint();
+        accessionNumbersJEditorPane.setText(null);
+
+        ((TitledBorder) resultsJPanel.getBorder()).setTitle("Results");
+        resultsJPanel.revalidate();
+        resultsJPanel.repaint();
+    }
+    
     /**
      * Reload the iTRAQ file. Used when the preferences have been changed.
      */
@@ -2372,6 +2452,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
             w.close();
 
         } catch (IOException e) {
+            System.out.println("Error while saving experimental design:");
             e.printStackTrace();
         }
     }
@@ -2411,13 +2492,14 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
             for (int i = 0; i < currentFilterValues.length; i++) {
                 b.write(currentFilterValues[i] + "\n");
             }
+            b.write(foldChangeAbsoluteValue + "\n");
 
             // filter radio button selections
             b.write("Filter Radio Button Selections:\n");
             for (int i = 0; i < currrentFilterRadioButtonSelections.length; i++) {
                 b.write(currrentFilterRadioButtonSelections[i] + "\n");
             }
-
+            
             // selected proteins
             b.write("Selected Proteins:\n");
             for (int i = 0; i < resultsJTable.getRowCount(); i++) {
@@ -2447,6 +2529,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
             }
 
         } catch (IOException e) {
+            System.out.println("Error while saving settings:");
             e.printStackTrace();
         }
     }
@@ -2457,7 +2540,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
      *
      * @param settingsFile the settings file
      */
-    private void readSettings(boolean updateFilter) {
+    private void readSettings() {
 
         if (new File(getJarFilePath() + "/conf/" + new File(currentRatioFile).getName() + ".props").exists()) {
 
@@ -2510,7 +2593,13 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
                 currentLine = b.readLine();
 
                 while (!currentLine.startsWith("Filter Radio Button Selections:")) {
-                    currentFilterValues[index++] = currentLine;
+                    
+                    if (currentLine.trim().equalsIgnoreCase("true") || currentLine.trim().equalsIgnoreCase("false")) {
+                        foldChangeAbsoluteValue = Boolean.parseBoolean(currentLine);
+                    } else {
+                        currentFilterValues[index++] = currentLine;
+                    }
+
                     currentLine = b.readLine();
                 }
 
@@ -2532,12 +2621,6 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
                     currentLine = b.readLine();
                 }
 
-                if (updateFilter) {
-                    ResultsFilter filter = new ResultsFilter(this, false, currentFilterValues, currrentFilterRadioButtonSelections, foldChangeAbsoluteValue, false);
-                    filter.filter();
-                    filter.dispose();
-                }
-
                 removedProteins = new ArrayList<String>();
 
                 if (currentLine != null) {
@@ -2555,8 +2638,10 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
                 f.close();
 
             } catch (FileNotFoundException e) {
+                System.out.println("Error while reading settings:");
                 e.printStackTrace();
             } catch (IOException e) {
+                System.out.println("Error while reading settings:");
                 e.printStackTrace();
             }
         } else {
@@ -2608,24 +2693,10 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
 
         this.groupAColor = new Color(groupAColor.getRGB());
         this.groupBColor = new Color(groupBColor.getRGB());
-
-        foldChangeChartJPanel.removeAll();
-        foldChangeChartJPanel.repaint();
-
-        // clear old data
-        while (resultsJTable.getRowCount() > 0) {
-            ((DefaultTableModel) resultsJTable.getModel()).removeRow(0);
-        }
-
-        resultsJTable.revalidate();
-        resultsJTable.repaint();
-
-        ratioChartJPanel.removeAll();
-        ratioChartJPanel.repaint();
-        accessionNumbersJEditorPane.setText(null);
+        
+        clearOldData();
 
         progressDialog = new ProgressDialog(this, this, true);
-
 
         new Thread(new Runnable() {
 
@@ -2646,7 +2717,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
                 // save the experimental design for later
                 saveExperimentalDesign();
 
-                readSettings(updateFilter);
+                readSettings();
 
 
                 // set up the experimental design
@@ -2823,14 +2894,14 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
 
                                             numQuantificationRatios++;
                                         } else {
-                                            ratio = -1;
+                                            ratio = Double.MIN_VALUE;
                                         }
 
                                         if (numUniqueSpectra < minNumUniqueSpectra || numUniquePeptides < minNumUniquePeptides) {
-                                            ratio = -1;
+                                            ratio = Double.MIN_VALUE;
                                         }
 
-                                        if (ratio != -1) {
+                                        if (ratio != Double.MIN_VALUE) {
                                             allRatios.get(i + "_" + j).add(ratio);
                                         }
 
@@ -2875,8 +2946,10 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
                         currentLine = b.readLine();
                     }
                 } catch (FileNotFoundException e) {
+                    System.out.println("Error while loading data:");
                     e.printStackTrace();
                 } catch (IOException e) {
+                    System.out.println("Error while loading data:");
                     e.printStackTrace();
                 }
 
@@ -2923,7 +2996,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
                         for (int k = 0; k < experimentLabels[0].length; k++) {
 
                             if (experimentLabels[j][k] != null && experimentLabels[j][k].equalsIgnoreCase(groupALabel)) {
-                                if (groupAValues.get(groupACounter) == -1) {
+                                if (groupAValues.get(groupACounter) == Double.MIN_VALUE) {
                                     groupAValues.set(groupACounter, null);
                                 } else {
                                     groupAValues.set(groupACounter, groupAValues.get(groupACounter) - medianRatios.get(j + "_" + k));
@@ -2932,7 +3005,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
                                 groupACounter++;
                             } else if (experimentLabels[j][k] != null && experimentLabels[j][k].equalsIgnoreCase(groupBLabel)) {
 
-                                if (groupBValues.get(groupBCounter) == -1) {
+                                if (groupBValues.get(groupBCounter) == Double.MIN_VALUE) {
                                     groupBValues.set(groupBCounter, null);
                                 } else {
                                     groupBValues.set(groupBCounter, groupBValues.get(groupBCounter) - medianRatios.get(j + "_" + k));
@@ -3226,7 +3299,14 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
                 ((TitledBorder) resultsJPanel.getBorder()).setTitle("Results (" + resultsJTable.getRowCount() + ")");
                 resultsJPanel.revalidate();
                 resultsJPanel.repaint();
-
+                
+                TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(resultsJTable.getModel());
+                resultsJTable.setRowSorter(sorter);
+                
+                ResultsFilter filter = new ResultsFilter(tempRef, false, currentFilterValues, currrentFilterRadioButtonSelections, foldChangeAbsoluteValue, false);
+                filter.filter();
+                filter.dispose();
+                
                 exportPlotJButton.setEnabled(true);
 
                 progressDialog.setVisible(false);
