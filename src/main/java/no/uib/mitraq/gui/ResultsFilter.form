@@ -45,14 +45,14 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jPanel4" min="-2" max="-2" attributes="0"/>
+              <Component id="filterPanel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace pref="351" max="32767" attributes="0"/>
-              <Component id="clearJButton" linkSize="2" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
               <Component id="okJButton" linkSize="2" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="clearJButton" linkSize="2" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="22" max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -61,7 +61,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jPanel4" min="-2" max="-2" attributes="0"/>
+              <Component id="filterPanel" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="clearJButton" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -73,7 +73,7 @@
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Container class="javax.swing.JPanel" name="jPanel4">
+    <Container class="javax.swing.JPanel" name="filterPanel">
       <Properties>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
@@ -265,25 +265,14 @@
             <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="proteinJTextFieldKeyReleased"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JLabel" name="jLabel10">
+        <Component class="javax.swing.JTextField" name="accessionJTextField">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Peptides:"/>
+            <Property name="horizontalAlignment" type="int" value="0"/>
+            <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;&#xa;Find all proteins containing a given accession number.&lt;br&gt;&#xa;Regular expressions are supported.&#xa;&lt;/html&gt;"/>
           </Properties>
-        </Component>
-        <Component class="javax.swing.JLabel" name="jLabel11">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Coverage:"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JLabel" name="jLabel12">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Exp. Count:"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JLabel" name="jLabel13">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Fold Change:"/>
-          </Properties>
+          <Events>
+            <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="accessionJTextFieldKeyReleased"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JTextField" name="peptidesJTextField">
           <Properties>
@@ -317,10 +306,13 @@
             <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="expCountJTextFieldKeyReleased"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JLabel" name="jLabel14">
+        <Component class="javax.swing.JTextField" name="quantCountJTextField">
           <Properties>
-            <Property name="text" type="java.lang.String" value="p-value:"/>
+            <Property name="horizontalAlignment" type="int" value="0"/>
           </Properties>
+          <Events>
+            <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="quantCountJTextFieldKeyReleased"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JTextField" name="pValueJTextField">
           <Properties>
@@ -330,11 +322,6 @@
             <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="pValueJTextFieldKeyReleased"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JLabel" name="jLabel15">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="q-value:"/>
-          </Properties>
-        </Component>
         <Component class="javax.swing.JTextField" name="qValueJTextField">
           <Properties>
             <Property name="horizontalAlignment" type="int" value="0"/>
@@ -342,6 +329,36 @@
           <Events>
             <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="qValueJTextFieldKeyReleased"/>
           </Events>
+        </Component>
+        <Component class="javax.swing.JLabel" name="jLabel10">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Peptides:"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="jLabel11">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Coverage:"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="jLabel12">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Exp. Count:"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="jLabel13">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Fold Change:"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="jLabel14">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="p-value:"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="jLabel15">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="q-value:"/>
+          </Properties>
         </Component>
         <Component class="javax.swing.JRadioButton" name="peptidesGreaterThanJRadioButton">
           <Properties>
@@ -557,15 +574,6 @@
             <Property name="text" type="java.lang.String" value="Accession:"/>
           </Properties>
         </Component>
-        <Component class="javax.swing.JTextField" name="accessionJTextField">
-          <Properties>
-            <Property name="horizontalAlignment" type="int" value="0"/>
-            <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;&#xa;Find all proteins containing a given accession number.&lt;br&gt;&#xa;Regular expressions are supported.&#xa;&lt;/html&gt;"/>
-          </Properties>
-          <Events>
-            <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="accessionJTextFieldKeyReleased"/>
-          </Events>
-        </Component>
         <Component class="javax.swing.JLabel" name="jLabel2">
           <Properties>
             <Property name="text" type="java.lang.String" value="(contains, RegExp)"/>
@@ -576,14 +584,6 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="Quant. Count:"/>
           </Properties>
-        </Component>
-        <Component class="javax.swing.JTextField" name="quantCountJTextField">
-          <Properties>
-            <Property name="horizontalAlignment" type="int" value="0"/>
-          </Properties>
-          <Events>
-            <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="quantCountJTextFieldKeyReleased"/>
-          </Events>
         </Component>
         <Component class="javax.swing.JRadioButton" name="quantCountGreaterThanJRadioButton">
           <Properties>
