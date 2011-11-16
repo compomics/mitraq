@@ -269,7 +269,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
 
         // set the result table details
         setUpResultsTable();
-        //setExtendedState(MAXIMIZED_BOTH);
+        setExtendedState(MAXIMIZED_BOTH);
 
         setLocationRelativeTo(null);
     }
