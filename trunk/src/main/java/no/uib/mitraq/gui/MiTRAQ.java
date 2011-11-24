@@ -2509,9 +2509,20 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent {
 
                     if (temp.startsWith("<html>")) {
                         temp = temp.substring("<html></u>".length() - 1, temp.length() - "</u></html>".length());
+                        
+                        if (temp.lastIndexOf("href=") != -1) {
+                            
+                            String description = temp.substring(0, temp.indexOf("href="));
+                            String accession = temp.substring(temp.indexOf("href="));
+                           
+                            accession = accession.substring(accession.lastIndexOf("\">") + 2);
+                            accession = accession.substring(0, accession.lastIndexOf("<"));
+                            
+                            temp = description.trim() + " " + accession.trim();
+                        }               
                     }
 
-                    b.write(resultsJTable.getValueAt(i, resultsJTable.getColumn("Protein").getModelIndex()) + " " + temp + "\n");
+                    b.write(((String) resultsJTable.getValueAt(i, resultsJTable.getColumn("Protein").getModelIndex())).trim() + " " + temp.trim() + "\n");
                 }
             }
 
