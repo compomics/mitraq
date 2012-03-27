@@ -13,7 +13,7 @@
 
     <!-- Set the version number for the whole project -->
     <properties>
-        <version.number>0.8.9</version.number>
+        <version.number>0.9</version.number>
     </properties>
 
 
@@ -170,7 +170,7 @@
         <dependency>
             <groupId>no.uib</groupId>
             <artifactId>jsparklines</artifactId>
-            <version>0.5.23</version>
+            <version>0.5.36</version>
         </dependency>
 
         <dependency>
@@ -207,7 +207,13 @@
             <artifactId>xercesImpl</artifactId>
             <version>2.9.1</version>
         </dependency>
-
+        <dependency>
+            <groupId>no.uib</groupId>
+            <artifactId>jexpress-modularized</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        
+        
     </dependencies>
 
 </project>
