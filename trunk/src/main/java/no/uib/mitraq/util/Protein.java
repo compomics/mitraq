@@ -61,7 +61,7 @@ public class Protein implements Comparable<Object> {
     /**
      * The detected sequence coverage.
      */
-    private Integer percentCoverage;
+    private Double percentCoverage;
     /**
      * The fold change between the two groups.
      */
@@ -105,7 +105,7 @@ public class Protein implements Comparable<Object> {
             ArrayList<Integer> numSpectraGroupB, ArrayList<Integer> numPeptidesGroupB,
             String accessionNumber, String accessionNumbersAll, String proteinName,
             Integer numberUniquePeptides, Integer numExperimentsDetected, Integer numQuantificationRatios, 
-            Integer percentCoverage) {
+            Double percentCoverage) {
         this.ratiosGroupA = ratiosGroupA;
         this.ratiosGroupB = ratiosGroupB;
         this.numSpectraGroupA = numSpectraGroupA;
@@ -244,14 +244,14 @@ public class Protein implements Comparable<Object> {
     /**
      * @return the percentCoverage
      */
-    public Integer getPercentCoverage() {
+    public Double getPercentCoverage() {
         return percentCoverage;
     }
 
     /**
      * @param percentCoverage the percentCoverage to set
      */
-    public void setPercentCoverage(Integer percentCoverage) {
+    public void setPercentCoverage(Double percentCoverage) {
         this.percentCoverage = percentCoverage;
     }
 

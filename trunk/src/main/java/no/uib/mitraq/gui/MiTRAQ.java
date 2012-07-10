@@ -1361,13 +1361,13 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
     private void valuesAndChartJCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_valuesAndChartJCheckBoxMenuItemActionPerformed
         showValuesAndCharts = valuesAndChartJCheckBoxMenuItem.isSelected();
 
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Peptides").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Exp. Count").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Quant. Count").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Coverage").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("p-value").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
-        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("q-value").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 30);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("FC").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 50);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Peptides").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 50);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Exp. Count").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 50);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Quant. Count").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 50);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("Coverage").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 50);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("p-value").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 50);
+        ((JSparklinesBarChartTableCellRenderer) resultsJTable.getColumn("q-value").getCellRenderer()).showNumberAndChart(showValuesAndCharts, 50);
 
         resultsJTable.revalidate();
         resultsJTable.repaint();
@@ -1513,17 +1513,27 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
 
                         if (currentAccessionNumber.toUpperCase().startsWith("IPI")) {
                             database = "IPI";
-                        } else if (currentAccessionNumber.toUpperCase().startsWith("SWISS-PROT")
-                                || currentAccessionNumber.startsWith("UNI-PROT")) {  // @TODO: untested!!
+//                        } 
+//                        else if (currentAccessionNumber.toUpperCase().startsWith("SWISS-PROT")
+//                                || currentAccessionNumber.startsWith("UNI-PROT")) {  // @TODO: untested!!
+//                            database = "UNI-PROT";
+                        } else {  // UniProt assumed
                             database = "UNI-PROT";
                         }
 
                         // @TODO: add more databases
 
                         if (database != null) {
-                            accessionNumberLinks += "<a href=\"http://srs.ebi.ac.uk/srsbin/cgi-bin/wgetz?-e+%5b"
+                            
+                            if (database.equalsIgnoreCase("IPI")) {
+                                accessionNumberLinks += "<a href=\"http://srs.ebi.ac.uk/srsbin/cgi-bin/wgetz?-e+%5b"
                                     + database + "-AccNumber:" + currentAccessionNumber
                                     + "%5d\">" + currentAccessionNumber + "</a>, ";
+                            } else {
+                                accessionNumberLinks += "<a href=\"" + "http://www.uniprot.org/uniprot/" + currentAccessionNumber
+                                + "\"><font color=\"" + notSelectedRowHtmlTagFontColor
+                                + "\">" + currentAccessionNumber + "</font></a>, ";
+                            }   
                         } else {
                             accessionNumberLinks += currentAccessionNumber + ", ";
                         }
@@ -2979,7 +2989,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
 
                     String headerLine = b.readLine();
 
-                    StringTokenizer tok = new StringTokenizer(headerLine, ";");
+                    StringTokenizer tok = new StringTokenizer(headerLine, "\t");
 
                     HashMap<String, Integer> columnHeaders = new HashMap<String, Integer>();
 
@@ -3007,7 +3017,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                         rowCounter++;
                         progressDialog.setTitle("Loading Data. Please Wait... (" + rowCounter + ")");
 
-                        tok = new StringTokenizer(currentLine, ";");
+                        tok = new StringTokenizer(currentLine, "\t");
 
                         Vector<String> rowValues = new Vector<String>();
 
@@ -3027,6 +3037,12 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                                 numUniquePeptides = new Integer(rowValues.get(
                                         columnHeaders.get("Exp. " + (i + 1) + " Unique Peps").intValue())).intValue();
                             } else {
+                                
+                                if (columnHeaders.get("Exp" + (i + 1) + " unique_peptides") == null) {
+                                    JOptionPane.showMessageDialog(null, "Unsupported data format!", "Format Error", JOptionPane.ERROR_MESSAGE);
+                                    System.exit(0);
+                                }
+                                
                                 numUniquePeptides = new Integer(rowValues.get(
                                         columnHeaders.get("Exp" + (i + 1) + " unique_peptides").intValue())).intValue();
                             }
@@ -3134,7 +3150,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                             String accessionNumbersAll = rowValues.get(columnHeaders.get("accession_numbers").intValue());
 
                             Integer numberUniquePeptides = new Integer(rowValues.get(columnHeaders.get("numPepsUnique").intValue()));
-                            Integer percentCoverage = new Integer(rowValues.get(columnHeaders.get("percentCoverage").intValue()));
+                            Double percentCoverage = new Double(rowValues.get(columnHeaders.get("percentCoverage").intValue()));
 
                             if (!removedProteins.contains(proteinName + "|" + accessionNumber)) {
                                 allProteins.add(new Protein(ratiosGroupA, ratiosGroupB, numSpectraGroupA, numPeptidesGroupA,
@@ -3455,6 +3471,10 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                                 + tempAccessionNumber + "%5d"
                                 + "\"><font color=\"" + notSelectedRowHtmlTagFontColor + "\">"
                                 + tempAccessionNumber + "</font></a></html>";
+                    } else { // uniprot assumed
+                        tempAccessionNumber = "<html><a href=\"" + "http://www.uniprot.org/uniprot/" + tempAccessionNumber
+                                + "\"><font color=\"" + notSelectedRowHtmlTagFontColor
+                                + "\">" + tempAccessionNumber + "</font></a></html>";
                     }
 
                     ((DefaultTableModel) resultsJTable.getModel()).addRow(

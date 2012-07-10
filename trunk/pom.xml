@@ -13,7 +13,7 @@
 
     <!-- Set the version number for the whole project -->
     <properties>
-        <version.number>0.9</version.number>
+        <version.number>0.9.1</version.number>
     </properties>
 
 
@@ -170,7 +170,7 @@
         <dependency>
             <groupId>no.uib</groupId>
             <artifactId>jsparklines</artifactId>
-            <version>0.5.36</version>
+            <version>0.5.38</version>
         </dependency>
 
         <dependency>
