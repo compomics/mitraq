@@ -5,16 +5,10 @@
     <groupId>no.uib</groupId>
     <artifactId>MiTRAQ</artifactId>
     <packaging>jar</packaging>
-    <version>${version.number}</version> <!-- version number is set below -->
+    <version>0.9.2</version>
     <name>MiTRAQ</name>
     <description></description>
     <url>http://mitraq.googlecode.com</url>
-
-
-    <!-- Set the version number for the whole project -->
-    <properties>
-        <version.number>0.9.1</version.number>
-    </properties>
 
 
     <!-- License -->
@@ -52,6 +46,15 @@
                 <directory>src/main/resources/</directory>
             </resource>
         </resources>
+        
+        <!-- Extensions -->
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh</artifactId>
+                <version>1.0-beta-2</version>
+            </extension>
+        </extensions>
 
 
         <plugins>
@@ -59,6 +62,7 @@
             <!-- Compiler plugin -->
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.5</version>
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
@@ -71,6 +75,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
                 <configuration>
                     <archive>
                         <manifest>
