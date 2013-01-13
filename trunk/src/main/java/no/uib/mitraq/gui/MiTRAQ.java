@@ -295,7 +295,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
      * Sets up the results table.
      */
     private void setUpResultsTable() {
-        
+
         resultsTableJScrollPane.getViewport().setOpaque(false);
 
         // sparklines cell renderers
@@ -406,7 +406,12 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
         String path = this.getClass().getResource("MiTRAQ.class").getPath();
 
         if (path.lastIndexOf("/MiTRAQ-") != -1) {
-            path = path.substring(5, path.lastIndexOf("/MiTRAQ-"));
+            // remove starting 'file:' tag if there
+            if (path.startsWith("file:")) {
+                path = path.substring("file:".length(), path.lastIndexOf("/MiTRAQ-"));
+            } else {
+                path = path.substring(0, path.lastIndexOf("/MiTRAQ-"));
+            }
             path = path.replace("%20", " ");
         } else {
             path = ".";
@@ -1524,16 +1529,16 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                         // @TODO: add more databases
 
                         if (database != null) {
-                            
+
                             if (database.equalsIgnoreCase("IPI")) {
                                 accessionNumberLinks += "<a href=\"http://srs.ebi.ac.uk/srsbin/cgi-bin/wgetz?-e+%5b"
-                                    + database + "-AccNumber:" + currentAccessionNumber
-                                    + "%5d\">" + currentAccessionNumber + "</a>, ";
+                                        + database + "-AccNumber:" + currentAccessionNumber
+                                        + "%5d\">" + currentAccessionNumber + "</a>, ";
                             } else {
                                 accessionNumberLinks += "<a href=\"" + "http://www.uniprot.org/uniprot/" + currentAccessionNumber
-                                + "\"><font color=\"" + notSelectedRowHtmlTagFontColor
-                                + "\">" + currentAccessionNumber + "</font></a>, ";
-                            }   
+                                        + "\"><font color=\"" + notSelectedRowHtmlTagFontColor
+                                        + "\">" + currentAccessionNumber + "</font></a>, ";
+                            }
                         } else {
                             accessionNumberLinks += currentAccessionNumber + ", ";
                         }
@@ -3037,12 +3042,12 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                                 numUniquePeptides = new Integer(rowValues.get(
                                         columnHeaders.get("Exp. " + (i + 1) + " Unique Peps").intValue())).intValue();
                             } else {
-                                
+
                                 if (columnHeaders.get("Exp" + (i + 1) + " unique_peptides") == null) {
                                     JOptionPane.showMessageDialog(null, "Unsupported data format!", "Format Error", JOptionPane.ERROR_MESSAGE);
                                     System.exit(0);
                                 }
-                                
+
                                 numUniquePeptides = new Integer(rowValues.get(
                                         columnHeaders.get("Exp" + (i + 1) + " unique_peptides").intValue())).intValue();
                             }
@@ -3933,7 +3938,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
 
         java.util.Collections.sort(arrayA);
         java.util.Collections.sort(arrayB);
-        
+
         return Arrays.equals(arrayA.toArray(), arrayB.toArray());
     }
 }
