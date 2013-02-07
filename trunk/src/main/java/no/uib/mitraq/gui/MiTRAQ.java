@@ -295,6 +295,11 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
      * Sets up the results table.
      */
     private void setUpResultsTable() {
+        
+        // correct the color for the upper right corner
+        JPanel proteinCorner = new JPanel();
+        proteinCorner.setBackground(resultsJTable.getTableHeader().getBackground());
+        resultsTableJScrollPane.setCorner(ScrollPaneConstants.UPPER_RIGHT_CORNER, proteinCorner);
 
         resultsTableJScrollPane.getViewport().setOpaque(false);
 
@@ -354,7 +359,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
     private void setUpLogFile() {
         if (useLogFile && !getJarFilePath().equalsIgnoreCase(".")) {
             try {
-                String path = getJarFilePath() + "/conf/MiTRAQLog.txt";
+                String path = getJarFilePath() + "/resources/MiTRAQ.log";
 
                 File file = new File(path);
                 System.setOut(new java.io.PrintStream(new FileOutputStream(file, true)));
@@ -372,7 +377,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                 }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(
-                        null, "An error occured when trying to create the MiTRAQLog.",
+                        null, "An error occured when trying to create MiTRAQ.log.",
                         "Error Creating Log File", JOptionPane.ERROR_MESSAGE);
                 e.printStackTrace();
             }
@@ -1071,7 +1076,6 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
             removeDataPointAnnotations();
 
             java.awt.EventQueue.invokeLater(new Runnable() {
-
                 public void run() {
                     foldChangeChartJPanel.repaint();
                     ratioChartJPanel.repaint();
@@ -1292,7 +1296,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                     JOptionPane.showMessageDialog(this, "Results successfully exported.", "Results Exported", JOptionPane.INFORMATION_MESSAGE);
 
                 } catch (IOException e) {
-                    JOptionPane.showMessageDialog(this, "An error occured when exporting the results. See ../conf/MiTRAQLog.txt for details.");
+                    JOptionPane.showMessageDialog(this, "An error occured when exporting the results. See ../resources/conf/MiTRAQ.log for details.");
                     e.printStackTrace();
                 }
 
@@ -2075,14 +2079,12 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
 
 
         new Thread(new Runnable() {
-
             public void run() {
                 progressDialog.setVisible(true);
             }
         }, "ProgressDialog").start();
 
         new Thread("DisplayThread") {
-
             @Override
             public void run() {
                 try {
@@ -2328,22 +2330,22 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
         // set the look and feel
         setLookAndFeel();
 
-        java.awt.EventQueue.invokeLater(new Runnable() {
+//        java.awt.EventQueue.invokeLater(new Runnable() {
+//
+//            public void run() {
+        MiTRAQ miTRAQ = new MiTRAQ();
+        miTRAQ.setVisible(true);
 
-            public void run() {
-                MiTRAQ miTRAQ = new MiTRAQ();
-                miTRAQ.setVisible(true);
+        String dataFile = null;
 
-                String dataFile = null;
+        // if a file is found in the data folder, suggest this as the file to open
+        if (new File(miTRAQ.getJarFilePath() + "/data/").listFiles().length > 0) {
+            dataFile = new File(miTRAQ.getJarFilePath() + "/data/").listFiles()[0].getPath();
+        }
 
-                // if a file is found in the data folder, suggest this as the file to open
-                if (new File(miTRAQ.getJarFilePath() + "/data/").listFiles().length > 0) {
-                    dataFile = new File(miTRAQ.getJarFilePath() + "/data/").listFiles()[0].getPath();
-                }
-
-                new ExperimentalDesign(miTRAQ, true, dataFile);
-            }
-        });
+        new ExperimentalDesign(miTRAQ, true, dataFile);
+//            }
+//        });
     }
 
     /**
@@ -2626,7 +2628,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
      */
     private void saveExperimentalDesign() {
 
-        File experimentalDesignFile = new File(getJarFilePath() + "/conf/" + new File(currentRatioFile).getName() + ".exp");
+        File experimentalDesignFile = new File(getJarFilePath() + "/resources/conf/" + new File(currentRatioFile).getName() + ".exp");
 
         try {
             FileWriter w = new FileWriter(experimentalDesignFile);
@@ -2665,7 +2667,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
      */
     private void saveSettings(boolean showMessage) {
 
-        File settingsFile = new File(getJarFilePath() + "/conf/" + new File(currentRatioFile).getName() + ".props");
+        File settingsFile = new File(getJarFilePath() + "/resources/conf/" + new File(currentRatioFile).getName() + ".props");
 
         try {
             FileWriter w = new FileWriter(settingsFile);
@@ -2756,9 +2758,9 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
      */
     private void readSettings() {
 
-        if (new File(getJarFilePath() + "/conf/" + new File(currentRatioFile).getName() + ".props").exists()) {
+        if (new File(getJarFilePath() + "/resources/conf/" + new File(currentRatioFile).getName() + ".props").exists()) {
 
-            File settingsFile = new File(getJarFilePath() + "/conf/" + new File(currentRatioFile).getName() + ".props");
+            File settingsFile = new File(getJarFilePath() + "/resources/conf/" + new File(currentRatioFile).getName() + ".props");
 
             try {
                 FileReader f = new FileReader(settingsFile);
@@ -2914,7 +2916,6 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
         progressDialog = new ProgressDialog(this, this, true);
 
         new Thread(new Runnable() {
-
             public void run() {
                 progressDialog.setIntermidiate(true);
                 progressDialog.setTitle("Loading Data. Please Wait...");
@@ -2923,7 +2924,6 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
         }, "ProgressDialog").start();
 
         new Thread("LoadingThread") {
-
             @Override
             public void run() {
 
@@ -2952,26 +2952,47 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                 groupANumberOfMembers = 0;
                 groupBNumberOfMembers = 0;
 
+                int refColumn = 1;
+
+                // find the reference column // @TODO: this should be done in a smarter way!
+                for (int i = 1; i < experimentalDesignJTable.getColumnCount(); i++) {
+                    if (experimentalDesignJTable.getValueAt(0, i) != null) {
+                        String currentValue = experimentalDesignJTable.getValueAt(0, i).toString();
+
+                        if (currentValue.equalsIgnoreCase("Ref")) {
+                            refColumn = i;
+                        }
+                    }
+                }
+
                 for (int i = 0; i < experimentalDesignJTable.getRowCount(); i++) {
                     for (int j = 1; j < experimentalDesignJTable.getColumnCount(); j++) {
+
+                        int columnIndex;
+
+                        if (j <= refColumn) {
+                            columnIndex = j - 1;
+                        } else {
+                            columnIndex = j - 2;
+                        }
 
                         if (experimentalDesignJTable.getValueAt(i, j) != null) {
 
                             String currentValue = experimentalDesignJTable.getValueAt(i, j).toString();
 
                             if (!currentValue.equalsIgnoreCase("Ref")) {
-                                experimentLabels[i][j - 2] = currentValue;
+                                experimentLabels[i][columnIndex] = currentValue;
                             }
 
                             if (currentValue.equalsIgnoreCase(groupALabel)) {
-                                allRatios.put(i + "_" + (j - 2), new ArrayList<Double>());
+                                allRatios.put(i + "_" + (columnIndex), new ArrayList<Double>());
                                 groupANumberOfMembers++;
                             } else if (currentValue.equalsIgnoreCase(groupBLabel)) {
-                                allRatios.put(i + "_" + (j - 2), new ArrayList<Double>());
+                                allRatios.put(i + "_" + (columnIndex), new ArrayList<Double>());
                                 groupBNumberOfMembers++;
                             }
                         } else {
-                            experimentLabels[i][j - 2] = null;
+                            experimentLabels[i][columnIndex] = null;
                         }
                     }
                 }
@@ -3088,7 +3109,8 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                             for (int j = 0; j < NUMBER_OF_ITRAQ_TAGS - 1; j++) {
 
                                 if (columnHeaders.get("Exp" + (i + 1) + " iTRAQ_ratio_" + (j + 1)) != null // new formatting
-                                        || columnHeaders.get("Exp. " + (i + 1) + " iTRAQ_" + (j + 1) + " log2 ratio") != null) { // old type formatting
+                                        || columnHeaders.get("Exp. " + (i + 1) + " iTRAQ_" + (j + 1) + " log2 ratio") != null // old type formatting
+                                        || columnHeaders.get("Exp" + (i + 1) + " log2_iTRAQ_" + (j + 1) + "_median") != null) {
 
                                     String temp;
 
@@ -3096,8 +3118,10 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                                         temp = rowValues.get(
                                                 columnHeaders.get("Exp. " + (i + 1) + " iTRAQ_" + (j + 1) + " log2 ratio").intValue());
                                     } else {
+//                                        temp = rowValues.get(
+//                                                columnHeaders.get("Exp" + (i + 1) + " iTRAQ_ratio_" + (j + 1)).intValue());
                                         temp = rowValues.get(
-                                                columnHeaders.get("Exp" + (i + 1) + " iTRAQ_ratio_" + (j + 1)).intValue());
+                                                columnHeaders.get("Exp" + (i + 1) + " log2_iTRAQ_" + (j + 1) + "_median").intValue());
                                     }
 
 
@@ -3110,7 +3134,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                                         if (ratio != 0) { // not sure if this is the correct test for the old dataformat...
                                             // take log 2 of the ratio, NB: not needed for the old data format...
                                             if (!oldDataFormat) {
-                                                ratio = Math.log(ratio) / Math.log(2);
+                                                //ratio = Math.log(ratio) / Math.log(2);
                                             }
 
                                             numQuantificationRatios++;
@@ -3206,6 +3230,8 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                 for (int i = 0; i < allProteins.size(); i++) {
 
                     Protein currentProtein = allProteins.get(i);
+
+                    //System.out.println(currentProtein.getProteinName());
 
                     int groupACounter = 0;
                     int groupBCounter = 0;

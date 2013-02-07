@@ -5,7 +5,7 @@
     <groupId>no.uib</groupId>
     <artifactId>MiTRAQ</artifactId>
     <packaging>jar</packaging>
-    <version>0.9.2</version>
+    <version>0.9.3</version>
     <name>MiTRAQ</name>
     <description></description>
     <url>http://mitraq.googlecode.com</url>
@@ -84,7 +84,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>no.uib.mitraq.gui.MiTRAQ</mainClass>
+                            <mainClass>no.uib.mitraq.gui.MiTRAQWrapper</mainClass>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib</classpathPrefix>
                         </manifest>
@@ -134,7 +134,7 @@
                                 <resource>
                                     <directory>./</directory>
                                     <includes>
-                                        <include>conf/</include>
+                                        <include>resources/</include>
                                         <include>data/</include>
                                         <include>LICENSE-2.0.txt</include>
                                     </includes>
@@ -164,6 +164,51 @@
 
     <!-- Dependencies -->
     <dependencies>
+        
+        <dependency>
+            <groupId>com.compomics</groupId>
+            <artifactId>utilities</artifactId>
+            <version>3.11.8</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>commons-math</artifactId>
+                    <groupId>commons-math</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>servlet-api</artifactId>
+                    <groupId>javax.servlet</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>swingx</artifactId>
+                    <groupId>org.swinglabs</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>swing-layout</artifactId>
+                    <groupId>org.swinglabs</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>ols-dialog</artifactId>
+                    <groupId>no.uib</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jmzml</artifactId>
+                    <groupId>uk.ac.ebi.jmzml</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>derby</artifactId>
+                    <groupId>org.apache.derby</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>ssj</artifactId>
+                    <groupId>umontreal.iro.lecuyer.gof</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>braf</artifactId>
+                    <groupId>uk.ac.ebi.pride.tools</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-math</artifactId>
