@@ -94,8 +94,8 @@ public class ExperimentalDesign extends javax.swing.JDialog implements ProgressD
         numberOfGroupsJSpinnerStateChanged(null);
 
         if (currentRatioFile != null) {
-            if (new File(mitraq.getJarFilePath() + "/conf/" + new File(ratioFileJTextField.getText()).getName() + ".exp").exists()) {
-                readExperimentalDesignSettings(mitraq.getJarFilePath() + "/conf/" + new File(ratioFileJTextField.getText()).getName() + ".exp");
+            if (new File(mitraq.getJarFilePath() + "/resources/conf/" + new File(ratioFileJTextField.getText()).getName() + ".exp").exists()) {
+                readExperimentalDesignSettings(mitraq.getJarFilePath() + "/resources/conf/" + new File(ratioFileJTextField.getText()).getName() + ".exp");
             }
         }
 
@@ -460,8 +460,8 @@ public class ExperimentalDesign extends javax.swing.JDialog implements ProgressD
             String path = (chooser.getSelectedFile().getAbsoluteFile().getPath());
             ratioFileJTextField.setText(path);
 
-            if (new File(mitraq.getJarFilePath() + "/conf/" + new File(ratioFileJTextField.getText()).getName() + ".exp").exists()) {
-                readExperimentalDesignSettings(mitraq.getJarFilePath() + "/conf/" + new File(ratioFileJTextField.getText()).getName() + ".exp");
+            if (new File(mitraq.getJarFilePath() + "/resources/conf/" + new File(ratioFileJTextField.getText()).getName() + ".exp").exists()) {
+                readExperimentalDesignSettings(mitraq.getJarFilePath() + "/resources/conf/" + new File(ratioFileJTextField.getText()).getName() + ".exp");
             }
         }
 
