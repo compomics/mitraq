@@ -295,7 +295,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
      * Sets up the results table.
      */
     private void setUpResultsTable() {
-        
+
         // correct the color for the upper right corner
         JPanel proteinCorner = new JPanel();
         proteinCorner.setBackground(resultsJTable.getTableHeader().getBackground());
@@ -3069,7 +3069,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                                     System.exit(0);
                                 }
 
-                                numUniquePeptides = new Integer(rowValues.get(
+                                numUniquePeptides = new Double(rowValues.get(
                                         columnHeaders.get("Exp" + (i + 1) + " unique_peptides").intValue())).intValue();
                             }
 
@@ -3099,10 +3099,10 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                                 numUniqueSpectra = new Integer(rowValues.get(
                                         columnHeaders.get("Exp. " + (i + 1) + " num Spectra").intValue())).intValue();
                             } else {
-                                numUniquePeptides = new Integer(rowValues.get(
+                                numUniquePeptides = new Double(rowValues.get(
                                         columnHeaders.get("Exp" + (i + 1) + " unique_peptides").intValue())).intValue();
 
-                                numUniqueSpectra = new Integer(rowValues.get(
+                                numUniqueSpectra = new Double(rowValues.get(
                                         columnHeaders.get("Exp" + (i + 1) + " numSpectra").intValue())).intValue();
                             }
 
@@ -3178,7 +3178,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                             String accessionNumber = rowValues.get(columnHeaders.get("accession_number").intValue());
                             String accessionNumbersAll = rowValues.get(columnHeaders.get("accession_numbers").intValue());
 
-                            Integer numberUniquePeptides = new Integer(rowValues.get(columnHeaders.get("numPepsUnique").intValue()));
+                            Integer numberUniquePeptides = new Double(rowValues.get(columnHeaders.get("numPepsUnique").intValue())).intValue();
                             Double percentCoverage = new Double(rowValues.get(columnHeaders.get("percentCoverage").intValue()));
 
                             if (!removedProteins.contains(proteinName + "|" + accessionNumber)) {
@@ -3510,20 +3510,20 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
 
                     ((DefaultTableModel) resultsJTable.getModel()).addRow(
                             new Object[]{
-                                new Integer(i + 1),
-                                currentProtein.getProteinName(),
-                                tempAccessionNumber,
-                                new XYDataPoint(currentProtein.getFoldChange(), currentProtein.getPValue()),
-                                currentProtein.getNumberUniquePeptides(),
-                                currentProtein.getPercentCoverage(),
-                                currentProtein.getNumExperimentsDetected(),
-                                currentProtein.getNumQuantificationRatios(),
-                                currentProtein.getPValue(),
-                                currentProtein.getQValue(),
-                                currentProtein.getPValue() < equallyExpressedSignificanceLevel,
-                                currentProtein.getPValue() < equallyExpressedSignificanceLevel / allValidProteins.size(),
-                                selected
-                            });
+                        new Integer(i + 1),
+                        currentProtein.getProteinName(),
+                        tempAccessionNumber,
+                        new XYDataPoint(currentProtein.getFoldChange(), currentProtein.getPValue()),
+                        currentProtein.getNumberUniquePeptides(),
+                        currentProtein.getPercentCoverage(),
+                        currentProtein.getNumExperimentsDetected(),
+                        currentProtein.getNumQuantificationRatios(),
+                        currentProtein.getPValue(),
+                        currentProtein.getQValue(),
+                        currentProtein.getPValue() < equallyExpressedSignificanceLevel,
+                        currentProtein.getPValue() < equallyExpressedSignificanceLevel / allValidProteins.size(),
+                        selected
+                    });
 
                     if (Math.abs(currentProtein.getFoldChange()) > maxAbsoluteValueFoldChange) {
                         maxAbsoluteValueFoldChange = Math.abs(currentProtein.getFoldChange());
