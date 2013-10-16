@@ -1358,7 +1358,14 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
         ArrayList<ChartPanel> chartPanels = new ArrayList<ChartPanel>();
         chartPanels.add(ratioChartPanel);
         chartPanels.add(foldChangeChartPanel);
-        new ExportPlot(this, true, chartPanels);
+
+        ArrayList<String> plotTitles = new ArrayList<String>();
+        String accession = (String) resultsJTable.getValueAt(resultsJTable.getSelectedRow(), resultsJTable.getColumn("Accession").getModelIndex());
+        accession = removeHtmlFromAccession(accession);
+        plotTitles.add(accession);
+        plotTitles.add(accession + " (All Fold Changes)");
+
+        new ExportPlot(this, true, chartPanels, plotTitles);
     }//GEN-LAST:event_exportPlotJButtonActionPerformed
 
     /**
@@ -1796,6 +1803,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
         int[] selectedRows = resultsJTable.getSelectedRows();
 
         ArrayList<ChartPanel> chartPanels = new ArrayList<ChartPanel>();
+        ArrayList<String> plotTitles = new ArrayList<String>();
 
         for (int i = 0; i < resultsJTable.getRowCount(); i++) {
 
@@ -1803,6 +1811,10 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                 resultsJTable.setRowSelectionInterval(i, i);
                 resultsJTableMouseReleased(null);
                 chartPanels.add(ratioChartPanel);
+
+                String accession = (String) resultsJTable.getValueAt(i, resultsJTable.getColumn("Accession").getModelIndex());
+                accession = removeHtmlFromAccession(accession);
+                plotTitles.add(accession);
             }
         }
 
@@ -1817,7 +1829,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
 
         if (chartPanels.size() > 0) {
             // export the plots
-            new ExportPlot(this, true, chartPanels);
+            new ExportPlot(this, true, chartPanels, plotTitles);
         } else {
             JOptionPane.showMessageDialog(this, "No proteins selected!", "Empty Selection", JOptionPane.INFORMATION_MESSAGE);
         }
@@ -2709,25 +2721,9 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
             b.write("Selected Proteins:\n");
             for (int i = 0; i < resultsJTable.getRowCount(); i++) {
                 if (((Boolean) resultsJTable.getValueAt(i, resultsJTable.getColumn("  ").getModelIndex()))) {
-
                     String temp = (String) resultsJTable.getValueAt(i, resultsJTable.getColumn("Accession").getModelIndex());
-
-                    if (temp.startsWith("<html>")) {
-                        temp = temp.substring("<html></u>".length() - 1, temp.length() - "</u></html>".length());
-
-                        if (temp.lastIndexOf("href=") != -1) {
-
-                            String description = temp.substring(0, temp.indexOf("href="));
-                            String accession = temp.substring(temp.indexOf("href="));
-
-                            accession = accession.substring(accession.lastIndexOf("\">") + 2);
-                            accession = accession.substring(0, accession.lastIndexOf("<"));
-
-                            temp = description.trim() + " " + accession.trim();
-                        }
-                    }
-
-                    b.write(((String) resultsJTable.getValueAt(i, resultsJTable.getColumn("Protein").getModelIndex())).trim() + " " + temp.trim() + "\n");
+                    temp = removeHtmlFromAccession(temp);
+                    b.write(((String) resultsJTable.getValueAt(i, resultsJTable.getColumn("Protein").getModelIndex())).trim() + " " + temp + "\n");
                 }
             }
 
@@ -3118,10 +3114,10 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
                                         temp = rowValues.get(
                                                 columnHeaders.get("Exp. " + (i + 1) + " iTRAQ_" + (j + 1) + " log2 ratio").intValue());
                                     } else {
-//                                        temp = rowValues.get(
-//                                                columnHeaders.get("Exp" + (i + 1) + " iTRAQ_ratio_" + (j + 1)).intValue());
                                         temp = rowValues.get(
-                                                columnHeaders.get("Exp" + (i + 1) + " log2_iTRAQ_" + (j + 1) + "_median").intValue());
+                                                columnHeaders.get("Exp" + (i + 1) + " iTRAQ_ratio_" + (j + 1)).intValue());
+//                                        temp = rowValues.get(
+//                                                columnHeaders.get("Exp" + (i + 1) + " log2_iTRAQ_" + (j + 1) + "_median").intValue());
                                     }
 
 
@@ -3133,9 +3129,9 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
 
                                         if (ratio != 0) { // not sure if this is the correct test for the old dataformat...
                                             // take log 2 of the ratio, NB: not needed for the old data format...
-                                            if (!oldDataFormat) {
-                                                //ratio = Math.log(ratio) / Math.log(2);
-                                            }
+//                                            if (!oldDataFormat) {
+//                                                ratio = Math.log(ratio) / Math.log(2);
+//                                            }
 
                                             numQuantificationRatios++;
                                         } else {
@@ -3966,6 +3962,32 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
         java.util.Collections.sort(arrayB);
 
         return Arrays.equals(arrayA.toArray(), arrayB.toArray());
+    }
+
+    /**
+     * Removed the HTML encoding for an accession number.
+     *
+     * @param temp
+     * @return
+     */
+    private String removeHtmlFromAccession(String temp) {
+
+        if (temp.startsWith("<html>")) {
+            temp = temp.substring("<html></u>".length() - 1, temp.length() - "</u></html>".length());
+
+            if (temp.lastIndexOf("href=") != -1) {
+
+                String description = temp.substring(0, temp.indexOf("href="));
+                String accession = temp.substring(temp.indexOf("href="));
+
+                accession = accession.substring(accession.lastIndexOf("\">") + 2);
+                accession = accession.substring(0, accession.lastIndexOf("<"));
+
+                temp = description.trim() + " " + accession.trim();
+            }
+        }
+
+        return temp.trim();
     }
 }
 

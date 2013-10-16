@@ -5,7 +5,7 @@
     <groupId>no.uib</groupId>
     <artifactId>MiTRAQ</artifactId>
     <packaging>jar</packaging>
-    <version>0.9.4</version>
+    <version>0.9.5</version>
     <name>MiTRAQ</name>
     <description></description>
     <url>http://mitraq.googlecode.com</url>
