@@ -75,16 +75,16 @@ public class Protein implements Comparable<Object> {
      */
     private Double qValue;
     /**
-     * @TODO: JavaDoc missing...
+     * The group A percentage.
      */
     private Double groupAPercent;
     /**
-     * @TODO: JavaDoc missing...
+     * The group B percentage.
      */
     private Double groupBPercent;
 
     /**
-     * @TODO: JavaDoc missing...
+     * Constructor.
      *
      * @param ratiosGroupA
      * @param ratiosGroupB
