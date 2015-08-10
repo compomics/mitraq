@@ -2147,7 +2147,7 @@ public class MiTRAQ extends javax.swing.JFrame implements ProgressDialogParent, 
     }//GEN-LAST:event_hcButtonActionPerformed
 
     /**
-     * Update the minimium number of peptides setting.
+     * Update the minimum number of peptides setting.
      *
      * @param minNumUniquePeptides
      */

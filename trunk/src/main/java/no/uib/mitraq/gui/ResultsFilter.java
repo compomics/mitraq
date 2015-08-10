@@ -199,7 +199,7 @@ public class ResultsFilter extends javax.swing.JDialog {
             }
         });
 
-        filterPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Results Fillter"));
+        filterPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Result Filters"));
 
         jLabel9.setText("Protein:");
 
@@ -642,7 +642,7 @@ public class ResultsFilter extends javax.swing.JDialog {
                 .addComponent(filterPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(351, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(okJButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(clearJButton)
